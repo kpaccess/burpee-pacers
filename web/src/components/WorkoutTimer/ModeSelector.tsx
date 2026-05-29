@@ -11,7 +11,7 @@ interface ModeSelectorProps {
 export default function ModeSelector({ modes, activeMode, onSelect }: ModeSelectorProps) {
   if (modes.length > 1) {
     return (
-      <Stack direction="row" spacing={1}>
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {modes.map((entry) => (
           <Chip
             key={entry.mode}

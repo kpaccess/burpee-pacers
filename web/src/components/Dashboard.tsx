@@ -160,7 +160,6 @@ const PULLING_WORK_CONFIG = [
     ],
   },
 ];
-
 // ── Health, Safety & Recovery configuration ───────────────────────────────────
 // Shown for both tracks. Warm-up and cool-down routines to bookend every session.
 const HEALTH_RECOVERY_CONFIG = {
@@ -198,7 +197,7 @@ interface DashboardProps {
   onToggleWorkout?: (
     dateStr: string,
     completed: boolean,
-    type?: "N" | "C",
+    type?: "N" | "C" | "H",
     repsCompleted?: number,
   ) => void;
   onUpdateData?: (data: Partial<UserData>) => void;
@@ -283,7 +282,7 @@ export default function Dashboard({
   const handleToggle = (
     dateStr: string,
     currentStatus: boolean,
-    type?: "N" | "C",
+    type?: "N" | "C" | "H",
   ) => {
     if (onToggleWorkout) {
       onToggleWorkout(dateStr, !currentStatus, type);
@@ -405,7 +404,7 @@ export default function Dashboard({
       return "Beginner 1";
     }
 
-    const advancedMatch = levelCompleted.match(/^([0-9A-Za-z]+)\(([NC])\)$/);
+    const advancedMatch = levelCompleted.match(/^([0-9A-Za-z]+)\(([NCH])\)$/);
     if (advancedMatch) {
       const [, levelId, mode] = advancedMatch;
       return `${levelId}(${mode})`;
@@ -800,6 +799,7 @@ export default function Dashboard({
                           key={ex.name}
                           sx={{
                             display: "flex",
+                            alignItems: "center",
                             gap: 1.5,
                             p: 1.5,
                             borderRadius: 1.5,
@@ -814,8 +814,8 @@ export default function Dashboard({
                             sx={{ minWidth: 18, lineHeight: 1.8 }}
                           >
                             {i + 1}.
-                          </Typography>
-                          <Box>
+                          </Typography>                          
+                          <Box sx={{ flex: 1 }}>
                             <Typography variant="body2" fontWeight={700}>
                               {ex.name}
                             </Typography>
@@ -1603,7 +1603,6 @@ export default function Dashboard({
             anchorEl={workoutMenuAnchor?.anchorEl}
             open={Boolean(workoutMenuAnchor)}
             onClose={() => setWorkoutMenuAnchor(null)}
-
           >
             <MenuItem
               onClick={() => {
@@ -1611,7 +1610,7 @@ export default function Dashboard({
                 setWorkoutMenuAnchor(null);
               }}
             >
-              {userData.currentLevelId || ""}(N)
+              {userData.currentLevelId || ""}(N) — Navy Seals
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -1619,8 +1618,19 @@ export default function Dashboard({
                 setWorkoutMenuAnchor(null);
               }}
             >
-              {userData.currentLevelId || ""}(C)
+              {userData.currentLevelId || ""}(C) — 5-Count Pushups
             </MenuItem>
+            {workoutMenuAnchor &&
+              format(new Date(workoutMenuAnchor.dateStr + "T00:00:00"), "EEE") === "Fri" && (
+                <MenuItem
+                  onClick={() => {
+                    handleToggle(workoutMenuAnchor!.dateStr, false, "H");
+                    setWorkoutMenuAnchor(null);
+                  }}
+                >
+                  {userData.currentLevelId || ""}(H) — Hybrid
+                </MenuItem>
+              )}
           </Menu>
         )}
         {/* iOS / Android availability banner */}

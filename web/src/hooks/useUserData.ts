@@ -72,7 +72,7 @@ export function useUserData() {
   const toggleWorkoutLog = async (
     dateStr: string,
     completed: boolean,
-    type?: "N" | "C",
+    type?: "N" | "C" | "H",
     repsCompleted?: number,
   ) => {
     if (!user || !userData) return;
@@ -101,7 +101,7 @@ export function useUserData() {
         : `${userData.currentLevelId || ""}${typeSuffix}`
       : null;
     const workoutType =
-      effectiveType === "N" || (!isBeginnerTrack && effectiveType === "C")
+      effectiveType === "N" || effectiveType === "H" || (!isBeginnerTrack && effectiveType === "C")
         ? "with_pushups"
         : isBeginnerTrack && effectiveType === "C"
           ? "no_pushups"
