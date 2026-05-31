@@ -4,7 +4,7 @@ import {
   WorkoutMode,
   WorkoutTimerConfig,
   WorkoutTimerModeConfig,
-} from "../../../shared/workoutTimer";
+} from "../lib/workoutTimer";
 import {
   playCountdownTick,
   playFinishWhistle,
@@ -15,6 +15,7 @@ import {
 
 const PREPARE_SECONDS = 10;
 const REP_EPSILON = 1e-9;
+const HYBRID_PHASE_DURATION = 10 * 60;
 
 type TimerPhase = "idle" | "prepare" | "workout" | "done";
 
@@ -77,8 +78,6 @@ export function useWorkoutTimer({
   // Derived entirely from secondsLeft — no extra state needed.
   // Phase 0 (Navy Seals):     secondsLeft > HYBRID_PHASE_DURATION  (first 10 min)
   // Phase 1 (5-Count Pushups): secondsLeft <= HYBRID_PHASE_DURATION (last 10 min)
-  const HYBRID_PHASE_DURATION = 10 * 60; // 600 seconds
-
   const hybridState: {
     phaseIndex: number;
     phase: HybridPhaseConfig;
@@ -109,7 +108,6 @@ export function useWorkoutTimer({
         : null;
 
     return { phaseIndex, phase, phaseSecondsLeft, phaseSecondsToNextRep, totalPhases: 2 };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode.mode, activeMode.hybridPhases, secondsLeft, totalSeconds, currentRep]);
 
   // ── Prepare countdown ──────────────────────────────────────────────

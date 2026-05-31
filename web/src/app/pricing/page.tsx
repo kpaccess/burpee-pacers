@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Alert,
   Box,
@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Container,
   Divider,
   List,
@@ -18,102 +17,29 @@ import {
   Typography,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import LockIcon from "@mui/icons-material/Lock";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 
-const PRO_FEATURES = [
-  "Full calendar history (all time)",
-  "Export workout data (CSV)",
+const ADVANCED_FEATURES = [
   "Advanced workout timer with intervals",
-  "Priority support",
+  "Navy Seals, 5-count pushups, and Hybrid sessions",
+  "Full calendar history",
+  "Export workout data (CSV)",
+  "Customizable workout schedule",
 ];
 
 const BEGINNER_FEATURES = [
   "Beginner workout track",
-  "Included in 60-day launch free access",
-  "Placeholder video area for your future content",
+  "No-pushup burpee progression",
   "Core progress tracking",
+  "Customizable workout schedule",
 ];
 
 export default function PricingPage() {
   const { user } = useAuth();
-  const { isPro, isTrialing, trialEndsAt, stripeCustomerId, loading } =
-    useSubscription(user?.uid ?? null, user?.email);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [portalError, setPortalError] = useState<string | null>(null);
-  const isPaidSubscriber = isPro && !isTrialing;
-  const formattedTrialEnd = trialEndsAt
-    ? new Date(trialEndsAt).toLocaleDateString()
-    : null;
-  const [checkoutLoading, setCheckoutLoading] = useState<"monthly" | "yearly" | null>(null);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
   const router = useRouter();
-
-  const handleUpgrade = async (plan: "monthly" | "yearly") => {
-    if (!user) {
-      router.push("/login?next=/pricing");
-      return;
-    }
-
-    setCheckoutLoading(plan);
-    setCheckoutError(null);
-    try {
-      const idToken = await user.getIdToken();
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          userEmail: user?.email ?? null,
-          plan,
-        }),
-      });
-      const { url, error } = await res.json();
-      if (!res.ok) throw new Error(error ?? "Unable to start checkout");
-      if (error) throw new Error(error);
-      if (!url) throw new Error("Missing Stripe checkout URL");
-      window.location.href = url;
-    } catch (err) {
-      console.error("Checkout error:", err);
-      setCheckoutLoading(null);
-      const message = err instanceof Error ? err.message : String(err);
-      setCheckoutError(message);
-    }
-  };
-
-  const handleManageBilling = async () => {
-    if (!stripeCustomerId) return;
-    setPortalLoading(true);
-    setPortalError(null);
-    try {
-      const idToken = await user?.getIdToken();
-      if (!idToken) throw new Error("You must be signed in to manage billing");
-      const res = await fetch("/api/stripe/portal", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      const { url, error } = await res.json();
-      if (!res.ok) throw new Error(error ?? "Unable to open billing portal");
-      if (error) throw new Error(error);
-      if (!url) throw new Error("Missing Stripe portal URL");
-      window.location.href = url;
-    } catch (err) {
-      console.error("Portal error:", err);
-      setPortalLoading(false);
-      const message = err instanceof Error ? err.message : String(err);
-      setPortalError(message);
-    }
-  };
 
   return (
     <Box
@@ -126,7 +52,6 @@ export default function PricingPage() {
       }}
     >
       <Container maxWidth="md">
-        {/* Back button */}
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.push("/")}
@@ -135,8 +60,7 @@ export default function PricingPage() {
           Back to App
         </Button>
 
-        {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
+        <Box sx={{ textAlign: "center", mb: 5 }}>
           <Typography
             variant="h3"
             fontWeight={800}
@@ -147,19 +71,26 @@ export default function PricingPage() {
               mb: 1,
             }}
           >
-            Workout Tracks
+            Launch Access
           </Typography>
-          <Typography variant="h6" color="grey.400">
-            All users get 60-day launch free access from their start date.
+          <Typography variant="h6" color="grey.300" sx={{ maxWidth: 680, mx: "auto" }}>
+            BurpeePacers is free for everyone during launch. Use either track,
+            customize your schedule, and help shape the app before paid plans
+            are introduced later.
           </Typography>
         </Box>
+
+        <Alert severity="success" sx={{ mb: 4, borderRadius: 2 }}>
+          No checkout is required right now. Advanced features are open during
+          launch so early users can train, test, and give feedback.
+        </Alert>
 
         <Box
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
             gap: 3,
-            alignItems: "start",
+            alignItems: "stretch",
           }}
         >
           <Card
@@ -182,29 +113,18 @@ export default function PricingPage() {
                   fontWeight: 700,
                 }}
               />
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 0.5,
-                  mb: 0.5,
-                }}
-              >
-                <Typography variant="h3" fontWeight={800} color="white">
-                  Free
-                </Typography>
-              </Box>
+              <Typography variant="h3" fontWeight={800} color="white" mb={0.5}>
+                Free
+              </Typography>
               <Typography variant="body2" color="grey.400" sx={{ mb: 3 }}>
-                Available during launch free period
+                Included during launch
               </Typography>
               <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 3 }} />
               <List dense disablePadding>
                 {BEGINNER_FEATURES.map((feature) => (
                   <ListItem key={feature} disablePadding sx={{ mb: 1.5 }}>
                     <ListItemIcon sx={{ minWidth: 36 }}>
-                      <CheckCircleIcon
-                        sx={{ color: "#00E5FF", fontSize: 20 }}
-                      />
+                      <CheckCircleIcon sx={{ color: "#00E5FF", fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
                       primary={feature}
@@ -213,23 +133,6 @@ export default function PricingPage() {
                   </ListItem>
                 ))}
               </List>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                onClick={() => router.push(user ? "/" : "/login")}
-                sx={{
-                  mt: 3,
-                  py: 1.5,
-                  fontWeight: 700,
-                  fontSize: 15,
-                  borderRadius: 2,
-                  color: "white",
-                  borderColor: "rgba(0,229,255,0.4)",
-                }}
-              >
-                {user ? "Use Beginner Track" : "Sign in for Beginner"}
-              </Button>
             </CardContent>
           </Card>
 
@@ -248,9 +151,7 @@ export default function PricingPage() {
             <Chip
               label="ADVANCED"
               size="small"
-              icon={
-                <WorkspacePremiumIcon sx={{ fontSize: "14px !important" }} />
-              }
+              icon={<WorkspacePremiumIcon sx={{ fontSize: "14px !important" }} />}
               sx={{
                 position: "absolute",
                 top: -14,
@@ -264,205 +165,52 @@ export default function PricingPage() {
               }}
             />
             <CardContent sx={{ p: 4 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 0.5,
-                  mt: 1,
-                  mb: 0.5,
-                }}
-              >
-                <Typography variant="h3" fontWeight={800} color="white">
-                  $4.99
-                </Typography>
-                <Typography variant="body1" color="grey.400">
-                  / month
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="grey.500" sx={{ mb: 3 }}>
-                Paid subscription
+              <Typography variant="h3" fontWeight={800} color="white" mb={0.5}>
+                Free
+              </Typography>
+              <Typography variant="body2" color="grey.400" sx={{ mb: 3 }}>
+                Full launch access
               </Typography>
               <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 3 }} />
               <List dense disablePadding>
-                {PRO_FEATURES.map((f) => (
-                  <ListItem key={f} disablePadding sx={{ mb: 1.5 }}>
+                {ADVANCED_FEATURES.map((feature) => (
+                  <ListItem key={feature} disablePadding sx={{ mb: 1.5 }}>
                     <ListItemIcon sx={{ minWidth: 36 }}>
-                      <CheckCircleIcon
-                        sx={{ color: "#f59e0b", fontSize: 20 }}
-                      />
+                      <CheckCircleIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary={f}
-                      primaryTypographyProps={{
-                        color: "white",
-                        fontSize: 15,
-                      }}
+                      primary={feature}
+                      primaryTypographyProps={{ color: "white", fontSize: 15 }}
                     />
                   </ListItem>
                 ))}
               </List>
-
-              {loading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : isPro ? (
-                <Box sx={{ mt: 3 }}>
-                  <Chip
-                    label={
-                      isTrialing ? "✓ Trial active" : "✓ Advanced unlocked"
-                    }
-                    sx={{
-                      width: "100%",
-                      background: "linear-gradient(135deg, #f59e0b, #ef4444)",
-                      color: "white",
-                      fontWeight: 700,
-                      height: 44,
-                      fontSize: 14,
-                      borderRadius: 2,
-                    }}
-                  />
-                  {isTrialing && formattedTrialEnd && (
-                    <Typography
-                      variant="body2"
-                      color="grey.400"
-                      sx={{ mt: 1.5, textAlign: "center" }}
-                    >
-                      Trial ends on {formattedTrialEnd}
-                    </Typography>
-                  )}
-
-                  {isTrialing && (
-                    <Box sx={{ mt: 1.5 }}>
-                      <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-                        <Button fullWidth variant={selectedPlan === "monthly" ? "contained" : "outlined"}
-                          onClick={() => setSelectedPlan("monthly")}
-                          sx={{ borderColor: "rgba(255,255,255,0.25)", color: selectedPlan === "monthly" ? "white" : "grey.400" }}>
-                          $5 / mo
-                        </Button>
-                        <Button fullWidth variant={selectedPlan === "yearly" ? "contained" : "outlined"}
-                          onClick={() => setSelectedPlan("yearly")}
-                          sx={{ borderColor: "rgba(255,255,255,0.25)", color: selectedPlan === "yearly" ? "white" : "grey.400" }}>
-                          $39 / yr
-                        </Button>
-                      </Box>
-                      <Button fullWidth variant="outlined"
-                        onClick={() => handleUpgrade(selectedPlan)}
-                        disabled={checkoutLoading !== null}
-                        sx={{ borderColor: "rgba(255,255,255,0.25)", color: "white" }}>
-                        {checkoutLoading ? "Redirecting..." : "Subscribe now"}
-                      </Button>
-                    </Box>
-                  )}
-
-                  {isPaidSubscriber && stripeCustomerId && (
-                    <Button
-                      fullWidth
-                      variant="text"
-                      onClick={handleManageBilling}
-                      disabled={portalLoading}
-                      sx={{ mt: 1.5, color: "grey.400", fontSize: 13 }}
-                    >
-                      {portalLoading ? (
-                        <CircularProgress size={16} />
-                      ) : (
-                        "Manage Billing"
-                      )}
-                    </Button>
-                  )}
-                  {portalError && (
-                    <Alert severity="error" sx={{ mt: 1.5 }}>
-                      {portalError}
-                    </Alert>
-                  )}
-                </Box>
-              ) : (
-                <Box sx={{ mt: 3 }}>
-                  {/* Plan toggle */}
-                  <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                    <Button fullWidth variant={selectedPlan === "monthly" ? "contained" : "outlined"}
-                      onClick={() => setSelectedPlan("monthly")}
-                      sx={{
-                        borderColor: "rgba(255,255,255,0.25)",
-                        color: selectedPlan === "monthly" ? "white" : "grey.400",
-                        background: selectedPlan === "monthly" ? "rgba(255,255,255,0.15)" : "transparent",
-                      }}>
-                      $5 / month
-                    </Button>
-                    <Button fullWidth variant={selectedPlan === "yearly" ? "contained" : "outlined"}
-                      onClick={() => setSelectedPlan("yearly")}
-                      sx={{
-                        borderColor: "rgba(255,255,255,0.25)",
-                        color: selectedPlan === "yearly" ? "white" : "grey.400",
-                        background: selectedPlan === "yearly" ? "rgba(255,255,255,0.15)" : "transparent",
-                        position: "relative",
-                      }}>
-                      $39 / year
-                      <Chip label="Save $21" size="small"
-                        sx={{ ml: 1, height: 18, fontSize: 10, bgcolor: "#22c55e", color: "white" }} />
-                    </Button>
-                  </Box>
-
-                  <Button fullWidth variant="contained" size="large"
-                    startIcon={checkoutLoading ? <CircularProgress size={16} color="inherit" /> : <WorkspacePremiumIcon />}
-                    onClick={() => handleUpgrade(selectedPlan)}
-                    disabled={checkoutLoading !== null}
-                    sx={{
-                      py: 1.5, fontWeight: 700, fontSize: 15, borderRadius: 2,
-                      background: "linear-gradient(135deg, #f59e0b, #ef4444)",
-                      "&:hover": { background: "linear-gradient(135deg, #d97706, #dc2626)" },
-                    }}>
-                    {checkoutLoading
-                      ? "Redirecting..."
-                      : user
-                        ? `Unlock Advanced — ${selectedPlan === "yearly" ? "$39/yr" : "$5/mo"}`
-                        : "Sign in to unlock Advanced"}
-                  </Button>
-
-                  <Typography variant="caption" color="grey.500" sx={{ display: "block", textAlign: "center", mt: 1 }}>
-                    Cancel anytime · Syncs across web, iOS, and Android
-                  </Typography>
-                </Box>
-              )}
-              {checkoutError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {checkoutError}
-                </Alert>
-              )}
             </CardContent>
           </Card>
         </Box>
 
-        {/* Trust badges */}
-        <Box sx={{ textAlign: "center", mt: 5 }}>
-          <Box
+        <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<WorkspacePremiumIcon />}
+            onClick={() => router.push(user ? "/" : "/login")}
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 4,
-              flexWrap: "wrap",
+              py: 1.5,
+              px: 4,
+              fontWeight: 700,
+              fontSize: 15,
+              borderRadius: 2,
+              background: "linear-gradient(135deg, #f59e0b, #ef4444)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #d97706, #dc2626)",
+              },
             }}
           >
-            {[
-              { icon: "🔒", label: "Secure payments via Stripe" },
-              { icon: "↩️", label: "Cancel anytime" },
-              { icon: "⚡", label: "Instant access after payment" },
-            ].map(({ icon, label }) => (
-              <Box
-                key={label}
-                sx={{ display: "flex", alignItems: "center", gap: 1 }}
-              >
-                <Typography variant="body2">{icon}</Typography>
-                <Typography variant="body2" color="grey.500">
-                  {label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+            {user ? "Open App" : "Start Free"}
+          </Button>
         </Box>
 
-        {/* Lock icon note */}
         <Box
           sx={{
             mt: 4,
@@ -470,15 +218,12 @@ export default function PricingPage() {
             borderRadius: 2,
             background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.08)",
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
           }}
         >
-          <LockIcon sx={{ color: "grey.600", fontSize: 18 }} />
-          <Typography variant="body2" color="grey.500">
-            Advanced features and premium content require a paid subscription
-            after your 60-day launch free access ends.
+          <Typography variant="body2" color="grey.500" textAlign="center">
+            Paid plans may be introduced later for advanced coaching, premium
+            content, or support features. Launch users can use the app free
+            while pricing is paused.
           </Typography>
         </Box>
       </Container>

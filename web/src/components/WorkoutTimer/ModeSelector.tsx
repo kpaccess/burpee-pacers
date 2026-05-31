@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Chip, Stack, Typography } from "@mui/material";
-import { WorkoutMode, WorkoutTimerModeConfig } from "../../../../shared/workoutTimer";
+import { WorkoutMode, WorkoutTimerModeConfig } from "../../lib/workoutTimer";
 
 interface ModeSelectorProps {
   modes: WorkoutTimerModeConfig[];

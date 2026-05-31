@@ -20,6 +20,11 @@ export interface UserData {
   startWeight: number;
   startPictureUrl: string | null;
   workoutTier?: WorkoutTier;
+  /**
+   * Selected weekly workout days using iOS Calendar weekday values:
+   * Sunday=1, Monday=2, ... Saturday=7.
+   */
+  workoutDays?: number[];
   trialEndsAt?: string; // ISO timestamp
 
   endDate?: string;

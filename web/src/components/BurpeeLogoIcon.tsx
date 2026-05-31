@@ -8,7 +8,6 @@ interface BurpeeLogoIconProps {
 
 export default function BurpeeLogoIcon({
   size = 56,
-  color, // Kept for prop compatibility, ignored in rendering
 }: BurpeeLogoIconProps) {
   return (
     <Image

@@ -1,4 +1,4 @@
-import { initializeApp, getApps, deleteApp } from 'firebase-admin/app';
+import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
 // Runs once before all Playwright tests when NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true.
@@ -7,6 +7,12 @@ import { getAuth } from 'firebase-admin/auth';
 // via .env.test.local so the Admin SDK connects to the emulator automatically.
 export default async function globalSetup() {
   if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR !== 'true') return;
+
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST?.startsWith('http')) {
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = new URL(
+      process.env.FIREBASE_AUTH_EMULATOR_HOST,
+    ).host;
+  }
 
   const app = initializeApp(
     { projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'burpee-workout' },
@@ -28,9 +34,18 @@ export default async function globalSetup() {
   for (const { email, password } of accounts) {
     try {
       await adminAuth.createUser({ email, password });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Already exists from a previous run — that's fine
-      if (err.code !== 'auth/email-already-exists') throw err;
+      if (
+        !(
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          err.code === 'auth/email-already-exists'
+        )
+      ) {
+        throw err;
+      }
     }
   }
 

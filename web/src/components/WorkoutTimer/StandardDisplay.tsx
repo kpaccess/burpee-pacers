@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { formatWorkoutTimerTime } from "../../../../shared/workoutTimer";
+import { formatWorkoutTimerTime } from "../../lib/workoutTimer";
 import PacingStrip from "./PacingStrip";
 
 interface StandardDisplayProps {

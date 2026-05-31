@@ -64,7 +64,7 @@ export default function ProGate({ children, isPro, featureName = 'This feature' 
             {featureName}
           </Typography>
           <Typography variant="body2" color="grey.400" sx={{ mb: 2 }}>
-            Unlock with BurpeePacer Pro
+            Available free during launch
           </Typography>
           <Button
             variant="contained"
@@ -79,7 +79,7 @@ export default function ProGate({ children, isPro, featureName = 'This feature' 
               },
             }}
           >
-            Upgrade to Pro
+            View Launch Access
           </Button>
         </Paper>
       </Box>

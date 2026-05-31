@@ -82,9 +82,9 @@ export default function LandingPage() {
                 textAlign: { xs: "center", md: "left" },
               }}
             >
-              Start with 60-day free access for all users, then continue with
-              the plan that fits you. Both tracks are built around simple,
-              consistent burpee training.
+              Free for everyone during launch. Choose the track that fits you,
+              customize your weekly schedule, and build consistent burpee
+              training.
             </Typography>
             <Typography
               variant="body1"
@@ -97,8 +97,9 @@ export default function LandingPage() {
                 textAlign: { xs: "center", md: "left" },
               }}
             >
-              Consistency is the real secret. Follow your schedule, show up on
-              your training days, and progress compounds.
+              Consistency is the real secret. Three workout days per week is
+              the recommended starting rhythm, but you can adjust your schedule
+              to fit your life.
             </Typography>
             <Box
               sx={{
@@ -147,14 +148,14 @@ export default function LandingPage() {
                 startIcon={<WorkspacePremiumIcon />}
                 onClick={() => router.push("/login")}
               >
-                Start 60-Day Free Access
+                Start Free
               </Button>
               <Button
                 variant="outlined"
                 size="large"
                 onClick={() => router.push("/pricing")}
               >
-                See Advanced Pricing
+                View Launch Access
               </Button>
               <Button
                 variant="text"
@@ -227,8 +228,9 @@ export default function LandingPage() {
             Consistency Over Intensity
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={1}>
-            The most important rule is simple: stick to your schedule. Miss
-            less, and your results improve month after month.
+            The recommended rhythm is three workout days per week with recovery
+            between sessions. You can customize the days in the app, then focus
+            on showing up consistently.
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={2}>
             Many people plan to walk outside, but weather changes - rain, cold,
@@ -236,7 +238,7 @@ export default function LandingPage() {
             barrier. No equipment, little space, anytime in 20 minutes.
           </Typography>
           <Chip
-            label="60-day launch free access"
+            label="Free during launch"
             sx={{
               mb: 2.5,
               bgcolor: "rgba(0,229,255,0.12)",
@@ -247,7 +249,7 @@ export default function LandingPage() {
             }}
           />
           <Typography variant="subtitle1" fontWeight={700} mb={1.2}>
-            Weekly Schedule (Example)
+            Recommended Weekly Schedule
           </Typography>
           <Box
             sx={{
@@ -295,9 +297,13 @@ export default function LandingPage() {
               </Box>
             ))}
           </Box>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            Use this as a starting point, or change your workout days after you
+            sign in.
+          </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-            <Chip label="Follow the schedule" color="secondary" />
-            <Chip label="60-day launch free access" color="primary" />
+            <Chip label="Customize your schedule" color="secondary" />
+            <Chip label="Free during launch" color="primary" />
             <Chip
               label="Advanced unlocks premium coaching"
               sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "white" }}
@@ -323,8 +329,8 @@ export default function LandingPage() {
               Beginner
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
-              Included in your 60-day launch free access. Use it to build
-              consistency and learn movement quality.
+              Included during launch. Use it to build consistency and learn
+              movement quality.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Best for people starting out or anyone who wants a no-cost entry
@@ -341,11 +347,12 @@ export default function LandingPage() {
               Advanced
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
-              Paid track with premium workout content, advanced tutorials, and
-              subscription-backed features.
+              Open during launch with premium workout content, advanced
+              tutorials, and full timer features.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              This is the only track that carries charges.
+              Paid plans may be introduced later, but no checkout is required
+              right now.
             </Typography>
           </Card>
         </Box>
@@ -374,18 +381,9 @@ export default function LandingPage() {
                 Lower upper-body fatigue and faster reps make it easier to
                 maintain pace.
               </Typography>
-              <Typography variant="body1" color="text.secondary" mb={2.5}>
+              <Typography variant="body1" color="text.secondary">
                 Good choice when your goal is consistency and daily completion.
               </Typography>
-              <Button
-                variant="outlined"
-                component="a"
-                href="https://www.youtube.com/shorts/O9E5BSf2l1Q"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Watch simple demo
-              </Button>
             </Card>
           </Grid>
           <Grid sx={{ xs: 12, md: 6 }}>
@@ -435,16 +433,15 @@ export default function LandingPage() {
         >
           <Box sx={{ flex: 1, minWidth: 200 }}>
             <Typography variant="subtitle1" fontWeight={700} mb={0.5}>
-              📱 Available on iOS
+              📱 iOS app in pre-release
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Track your workouts on the go. Your progress syncs automatically between web and iPhone.
-              Android coming soon.
+              The native iOS app is being tested before public release. Android coming soon.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Chip
-              label="iOS — Available"
+              label="iOS — Pre-release"
               sx={{ bgcolor: "rgba(255,51,102,0.15)", color: "primary.main", fontWeight: 600 }}
             />
             <Chip

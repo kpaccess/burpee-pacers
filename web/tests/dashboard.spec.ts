@@ -25,6 +25,12 @@ test('workout calendar shows day headers', async () => {
   await expect(page.getByText('Thu').first()).toBeVisible();
 });
 
+test('schedule controls show selectable workout days', async () => {
+  await expect(page.getByRole('button', { name: /Mon · (Navy Seals|Burpees)/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Wed · (5-Count|Burpees)/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Fri · (Hybrid|Burpees)/ })).toBeVisible();
+});
+
 test('timer start button is visible', async () => {
   await expect(page.getByRole('button', { name: /^start$/i })).toBeVisible();
 });

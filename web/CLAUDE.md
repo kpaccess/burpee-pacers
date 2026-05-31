@@ -17,42 +17,39 @@ No test runner is configured. There is no `test` script.
 
 ## Architecture
 
-**BurpeePacer** is a burpee workout tracker. Users follow structured programs (Beginner B1–B6 or Advanced 1A–4/Grad), log workouts, and unlock Pro features via Stripe subscription.
+**BurpeePacer** is a burpee workout tracker. Users follow structured programs (Beginner B1–B6 or Advanced 1A–4/Grad), log workouts, and currently receive full launch access while paid plans are paused.
 
 ### Stack
 - **Next.js App Router** (src/app/) — pages and API routes colocated
 - **Firebase Auth** — client-side authentication via `src/context/AuthContext.tsx` (`useAuth` hook)
 - **Firestore** — primary database (client via `src/lib/db.ts`, server via `firebase-admin`)
-- **Stripe** — Pro subscription billing (webhook at `/api/stripe/webhook`)
+- **Stripe** — payment plumbing retained for possible future paid plans (webhook at `/api/stripe/webhook`)
 - **MUI v7** dark theme + **Tailwind CSS v4** for styling
 - **Resend** — transactional email via `src/lib/email.ts`
 
 ### Monorepo Structure
 
-This is one of three packages under `/burpee-workout/`:
+This is one of the active packages under `/burpee-workout/`:
 - `web/` — this Next.js app
-- `mobile/` — Expo/React Native app (Expo SDK 54, expo-router, Firebase with AsyncStorage persistence)
-- `shared/` — shared TypeScript logic: `workoutTimer.ts` (config builder) and `useWorkoutTimer.ts` (React hook)
+- `ios/BurpeePacer/` — native iOS app, pre-release only
 
 ### Key Data Flow
 
 `src/app/page.tsx` is the app shell. It renders conditionally: `LandingPage` → `Onboarding` → `MilestoneCheckin` → `Dashboard` based on auth/user state.
 
-User data lives in a single Firestore doc (`users/{userId}`). `useUserData` (`src/hooks/useUserData.ts`) manages all reads/writes. `useSubscription` (`src/hooks/useSubscription.ts`) computes Pro access, factoring in the allowlist and trial period. Types are defined in `src/types/index.ts`.
+User data lives in a single Firestore doc (`users/{userId}`). `useUserData` (`src/hooks/useUserData.ts`) manages all reads/writes. `useSubscription` (`src/hooks/useSubscription.ts`) remains for subscription state, but the launch UI currently grants full access. Types are defined in `src/types/index.ts`.
 
-### Shared Logic (`../shared/`)
+### Workout Logic
 
-Imported via `experimental.externalDir: true` in `next.config.ts`.
+- `src/lib/workoutTimer.ts` — `buildWorkoutTimerConfig()` builds tier-specific workout configs (modes, goals). Beginner: single (C) mode counting burpees without pushups. Advanced: Navy Seals, 5-count pushups, and Hybrid modes.
+- `src/hooks/useWorkoutTimer.ts` — React hook wrapping the timer state machine.
 
-- `shared/workoutTimer.ts` — `buildWorkoutTimerConfig()` builds tier-specific workout configs (modes, goals). Beginner: single (C) mode counting burpees without pushups. Advanced: two modes (N = Navy Seals, C = 5-count pushups) with separate goals.
-- `shared/useWorkoutTimer.ts` — React hook wrapping the timer state machine.
-
-### Subscription & Access Control
+### Launch Access & Subscription Plumbing
 - **Stripe webhooks** update `isPro` and `subscriptionStatus` in Firestore
 - **Allowlist** (`src/lib/allowlist.ts`): hardcoded emails get free Pro; `isAdmin()` gates `/admin` (verified server-side against `ADMIN_EMAIL`)
 - **Guest checkout**: Stripe session stores email in `pending_subscriptions` collection; claimed via `/api/claim-subscription` after signup
-- `<ProGate>` (`src/components/ProGate.tsx`) wraps any feature requiring Pro access
-- Trial period: 60 days from `startDate`, stored as `trialEndsAt` in user doc
+- `<ProGate>` (`src/components/ProGate.tsx`) is legacy gating UI; current launch copy points users to launch access
+- New onboarding still stores `trialEndsAt` for compatibility, but checkout is hidden during launch
 
 ### API Routes
 

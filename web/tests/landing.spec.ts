@@ -11,17 +11,17 @@ test.describe('Landing page', () => {
 
   test('shows start CTA button', async ({ page }) => {
     await expect(
-      page.getByRole('button', { name: /start 60-day free access/i }),
+      page.getByRole('button', { name: /^start free$/i }),
     ).toBeVisible();
   });
 
   test('start CTA navigates to login', async ({ page }) => {
-    await page.getByRole('button', { name: /start 60-day free access/i }).click();
+    await page.getByRole('button', { name: /^start free$/i }).click();
     await expect(page).toHaveURL('/login');
   });
 
   test('pricing button navigates to pricing page', async ({ page }) => {
-    await page.getByRole('button', { name: /see advanced pricing/i }).click();
+    await page.getByRole('button', { name: /view launch access/i }).click();
     await expect(page).toHaveURL('/pricing');
   });
 

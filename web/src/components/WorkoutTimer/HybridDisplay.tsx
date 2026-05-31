@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { formatWorkoutTimerTime, HybridPhaseConfig } from "../../../../shared/workoutTimer";
+import { formatWorkoutTimerTime, HybridPhaseConfig } from "../../lib/workoutTimer";
 import PacingStrip from "./PacingStrip";
 
 interface HybridDisplayProps {

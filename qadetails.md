@@ -121,6 +121,51 @@ npx playwright test --ui
 
 ---
 
+## Manual QA Checklist
+
+Use this checklist for release testing in addition to automated tests.
+
+### Launch Access / Pricing
+
+- Landing page says the app is free during launch.
+- Landing page CTA says "View Launch Access" instead of "Advanced Pricing".
+- Pricing page headline says "Launch Access".
+- Pricing page shows Beginner and Advanced as free during launch.
+- Pricing page does not show monthly/yearly prices, Stripe checkout buttons, "Subscribe", "Upgrade to Pro", or "60-day trial" wording.
+- "Start Free" sends signed-out users to login and "Open App" sends signed-in users to the dashboard.
+- Advanced content, CSV export, and timer features are available without a paid subscription during launch.
+
+### Custom Workout Schedule
+
+- Landing page explains that three workout days per week is recommended, but users can customize their schedule.
+- Logged-in dashboard schedule card shows Mon, Wed, and Fri selected by default for existing users.
+- Tapping a selected day removes it from the schedule, unless it is the only selected day.
+- Tapping an unselected day adds it back to the schedule.
+- The workout calendar updates immediately to mark only selected days as workout days.
+- The selected schedule persists after refresh and after signing out and back in.
+- Beginner users see "Burpees" labels on schedule chips.
+- Advanced users see Navy Seals on Monday, 5-Count on Wednesday, and Hybrid on Friday.
+
+### iOS App
+
+- Native landing screen includes "Free during launch".
+- Native track selection does not mention subscriptions, pricing, or trials.
+- Beginner and Advanced tracks can both be selected without any paywall.
+- Account Settings lets users toggle Mon/Wed/Fri workout days while keeping at least one day selected.
+- Workout reminders use the selected workout days and selected reminder time.
+- iOS still builds and launches after the launch-access copy changes.
+
+### Regression Areas
+
+- New account onboarding still creates a usable profile.
+- Existing accounts without `workoutDays` still default to Mon/Wed/Fri.
+- Timer completion still logs today's workout.
+- Advanced Friday Hybrid completion still unlocks pulling work.
+- Admin dashboard still loads for allowlisted admin users.
+- Privacy and success pages still load, even though checkout is hidden during launch.
+
+---
+
 ## Test Coverage at a Glance
 
 | Spec file | Pages / flows covered | Needs login? |

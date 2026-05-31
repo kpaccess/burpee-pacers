@@ -6,29 +6,28 @@ test.describe('Pricing page', () => {
   });
 
   test('shows page heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /workout tracks/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /launch access/i })).toBeVisible();
   });
 
-  test('shows 60-day free access subtitle', async ({ page }) => {
+  test('shows launch access subtitle', async ({ page }) => {
     await expect(
-      page.getByText('All users get 60-day launch free access from their start date.'),
+      page.getByText(/BurpeePacers is free for everyone during launch/i),
     ).toBeVisible();
   });
 
   test('shows beginner card with free price', async ({ page }) => {
     await expect(page.getByText('BEGINNER', { exact: true })).toBeVisible();
-    await expect(page.getByText('Free', { exact: true })).toBeVisible();
+    await expect(page.getByText('Included during launch', { exact: true })).toBeVisible();
   });
 
-  test('shows advanced card with monthly price', async ({ page }) => {
+  test('shows advanced card as free during launch', async ({ page }) => {
     await expect(page.getByText('ADVANCED', { exact: true })).toBeVisible();
-    await expect(page.getByText('$4.99', { exact: true })).toBeVisible();
-    await expect(page.getByText('/ month', { exact: true })).toBeVisible();
+    await expect(page.getByText('Full launch access', { exact: true })).toBeVisible();
   });
 
-  test('unauthenticated user sees sign-in prompt for advanced', async ({ page }) => {
+  test('unauthenticated user sees start free CTA', async ({ page }) => {
     await expect(
-      page.getByRole('button', { name: /sign in to unlock advanced/i }),
+      page.getByRole('button', { name: /^start free$/i }),
     ).toBeVisible();
   });
 
@@ -37,8 +36,8 @@ test.describe('Pricing page', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('shows trust badges', async ({ page }) => {
-    await expect(page.getByText(/secure payments via stripe/i)).toBeVisible();
-    await expect(page.getByText(/cancel anytime/i)).toBeVisible();
+  test('hides checkout wording during launch', async ({ page }) => {
+    await expect(page.getByText(/\$4\.99/i)).toHaveCount(0);
+    await expect(page.getByText(/subscribe/i)).toHaveCount(0);
   });
 });

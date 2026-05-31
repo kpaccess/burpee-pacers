@@ -35,7 +35,7 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
-  const FREE_ACCESS_DAYS = 60;
+  const LAUNCH_ACCESS_DAYS = 365;
   const { user, logout } = useAuth();
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0],
@@ -74,7 +74,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     if (!weight || !workoutTier) return;
     const start = new Date(`${startDate}T00:00:00`);
     const trialEnds = new Date(start);
-    trialEnds.setDate(trialEnds.getDate() + FREE_ACCESS_DAYS);
+    trialEnds.setDate(trialEnds.getDate() + LAUNCH_ACCESS_DAYS);
 
     onComplete({
       startDate,
@@ -136,19 +136,19 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 bullets: [
                   "Structured 6-level progression",
                   "No-pushup variant included",
-                  "60-day free trial",
+                  "Free during launch",
                 ],
               },
               {
                 tier: "advanced" as WorkoutTier,
                 icon: <StarIcon fontSize="large" />,
                 label: "Advanced",
-                badge: "Pro",
+                badge: "Launch",
                 badgeColor: "primary" as const,
                 bullets: [
                   "Premium multi-phase workouts",
                   "Graduation track included",
-                  "60-day free trial, then subscription",
+                  "Free during launch",
                 ],
               },
             ] as const

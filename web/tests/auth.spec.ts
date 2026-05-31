@@ -39,7 +39,7 @@ test.describe('Login page', () => {
   test('navigating to / from login shows landing page', async ({ page }) => {
     await page.goto('/');
     await expect(
-      page.getByRole('button', { name: /start 60-day free access/i }),
+      page.getByRole('button', { name: /^start free$/i }),
     ).toBeVisible();
   });
 });

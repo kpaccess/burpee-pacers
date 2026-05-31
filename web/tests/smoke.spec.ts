@@ -11,7 +11,7 @@ test.describe('Production smoke — landing', () => {
 
   test('CTA button is visible', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('button', { name: /start 60-day free access/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^start free$/i })).toBeVisible();
   });
 
   test('sign in link is present', async ({ page }) => {
@@ -32,13 +32,13 @@ test.describe('Production smoke — login page', () => {
 test.describe('Production smoke — pricing page', () => {
   test('renders pricing cards', async ({ page }) => {
     await page.goto('/pricing');
-    await expect(page.getByRole('heading', { name: /workout tracks/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /launch access/i })).toBeVisible();
     await expect(page.getByText('BEGINNER', { exact: true })).toBeVisible();
     await expect(page.getByText('ADVANCED', { exact: true })).toBeVisible();
   });
 
-  test('shows trust badges', async ({ page }) => {
+  test('shows launch access copy', async ({ page }) => {
     await page.goto('/pricing');
-    await expect(page.getByText(/secure payments via stripe/i)).toBeVisible();
+    await expect(page.getByText(/free for everyone during launch/i)).toBeVisible();
   });
 });

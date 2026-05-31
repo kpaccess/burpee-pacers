@@ -36,7 +36,7 @@ import {
   UserData,
   WorkoutLog,
 } from "../types";
-import { WorkoutMode } from "../../../shared/workoutTimer";
+import { WorkoutMode } from "../lib/workoutTimer";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   addMonths,
@@ -55,7 +55,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { useAuth } from "../context/AuthContext";
 import { toDateKey } from "../lib/date";
 import { isAdmin } from "../lib/allowlist";
-import { useSubscription } from "../hooks/useSubscription";
+// import { useSubscription } from "../hooks/useSubscription";
 import { useRouter } from "next/navigation";
 import WorkoutTimer from "./WorkoutTimer";
 
@@ -191,6 +191,13 @@ const HEALTH_RECOVERY_CONFIG = {
   disclaimer: "If you are over 40, have a pre-existing medical condition, or have been sedentary for more than 6 months, consult your doctor before starting this program. Stop immediately and seek medical attention if you experience sharp pain, chest tightness, dizziness, or shortness of breath. This program is not a substitute for professional medical advice.",
 } as const;
 
+const DEFAULT_WORKOUT_DAYS = [2, 4, 6] as const;
+const WORKOUT_DAY_OPTIONS = [
+  { weekday: 2, short: "Mon" },
+  { weekday: 4, short: "Wed" },
+  { weekday: 6, short: "Fri" },
+] as const;
+
 interface DashboardProps {
   userData: UserData;
   onMilestoneCheckin: () => void;
@@ -213,7 +220,8 @@ export default function Dashboard({
 }: DashboardProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { isPro } = useSubscription(user?.uid ?? null, user?.email);
+  // const { isPro } = useSubscription(user?.uid ?? null, user?.email);
+  const isPro = true; // Temporarily free for all — subscription disabled until subscriber base grows
   const [openVideo, setOpenVideo] = useState(false);
   const [openLevelChange, setOpenLevelChange] = useState(false);
   const [newLevel, setNewLevel] = useState(userData.currentLevelId || "1B");
@@ -260,6 +268,14 @@ export default function Dashboard({
         : "N"
     : "C"; // beginner always uses "C" (single mode, ignored by buildWorkoutTimerConfig)
 
+  const storedWorkoutDays = Array.isArray(userData.workoutDays)
+    ? userData.workoutDays.filter((weekday) =>
+        WORKOUT_DAY_OPTIONS.some((option) => option.weekday === weekday),
+      )
+    : [];
+  const selectedWorkoutDays =
+    storedWorkoutDays.length > 0 ? storedWorkoutDays : [...DEFAULT_WORKOUT_DAYS];
+
   // Show the Pulling Work section only on Fridays for the Advanced Track
   const isFridayAdvanced = isAdvancedTrack && todayDayName === "Fri";
 
@@ -294,6 +310,29 @@ export default function Dashboard({
       onUpdateData({ currentLevelId: newLevel });
     }
     setOpenLevelChange(false);
+  };
+
+  const getWorkoutLabelForWeekday = (weekday: number): string => {
+    if (!isAdvancedTrack) return "Burpees";
+    if (weekday === 2) return "Navy Seals";
+    if (weekday === 4) return "5-Count";
+    if (weekday === 6) return "Hybrid";
+    return "Workout";
+  };
+
+  const handleWorkoutDayToggle = (weekday: number) => {
+    if (!onUpdateData) return;
+
+    const isSelected = selectedWorkoutDays.includes(weekday);
+    if (isSelected && selectedWorkoutDays.length === 1) return;
+
+    const nextWorkoutDays = isSelected
+      ? selectedWorkoutDays.filter((day) => day !== weekday)
+      : [...selectedWorkoutDays, weekday];
+
+    onUpdateData({
+      workoutDays: nextWorkoutDays.sort((a, b) => a - b),
+    });
   };
 
   const handleExportCSV = () => {
@@ -574,17 +613,29 @@ export default function Dashboard({
                 Do the program on:
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
-                {["Mon", "Wed", "Fri"].map((day) => (
-                  <Chip
-                    key={day}
-                    label={day}
-                    color="primary"
-                    sx={{ fontWeight: 600 }}
-                  />
-                ))}
+                {WORKOUT_DAY_OPTIONS.map(({ weekday, short }) => {
+                  const isSelected = selectedWorkoutDays.includes(weekday);
+                  const canToggleOff = !isSelected || selectedWorkoutDays.length > 1;
+
+                  return (
+                    <Chip
+                      key={weekday}
+                      label={`${short} · ${getWorkoutLabelForWeekday(weekday)}`}
+                      color={isSelected ? "primary" : "default"}
+                      variant={isSelected ? "filled" : "outlined"}
+                      onClick={() => handleWorkoutDayToggle(weekday)}
+                      disabled={!canToggleOff || !onUpdateData}
+                      sx={{
+                        fontWeight: 600,
+                        opacity: isSelected || canToggleOff ? 1 : 0.55,
+                      }}
+                    />
+                  );
+                })}
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                48h rest between each session for recovery &amp; adaptation
+                Tap days to customize your weekly schedule. Keep at least one
+                workout day selected.
               </Typography>
             </Card>
           </Grid>
@@ -682,12 +733,9 @@ export default function Dashboard({
                     Switch Program
                   </Button>
                 </Box>
-                {userData.trialEndsAt && (
-                  <Typography variant="body2" color="secondary" mt={1}>
-                    Trial ends on:{" "}
-                    {new Date(userData.trialEndsAt).toLocaleDateString()}
-                  </Typography>
-                )}
+                <Typography variant="body2" color="secondary" mt={1}>
+                  Launch access active: all features are free right now.
+                </Typography>
                 {!isMilestoneReached && daysToMilestone > 0 && (
                   <Typography variant="body2" color="secondary" mt={1}>
                     {daysToMilestone} days until 6-month check-in.
@@ -1111,7 +1159,7 @@ export default function Dashboard({
             </Alert>
           )}
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Check off your workout on scheduled days (Mon, Wed, Fri)
+            Check off your workout on your selected schedule
           </Typography>
 
           <Box
@@ -1136,12 +1184,10 @@ export default function Dashboard({
           <Box display="grid" gridTemplateColumns="repeat(7, 1fr)" gap={1}>
             {trackingDays.map((dateStr) => {
               const dayObj = new Date(dateStr + "T00:00:00");
-              const _dayName = format(dayObj, "EEE");
               const dayLog = getWorkoutLogForDate(dateStr);
               const isCompleted = !!dayLog?.completed;
-              const isWorkoutDay = ["Mon", "Wed", "Fri"].includes(
-                _dayName,
-              );
+              const weekday = dayObj.getDay() + 1;
+              const isWorkoutDay = selectedWorkoutDays.includes(weekday);
               const isCurrentMonth = isSameMonth(dayObj, currentMonth);
               const isPast = dateStr < todayStr;
 
@@ -1410,14 +1456,14 @@ export default function Dashboard({
             ) : (
               <Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
-                  CSV export is a Pro feature.
+                  CSV export is open during launch.
                 </Typography>
                 <Button
                   variant="outlined"
                   color="primary"
                   onClick={() => router.push("/pricing")}
                 >
-                  Upgrade to Pro
+                  View Launch Access
                 </Button>
               </Box>
             )}
@@ -1577,11 +1623,11 @@ export default function Dashboard({
               {isAdvancedTrack && !isPro && (
                 <Card sx={{ p: 3, border: "1px solid rgba(245,158,11,0.35)" }}>
                   <Typography variant="subtitle1" mb={1} fontWeight="bold">
-                    Advanced videos are paid
+                    Advanced videos are open during launch
                   </Typography>
                   <Typography variant="body2" color="text.secondary" mb={2}>
-                    Your launch free period is active for 60 days from start.
-                    Subscribe to keep advanced tutorial access afterward.
+                    Paid plans may come later, but advanced tutorial access is
+                    free right now.
                   </Typography>
                   <Button
                     variant="contained"
@@ -1590,7 +1636,7 @@ export default function Dashboard({
                       router.push("/pricing");
                     }}
                   >
-                    View Advanced Pricing
+                    View Launch Access
                   </Button>
                 </Card>
               )}
@@ -1649,15 +1695,15 @@ export default function Dashboard({
         >
           <Box sx={{ flex: 1, minWidth: 180 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={0.25}>
-              📱 Also available on iOS
+              📱 iOS app in pre-release
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Your workouts sync automatically. Android coming soon.
+              The native iOS app is being tested before public release. Android coming soon.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Chip
-              label="iOS — Available"
+              label="iOS — Pre-release"
               size="small"
               sx={{ bgcolor: "rgba(255,51,102,0.15)", color: "primary.main", fontWeight: 600 }}
             />

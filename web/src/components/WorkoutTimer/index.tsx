@@ -5,7 +5,7 @@ import { Button, Card, Typography } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import { buildWorkoutTimerConfig, WorkoutMode } from "../../../../shared/workoutTimer";
+import { buildWorkoutTimerConfig, WorkoutMode } from "../../lib/workoutTimer";
 import { useWorkoutTimer } from "../../hooks/useWorkoutTimer";
 import { WorkoutTier } from "../../types";
 import ModeSelector from "./ModeSelector";
