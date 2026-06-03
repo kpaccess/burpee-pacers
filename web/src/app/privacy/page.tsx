@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Privacy policy for BurpeePacers web and iOS app.",
 };
 
-const LAST_UPDATED = "May 22, 2026";
+const LAST_UPDATED = "June 3, 2026";
 const CONTACT_EMAIL = "kpaccess@gmail.com";
 
 export default function PrivacyPage() {
@@ -23,19 +23,23 @@ export default function PrivacyPage() {
         <Section title="Overview">
           BurpeePacers (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;)
           operates the BurpeePacers website at burpeepacers.com and the
-          BurpeePacers iOS app. This policy explains what information we
-          collect, how we use it, and your rights regarding that information. We
-          do not sell your personal data.
+          BurpeePacers iOS app. BurpeePacers is a personal fitness app built by
+          an individual who uses it alongside the community — not a corporation.
+          This policy explains what information we collect, how we use it, and
+          your rights regarding that information. We do not sell your personal
+          data.
         </Section>
 
         <Section title="Information We Collect">
           <BulletList
             items={[
-              "Email address — collected when you create an account or sign in with Google, used solely to identify your account.",
-              "Workout logs — dates, rep counts, levels, and workout modes you record in the app.",
+              "Name and email address — collected when you create an account via Sign in with Apple, Sign in with Google, or email/password. When using Sign in with Apple, you may choose to hide your email using Apple's private relay service; we only receive the relay address.",
+              "Workout logs — dates, rep counts, levels, workout modes, and completion status you record in the app.",
               "Body weight — optionally entered for protein target calculations. Stored only on your account.",
-              "Progress photos — optionally uploaded as Day 1 baseline or 6-month check-in photos. Stored in your private Firebase Storage bucket.",
+              "Progress photos — optionally uploaded as a Day 1 baseline or 6-month check-in photo. Stored in your private Firebase Storage bucket, accessible only to you.",
               "Start date — the date you began the program, used to calculate your program day and milestone dates.",
+              "Purchase information — when you subscribe to BurpeePacers Pro, Apple processes the payment via In-App Purchase. We receive only your subscription status (active or inactive). We never see or store your credit card details.",
+              "Device and usage data — basic crash logs and device identifiers collected automatically by Firebase to help us diagnose issues.",
             ]}
           />
         </Section>
@@ -43,10 +47,11 @@ export default function PrivacyPage() {
         <Section title="How We Use Your Information">
           <BulletList
             items={[
-              "To provide and sync your workout history across the web app and iOS app.",
+              "To sync your workout history across the web app and iOS app.",
               "To calculate your current level, program day, and progress statistics.",
+              "To manage your Pro subscription status.",
               "To send a one-time welcome email when you create a new account.",
-              "To manage your subscription status if you subscribe to BurpeePacers Pro.",
+              "To diagnose crashes and improve app stability.",
             ]}
           />
           We do not use your data for advertising, profiling, or any purpose
@@ -54,13 +59,14 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="Third-Party Services">
-          We use the following third-party services which may process your data
+          We use the following third-party services, which process your data
           under their own privacy policies:
           <BulletList
             items={[
+              "Apple — Sign in with Apple and In-App Purchase processing. Privacy policy: apple.com/legal/privacy",
               "Firebase (Google) — authentication, database (Firestore), and file storage. Privacy policy: firebase.google.com/support/privacy",
               "Google Sign-In — optional sign-in method. Privacy policy: policies.google.com/privacy",
-              "Stripe — payment processing for Pro subscriptions. We never see or store your full card number. Privacy policy: stripe.com/privacy",
+              "Stripe — web subscription payment processing. We never see or store your card number. Privacy policy: stripe.com/privacy",
               "Resend — transactional email delivery (welcome email only). Privacy policy: resend.com/legal/privacy-policy",
             ]}
           />
@@ -68,9 +74,24 @@ export default function PrivacyPage() {
 
         <Section title="Data Retention">
           Your data is retained for as long as your account is active. If you
-          delete your account or request deletion, we will permanently remove
-          your personal data and workout history from our systems within 30
-          days.
+          delete your account, we will permanently remove your personal data and
+          workout history from our systems. Deletion is immediate for your
+          Firestore data and Firebase Auth account.
+        </Section>
+
+        <Section title="Account Deletion">
+          You can delete your account and all associated data at any time
+          directly within the app:
+          <BulletList
+            items={[
+              "iOS app: Tap the person icon (top right of the Dashboard) → scroll to the bottom → tap Delete Account.",
+              "Web app: Contact us at the email below and we will delete your account within 48 hours.",
+            ]}
+          />
+          Deletion is permanent and cannot be undone. All workout logs,
+          progress photos, and personal information will be removed. If you
+          subscribed via In-App Purchase, cancel your subscription separately in
+          your Apple ID settings to avoid future charges.
         </Section>
 
         <Section title="Your Rights">
@@ -79,11 +100,11 @@ export default function PrivacyPage() {
             items={[
               "Access the data we hold about you.",
               "Request correction of inaccurate data.",
-              "Request deletion of your account and all associated data.",
-              "Export your workout data (available in the app as a CSV download for Pro users).",
+              "Delete your account and all associated data (see Account Deletion above).",
+              "Export your workout data (available in the app as a CSV download).",
             ]}
           />
-          To exercise any of these rights, email us at{" "}
+          To exercise any of these rights, contact us at{" "}
           <Typography component="span" color="primary.main">
             {CONTACT_EMAIL}
           </Typography>
