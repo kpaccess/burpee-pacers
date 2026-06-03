@@ -38,7 +38,7 @@ export default function PrivacyPage() {
               "Body weight — optionally entered for protein target calculations. Stored only on your account.",
               "Progress photos — optionally uploaded as a Day 1 baseline or 6-month check-in photo. Stored in your private Firebase Storage bucket, accessible only to you.",
               "Start date — the date you began the program, used to calculate your program day and milestone dates.",
-              "Purchase information — when you subscribe to BurpeePacers Pro, Apple processes the payment via In-App Purchase. We receive only your subscription status (active or inactive). We never see or store your credit card details.",
+              "Purchase information — when you purchase BurpeePacers Pro, Apple processes the payment via In-App Purchase. We receive only confirmation that the purchase was made. We never see or store your credit card details.",
               "Device and usage data — basic crash logs and device identifiers collected automatically by Firebase to help us diagnose issues.",
             ]}
           />
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
             items={[
               "To sync your workout history across the web app and iOS app.",
               "To calculate your current level, program day, and progress statistics.",
-              "To manage your Pro subscription status.",
+              "To verify and unlock your one-time Pro purchase.",
               "To send a one-time welcome email when you create a new account.",
               "To diagnose crashes and improve app stability.",
             ]}
@@ -89,9 +89,9 @@ export default function PrivacyPage() {
             ]}
           />
           Deletion is permanent and cannot be undone. All workout logs,
-          progress photos, and personal information will be removed. If you
-          subscribed via In-App Purchase, cancel your subscription separately in
-          your Apple ID settings to avoid future charges.
+          progress photos, and personal information will be removed.
+          BurpeePacers Pro is a one-time purchase — there are no recurring
+          charges to cancel.
         </Section>
 
         <Section title="Your Rights">
