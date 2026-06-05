@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## Project Overview
 
-**BurpeePacer** — a fitness app for a community that runs structured burpee workout sessions. Users are assigned to Beginner or Advanced tracks with level-based rep goals. The app provides a live workout timer, progress tracking, admin analytics, and subscription gating. The public app is the Next.js web app; the native iOS SwiftUI app exists as a pre-release build and is not published publicly yet.
+**BurpeePacer** — a fitness app for a community that runs structured burpee workout sessions. Users are assigned to Beginner or Advanced tracks with level-based rep goals. The app provides a live workout timer, progress tracking, admin analytics, and subscription gating. The public app is the Next.js web app; native iOS (SwiftUI) and Android (Kotlin/Compose) apps exist as pre-release builds and are not published publicly yet.
 
 ## Monorepo Structure
 
@@ -12,6 +12,7 @@ Guidance for Claude Code when working in this repository.
 burpee-pacers/
 ├── web/                  # Next.js 16 web app (primary codebase)
 ├── ios/                  # Native iOS SwiftUI app (ios/BurpeePacer/)
+├── android/              # Native Android Kotlin/Compose app (pre-release)
 ├── n8n-workflows/        # Automation workflows
 ├── firebase.json         # Firebase config (Firestore, Storage, Hosting, Emulator)
 ├── firestore.rules       # Firestore security rules
@@ -42,6 +43,12 @@ cd web && npm run test:report
 
 # iOS — open in Xcode
 open ios/BurpeePacer/BurpeePacer.xcodeproj
+
+# Android — build debug APK
+cd android && ./gradlew assembleDebug
+
+# Android — build release APK (requires keystore.properties)
+cd android && ./gradlew assembleRelease
 ```
 
 ## Tech Stack
@@ -62,6 +69,13 @@ open ios/BurpeePacer/BurpeePacer.xcodeproj
 - **Extras**: WatchConnectivity (Apple Watch sync), UserNotifications (workout reminders)
 - **Minimum iOS**: 17.0, Xcode 15+
 
+### Android (Native)
+- **Language**: Kotlin, Jetpack Compose + Material3
+- **Architecture**: MVVM with `StateFlow`
+- **Storage**: Jetpack DataStore (local, no Firebase) + Gson for workout history JSON
+- **Build**: Gradle with `google-services` plugin; signing config via `keystore.properties`
+- **Minimum SDK**: 26 (Android 8.0); Target SDK: 34
+
 ## Tracks & Levels
 
 Two tracks with different workout modes:
@@ -73,7 +87,7 @@ Advanced Track day-of-week defaults:
 - Wednesday → 5-Count Pushups (`"C"`)
 - Friday → Hybrid (`"H"`) — 10 min Navy Seals → 10 min 5-Count Pushups
 
-### Level Definitions (shared across web and iOS)
+### Level Definitions (shared across web, iOS, and Android)
 
 **Beginner levels** (B1–B6): 20 → 40 → 55 → 70 → 90 → 110 burpees (no pushups) in 20 min.
 
@@ -184,6 +198,30 @@ Hybrid rep targets per phase = `Math.ceil(fullGoal / 2)` (seals half + five-coun
 ### iOS Default Timer Mode
 
 `AppViewModel.defaultMode(for:)` returns `.fiveCount` for Beginner users; for Advanced: Mon → `.navySeals`, Wed → `.fiveCount`, Fri → `.hybrid`.
+
+## Android Architecture (`android/app/src/main/java/com/burpeepacer/app/`)
+
+### Key Files
+
+- `model/Models.kt` — `ProgramTrack`, `WorkoutMode`, `Level`, `LevelDatabase`, `WorkoutSession`, `UserProfile`, `AgeBracket`, `Equipment`
+- `model/Finishers.kt` — `Finisher`, `FinisherDatabase`; day-of-week finisher exercises keyed by `AgeBracket` and `Equipment`
+- `data/DataRepository.kt` — all persistence via Jetpack DataStore; workout history serialized as JSON via Gson
+- `viewmodel/AppViewModel.kt` — derives `currentLevel`, `programStatusText`, `todayFinisher` from `DataRepository` flows
+- `viewmodel/WorkoutViewModel.kt` — 20-min countdown timer; Hybrid phase logic; `WorkoutSoundManager` for audio cues
+- `ui/screens/LandingScreen.kt` — onboarding/login (local only, no Firebase Auth)
+- `ui/screens/DashboardScreen.kt` — main hub; level card, calendar, stats, finisher card
+- `ui/screens/WorkoutScreen.kt` — live timer with progress ring, rep counter, pacing strip
+
+### Android Data Flow
+
+`DataRepository` (DataStore flows) → `AppViewModel` (derived `StateFlow`) → Compose screens. No Firebase — all data is local to the device.
+
+### Android-Specific Concepts
+
+- **`AgeBracket`** — `THIRTIES | FORTIES | FIFTIES_PLUS`; determines finisher exercises
+- **`Equipment`** — `DUMBBELLS_ONLY | FULL_GYM`; affects Friday finisher options
+- **`FinisherDatabase`** — returns a post-workout finisher (`Finisher`) for Mon/Wed/Fri based on `AgeBracket` + `Equipment`; returns `null` on other days
+- **`keystore.properties`** — required for release builds; copy from `keystore.properties.example`
 
 ## Firestore Schema (`users/{uid}`)
 
