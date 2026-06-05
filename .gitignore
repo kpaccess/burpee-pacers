@@ -20,6 +20,9 @@ dist/
 .env.test.local
 .env.production.local
 
+# iOS
+ios/BurpeePacer/BurpeePacer/GoogleService-Info.plist
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
