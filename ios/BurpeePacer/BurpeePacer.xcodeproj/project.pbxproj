@@ -1,0 +1,625 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9740D6272FCF4B3B00918A04 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9740D6262FCF4B3B00918A04 /* StoreKit.framework */; };
+		97604D5D2FD09E60007E2274 /* BurpeePacerWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 97604D532FD09E5D007E2274 /* BurpeePacerWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		97A6CB962FC0E79B00190F0F /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 97A6CB952FC0E79B00190F0F /* FirebaseFirestore */; };
+		97A6CB982FC0E7A800190F0F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 97A6CB972FC0E7A800190F0F /* FirebaseCore */; };
+		97A6CB9A2FC0EC6900190F0F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 97A6CB992FC0EC6900190F0F /* FirebaseAuth */; };
+		97A6CB9D2FC0F7F600190F0F /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 97A6CB9C2FC0F7F600190F0F /* GoogleSignIn */; };
+		97A6CB9F2FC0F7F600190F0F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 97A6CB9E2FC0F7F600190F0F /* GoogleSignInSwift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		97604D5B2FD09E60007E2274 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97AED96D2FBF51CE001031E1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 97604D522FD09E5D007E2274;
+			remoteInfo = "BurpeePacerWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		97604D612FD09E60007E2274 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				97604D5D2FD09E60007E2274 /* BurpeePacerWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9740D6262FCF4B3B00918A04 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		97604D532FD09E5D007E2274 /* BurpeePacerWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BurpeePacerWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		97AED9752FBF51CF001031E1 /* BurpeePacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BurpeePacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		97AED9832FBF51CF001031E1 /* Exceptions for "BurpeePacer" folder in "BurpeePacer" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				BurpeePacerTests.swift,
+				Info.plist,
+			);
+			target = 97AED9742FBF51CF001031E1 /* BurpeePacer */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		97604D542FD09E5D007E2274 /* BurpeePacerWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "BurpeePacerWatch Watch App";
+			sourceTree = "<group>";
+		};
+		97AED9772FBF51CF001031E1 /* BurpeePacer */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				97AED9832FBF51CF001031E1 /* Exceptions for "BurpeePacer" folder in "BurpeePacer" target */,
+			);
+			path = BurpeePacer;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		97604D502FD09E5D007E2274 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97AED9722FBF51CF001031E1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97A6CB9F2FC0F7F600190F0F /* GoogleSignInSwift in Frameworks */,
+				97A6CB982FC0E7A800190F0F /* FirebaseCore in Frameworks */,
+				97A6CB9D2FC0F7F600190F0F /* GoogleSignIn in Frameworks */,
+				9740D6272FCF4B3B00918A04 /* StoreKit.framework in Frameworks */,
+				97A6CB9A2FC0EC6900190F0F /* FirebaseAuth in Frameworks */,
+				97A6CB962FC0E79B00190F0F /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		97A6CB922FC0E78B00190F0F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9740D6262FCF4B3B00918A04 /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		97AED96C2FBF51CE001031E1 = {
+			isa = PBXGroup;
+			children = (
+				97AED9772FBF51CF001031E1 /* BurpeePacer */,
+				97604D542FD09E5D007E2274 /* BurpeePacerWatch Watch App */,
+				97A6CB922FC0E78B00190F0F /* Frameworks */,
+				97AED9762FBF51CF001031E1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		97AED9762FBF51CF001031E1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				97AED9752FBF51CF001031E1 /* BurpeePacer.app */,
+				97604D532FD09E5D007E2274 /* BurpeePacerWatch Watch App.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		97604D522FD09E5D007E2274 /* BurpeePacerWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97604D5E2FD09E60007E2274 /* Build configuration list for PBXNativeTarget "BurpeePacerWatch Watch App" */;
+			buildPhases = (
+				97604D4F2FD09E5D007E2274 /* Sources */,
+				97604D502FD09E5D007E2274 /* Frameworks */,
+				97604D512FD09E5D007E2274 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				97604D542FD09E5D007E2274 /* BurpeePacerWatch Watch App */,
+			);
+			name = "BurpeePacerWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "BurpeePacerWatch Watch App";
+			productReference = 97604D532FD09E5D007E2274 /* BurpeePacerWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		97AED9742FBF51CF001031E1 /* BurpeePacer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97AED9802FBF51D2001031E1 /* Build configuration list for PBXNativeTarget "BurpeePacer" */;
+			buildPhases = (
+				97AED9712FBF51CF001031E1 /* Sources */,
+				97AED9722FBF51CF001031E1 /* Frameworks */,
+				97AED9732FBF51CF001031E1 /* Resources */,
+				97604D612FD09E60007E2274 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				97604D5C2FD09E60007E2274 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				97AED9772FBF51CF001031E1 /* BurpeePacer */,
+			);
+			name = BurpeePacer;
+			packageProductDependencies = (
+				97A6CB952FC0E79B00190F0F /* FirebaseFirestore */,
+				97A6CB972FC0E7A800190F0F /* FirebaseCore */,
+				97A6CB992FC0EC6900190F0F /* FirebaseAuth */,
+				97A6CB9C2FC0F7F600190F0F /* GoogleSignIn */,
+				97A6CB9E2FC0F7F600190F0F /* GoogleSignInSwift */,
+			);
+			productName = BurpeePacer;
+			productReference = 97AED9752FBF51CF001031E1 /* BurpeePacer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		97AED96D2FBF51CE001031E1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					97604D522FD09E5D007E2274 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					97AED9742FBF51CF001031E1 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+				};
+			};
+			buildConfigurationList = 97AED9702FBF51CE001031E1 /* Build configuration list for PBXProject "BurpeePacer" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 97AED96C2FBF51CE001031E1;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				97A6CB912FC0E51400190F0F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				97A6CB9B2FC0F7F600190F0F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 97AED9762FBF51CF001031E1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				97AED9742FBF51CF001031E1 /* BurpeePacer */,
+				97604D522FD09E5D007E2274 /* BurpeePacerWatch Watch App */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		97604D512FD09E5D007E2274 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97AED9732FBF51CF001031E1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		97604D4F2FD09E5D007E2274 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97AED9712FBF51CF001031E1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		97604D5C2FD09E60007E2274 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 97604D522FD09E5D007E2274 /* BurpeePacerWatch Watch App */;
+			targetProxy = 97604D5B2FD09E60007E2274 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		97604D5F2FD09E60007E2274 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "BurpeePacerWatch Watch App/BurpeePacerWatch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BurpeePacerWatch;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "BurpeePacers reads heart rate and active energy to provide a complete summary of your workout.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "BurpeePacers needs to save your burpee sessions as Functional Strength Training workouts in the Health app.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.BurpeePacers.BurpeePacers;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.BurpeePacers.BurpeePacers.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10;
+			};
+			name = Debug;
+		};
+		97604D602FD09E60007E2274 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "BurpeePacerWatch Watch App/BurpeePacerWatch Watch App.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BurpeePacerWatch;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "BurpeePacers reads heart rate and active energy to provide a complete summary of your workout.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "BurpeePacers needs to save your burpee sessions as Functional Strength Training workouts in the Health app.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.BurpeePacers.BurpeePacers;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.BurpeePacers.BurpeePacers.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10;
+			};
+			name = Release;
+		};
+		97AED97E2FBF51D2001031E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		97AED97F2FBF51D2001031E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		97AED9812FBF51D2001031E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BurpeePacer/BurpeePacer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BurpeePacer/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BurpeePacers;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.BurpeePacers.BurpeePacers;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		97AED9822FBF51D2001031E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BurpeePacer/BurpeePacer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 5U59BY5EW4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BurpeePacer/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BurpeePacers;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.BurpeePacers.BurpeePacers;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		97604D5E2FD09E60007E2274 /* Build configuration list for PBXNativeTarget "BurpeePacerWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97604D5F2FD09E60007E2274 /* Debug */,
+				97604D602FD09E60007E2274 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97AED9702FBF51CE001031E1 /* Build configuration list for PBXProject "BurpeePacer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97AED97E2FBF51D2001031E1 /* Debug */,
+				97AED97F2FBF51D2001031E1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97AED9802FBF51D2001031E1 /* Build configuration list for PBXNativeTarget "BurpeePacer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97AED9812FBF51D2001031E1 /* Debug */,
+				97AED9822FBF51D2001031E1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		97A6CB912FC0E51400190F0F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.13.0;
+			};
+		};
+		97A6CB9B2FC0F7F600190F0F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		97A6CB952FC0E79B00190F0F /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 97A6CB912FC0E51400190F0F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		97A6CB972FC0E7A800190F0F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 97A6CB912FC0E51400190F0F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		97A6CB992FC0EC6900190F0F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 97A6CB912FC0E51400190F0F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		97A6CB9C2FC0F7F600190F0F /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 97A6CB9B2FC0F7F600190F0F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		97A6CB9E2FC0F7F600190F0F /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 97A6CB9B2FC0F7F600190F0F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 97AED96D2FBF51CE001031E1 /* Project object */;
+}
