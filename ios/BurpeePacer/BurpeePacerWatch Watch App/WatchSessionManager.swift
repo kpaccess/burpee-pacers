@@ -14,10 +14,10 @@ final class WatchSessionManager: NSObject {
 
     // MARK: - Workout Display State (mirrored from iPhone)
 
-    var phase: String = "idle"          // "idle" | "prepare" | "active" | "finished"
+    var phase: String = "idle"          // "idle" | "prepare" | "active" | "paused" | "finished"
     var secondsLeft: Int = 1200
     var totalSeconds: Int = 1200
-    var prepareSecondsLeft: Int = 5
+    var prepareSecondsLeft: Int = 10
     var currentRep: Int = 0
     var totalReps: Int = 0
     var isActive: Bool = false
@@ -41,7 +41,6 @@ final class WatchSessionManager: NSObject {
     private let healthStore = HKHealthStore()
     private var workoutSession: HKWorkoutSession?
     private var workoutBuilder: HKLiveWorkoutBuilder?
-    private var workoutStartDate: Date?
 
     private override init() {
         super.init()
@@ -76,14 +75,14 @@ final class WatchSessionManager: NSObject {
         secondsLeft = 1200
     }
 
-    // MARK: - HealthKit Authorization
+    // MARK: - Authorization
 
     func requestAuthorization() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         let share: Set<HKSampleType> = [HKQuantityType.workoutType()]
         let read: Set<HKObjectType> = [
             HKQuantityType.quantityType(forIdentifier: .heartRate)!,
-            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
         ]
         try? await healthStore.requestAuthorization(toShare: share, read: read)
     }
@@ -91,6 +90,7 @@ final class WatchSessionManager: NSObject {
     // MARK: - HealthKit Session Lifecycle
 
     private func startHealthKitWorkout() async {
+        guard workoutSession == nil else { return }
         let config = HKWorkoutConfiguration()
         config.activityType = .functionalStrengthTraining
         config.locationType = .indoor
@@ -102,58 +102,72 @@ final class WatchSessionManager: NSObject {
                                                           workoutConfiguration: config)
             builder.delegate = self
             session.delegate = self
-
             workoutSession = session
             workoutBuilder = builder
-            workoutStartDate = Date()
 
-            session.startActivity(with: workoutStartDate!)
-            try await builder.beginCollection(at: workoutStartDate!)
+            let startDate = Date()
+            session.startActivity(with: startDate)
+            try await builder.beginCollection(at: startDate)
         } catch {
-            print("HealthKit workout start failed: \(error)")
+            print("WatchSessionManager: HK start failed: \(error)")
         }
     }
 
     private func endHealthKitWorkout() async {
         guard let session = workoutSession, let builder = workoutBuilder else { return }
+        workoutSession = nil
+        workoutBuilder = nil
         session.end()
         do {
             try await builder.endCollection(at: Date())
             _ = try await builder.finishWorkout()
         } catch {
-            print("HealthKit workout end failed: \(error)")
+            print("WatchSessionManager: HK end failed: \(error)")
         }
-        workoutSession = nil
-        workoutBuilder = nil
     }
 
-    // MARK: - Apply State from iPhone
+    // MARK: - Apply UI State from iPhone (WatchConnectivity)
 
     private func apply(_ dict: [String: Any]) {
-        let newPhase   = dict["phase"]    as? String ?? "idle"
+        let newPhase    = dict["phase"]    as? String ?? "idle"
         let newIsActive = dict["isActive"] as? Bool   ?? false
-        let wasActive  = isActive
+        let wasActive   = isActive
 
-        phase             = newPhase
-        secondsLeft       = dict["secondsLeft"]       as? Int    ?? 1200
-        totalSeconds      = dict["totalSeconds"]      as? Int    ?? 1200
-        prepareSecondsLeft = dict["prepareSecondsLeft"] as? Int  ?? 5
-        currentRep        = dict["currentRep"]        as? Int    ?? 0
-        totalReps         = dict["totalReps"]         as? Int    ?? 0
-        isActive          = newIsActive
-        modeLabel         = dict["modeLabel"]         as? String ?? ""
-        hybridPhaseIndex  = dict["hybridPhaseIndex"]  as? Int    ?? 0
+        phase              = newPhase
+        secondsLeft        = dict["secondsLeft"]        as? Int    ?? 1200
+        totalSeconds       = dict["totalSeconds"]       as? Int    ?? 1200
+        prepareSecondsLeft = dict["prepareSecondsLeft"] as? Int    ?? 10
+        currentRep         = dict["currentRep"]         as? Int    ?? 0
+        totalReps          = dict["totalReps"]          as? Int    ?? 0
+        isActive           = newIsActive
+        modeLabel          = dict["modeLabel"]          as? String ?? ""
+        hybridPhaseIndex   = dict["hybridPhaseIndex"]   as? Int    ?? 0
 
-        if newIsActive && !wasActive {
-            Task { await startHealthKitWorkout() }
-        }
-
-        if !newIsActive && wasActive {
-            summaryReps     = currentRep
-            summaryDuration = TimeInterval(totalSeconds - secondsLeft)
-            summaryCalories = activeCalories
-            showSummary     = true
-            Task { await endHealthKitWorkout() }
+        switch newPhase {
+        case "active":
+            if !wasActive {
+                if workoutSession == nil {
+                    Task { await startHealthKitWorkout() }
+                } else {
+                    workoutSession?.resume()
+                }
+            }
+        case "paused":
+            if wasActive { workoutSession?.pause() }
+        case "finished":
+            if workoutSession != nil {
+                summaryReps     = currentRep
+                summaryDuration = TimeInterval(totalSeconds - secondsLeft)
+                summaryCalories = activeCalories
+                showSummary     = true
+                Task { await endHealthKitWorkout() }
+            }
+        case "idle":
+            if workoutSession != nil {
+                Task { await endHealthKitWorkout() }
+            }
+        default:
+            break
         }
     }
 }
@@ -182,9 +196,10 @@ extension WatchSessionManager: HKWorkoutSessionDelegate {
                         didChangeTo toState: HKWorkoutSessionState,
                         from fromState: HKWorkoutSessionState,
                         date: Date) {}
+
     func workoutSession(_ workoutSession: HKWorkoutSession,
                         didFailWithError error: Error) {
-        print("HKWorkoutSession error: \(error)")
+        print("WatchSessionManager: HKWorkoutSession error: \(error)")
     }
 }
 

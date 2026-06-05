@@ -39,6 +39,21 @@ import AVFoundation
                     AVAudioSession.InterruptionType(rawValue: v) == .ended
               else { return }
               self.restartEngine()
+              // Retry after 300ms: Apple Fitness sometimes hasn't released the
+              // audio session by the time .ended fires, so the first attempt fails.
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                  self?.restartEngine()
+              }
+          }
+
+          // Apple Fitness notification can trigger a route change instead of
+          // (or in addition to) a clean interruption. Restart on any route change
+          // so the engine reconnects to the new output route.
+          NotificationCenter.default.addObserver(
+              forName: AVAudioSession.routeChangeNotification,
+              object: nil, queue: .main
+          ) { [weak self] _ in
+              self?.restartEngine()
           }
       }
 
@@ -146,7 +161,11 @@ import AVFoundation
 
       private func restartEngine() {
           guard !engine.isRunning else { return }
-          try? AVAudioSession.sharedInstance().setActive(true)
-          try? engine.start()
+          do {
+              try AVAudioSession.sharedInstance().setActive(true)
+              try engine.start()
+          } catch {
+              print("WorkoutSoundManager: engine restart failed: \(error)")
+          }
       }
   }

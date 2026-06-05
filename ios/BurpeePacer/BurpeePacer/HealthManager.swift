@@ -2,21 +2,20 @@
 //  HealthManager.swift
 //  BurpeePacer
 //
-//  HealthKit workout sessions run on the Apple Watch (WatchSessionManager).
-//  This class exists as a no-op stub so SessionTimerViewModel compiles
-//  unchanged on iOS.
+//  HKWorkoutSession on iOS requires iOS 26+. For iOS 17 targets the Watch
+//  owns the HKWorkoutSession (see WatchSessionManager). This stub lets
+//  SessionTimerViewModel compile unchanged.
 //
 
 import Foundation
-import HealthKit
 
 final class HealthManager {
     static let shared = HealthManager()
     private init() {}
 
-    // Stub — Watch owns the HKWorkoutSession
     var session: Any? { nil }
 
+    func requestAuthorization() async {}
     func startWorkout() async {}
     func pauseWorkout() {}
     func resumeWorkout() {}

@@ -95,8 +95,8 @@ struct WatchWorkoutView: View {
             }
             .buttonStyle(.plain)
 
-            Button(action: session.tapPause) {
-                Image(systemName: "pause.fill")
+            Button(action: session.isActive ? session.tapPause : session.tapStart) {
+                Image(systemName: session.isActive ? "pause.fill" : "play.fill")
                     .font(.system(size: 14, weight: .bold))
                     .frame(width: 36, height: 36)
                     .background(Color.orange.opacity(0.8))

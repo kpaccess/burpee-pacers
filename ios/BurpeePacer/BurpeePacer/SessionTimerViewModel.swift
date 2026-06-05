@@ -63,9 +63,10 @@ class SessionTimerViewModel: Identifiable {
     // MARK: - Watch State Push
 
     private var watchPhase: String {
-        if isCountingDown { return "prepare" }
-        if isRunning      { return "active" }
-        if timeRemaining <= 0 { return "finished" }
+        if isCountingDown        { return "prepare" }
+        if isRunning             { return "active" }
+        if timeRemaining <= 0    { return "finished" }
+        if hasEverStarted        { return "paused" }
         return "idle"
     }
 
