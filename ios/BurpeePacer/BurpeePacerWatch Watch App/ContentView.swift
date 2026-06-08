@@ -11,7 +11,7 @@ struct WatchRootView: View {
     var body: some View {
         if session.showSummary {
             WatchSummaryView()
-        } else if session.isActive || session.phase == "prepare" {
+        } else if session.phase == "active" || session.phase == "prepare" || session.phase == "paused" {
             WatchWorkoutView()
         } else {
             WatchIdleView()

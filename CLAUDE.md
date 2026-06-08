@@ -41,8 +41,9 @@ cd web && npm run test:ui
 # View test report
 cd web && npm run test:report
 
-# iOS — open in Xcode
+# iOS — open in Xcode (select BurpeePacer scheme → iPhone)
 open ios/BurpeePacer/BurpeePacer.xcodeproj
+# Apple Watch — select BurpeePacerWatch Watch App scheme → paired Watch
 
 # Android — build debug APK
 cd android && ./gradlew assembleDebug
@@ -66,7 +67,7 @@ cd android && ./gradlew assembleRelease
 - **Language**: Swift 5.10+, SwiftUI
 - **Architecture**: MVVM with `@Observable` macro
 - **Backend**: Firebase iOS SDK 12.13.0 (Auth + Firestore), GoogleSignIn 9.1.0
-- **Extras**: WatchConnectivity (Apple Watch sync), UserNotifications (workout reminders)
+- **Extras**: WatchConnectivity (Apple Watch sync), HealthKit, UserNotifications (workout reminders)
 - **Minimum iOS**: 17.0, Xcode 15+
 
 ### Android (Native)
@@ -172,7 +173,7 @@ Hybrid rep targets per phase = `Math.ceil(fullGoal / 2)` (seals half + five-coun
 - `Models.swift` — `ProgramTrack`, `WorkoutMode`, `Level`, `LevelDatabase`, `WorkoutSession`, `UserProfile`, `CalendarDay`
 - `AppViewModel.swift` — main `@Observable` ViewModel; derives all state from `FirebaseService`; mirrors Firestore schema
 - `FirebaseService.swift` — Firebase Auth + Firestore sync; `@Observable`; mirrors web `types/index.ts` schema (`FirestoreUserData`, `FirestoreWorkoutLog`)
-- `SessionTimerViewModel.swift` — timer-specific `@Observable` ViewModel; handles Hybrid phase crossover, rep counting, beep guards
+- `SessionTimerViewModel.swift` — timer-specific `@Observable` ViewModel; handles Hybrid phase crossover, rep counting, beep guards; pushes `WorkoutState` to Watch on every timer event; `watchPhase` returns `"idle" | "prepare" | "active" | "paused" | "finished"`
 - `ContentView.swift` — app entry; routes between `SignInView` and `DashboardView`
 - `DashboardView.swift` — main hub; level card, calendar, stats, CSV export, Friday pulling-work section
 - `SessionTimerView.swift` — 20-min countdown timer sheet with progress ring and rep counter
@@ -183,13 +184,54 @@ Hybrid rep targets per phase = `Math.ceil(fullGoal / 2)` (seals half + five-coun
 - `ProgressPhotosSection.swift` — Day 1 and milestone progress photos (Firebase Storage)
 - `FridayPullingWorkSection.swift` — Friday pulling-work (chin-ups etc.) guidance
 - `NotificationManager.swift` — schedules Mon/Wed/Fri workout reminders via `UNUserNotificationCenter`; configurable hour/minute; persisted in UserDefaults
-- `PhoneSessionManager.swift` — WatchConnectivity bridge; sends `WorkoutState` dict to Apple Watch during active sessions
-- `SoundManager.swift` / `WorkoutSoundManger.swift` — audio cues
+- `PhoneSessionManager.swift` — WatchConnectivity bridge; sends `WorkoutState` dict to Apple Watch on every timer event; receives Watch commands (`start`, `pause`, `reset`, `incrementRep`, `decrementRep`)
+- `HealthManager.swift` — stub on iOS 17 (HKWorkoutSession on iPhone requires iOS 26+); Watch owns the HKWorkoutSession
+- `SoundManager.swift` / `WorkoutSoundManger.swift` — audio cues; restarts AVAudioEngine on interruption (with 300ms retry) and route changes
 - `AccountSettingsView.swift` — user settings (weight unit, notifications, sign-out)
 
 ### iOS Data Flow
 
 `FirebaseService` (Firestore listener) → `AppViewModel` (derived state) → SwiftUI Views. The only UserDefaults key is `useKilograms` (weight unit preference); all workout data lives in Firestore at `users/{uid}`, matching the web schema exactly.
+
+## Apple Watch Architecture (`ios/BurpeePacer/BurpeePacerWatch Watch App/`)
+
+### Key Files
+
+- `WatchSessionManager.swift` — `@Observable` singleton; owns the `HKWorkoutSession`; receives `WorkoutState` from iPhone via WatchConnectivity and drives all Watch UI state; sends tap commands back to iPhone
+- `BurpeePacerWatchApp.swift` — Watch app entry; injects `WatchSessionManager` into environment; requests HealthKit authorization at launch
+- `ContentView.swift` (`WatchRootView`) — routes between `WatchIdleView`, `WatchWorkoutView`, `WatchSummaryView` based on `session.phase` and `session.showSummary`
+- `WatchIdleView.swift` — shown when no workout is in progress; prompts user to start on iPhone
+- `WatchWorkoutView.swift` — live workout UI: progress ring, countdown, rep counter, heart rate, pause/play + rep controls
+- `WatchSummaryView.swift` — post-workout summary: reps, duration, calories
+
+### Watch Data Flow
+
+iPhone `SessionTimerViewModel` → `PhoneSessionManager.push()` (WatchConnectivity) → `WatchSessionManager.apply()` → SwiftUI Watch views.
+
+On `phase == "active"` (first transition): Watch creates `HKWorkoutSession(functionalStrengthTraining)` and starts `HKLiveWorkoutBuilder` to collect heart rate + calories.
+
+### Watch Phase States
+
+`watchPhase` in `SessionTimerViewModel` maps timer state to one of:
+- `"idle"` — not started or reset
+- `"prepare"` — 5-second countdown
+- `"active"` — 20-min timer running (`isRunning = true`)
+- `"paused"` — timer paused mid-workout (`hasEverStarted && !isRunning`)
+- `"finished"` — timer reached 0:00
+
+### Watch HealthKit Lifecycle
+
+- **Start**: `phase == "active"` and `workoutSession == nil` → `startHealthKitWorkout()`
+- **Pause**: `phase == "paused"` → `workoutSession?.pause()`
+- **Resume**: `phase == "active"` and `workoutSession != nil` → `workoutSession?.resume()`
+- **Finish**: `phase == "finished"` → `endHealthKitWorkout()` saves to Health app, shows summary
+- **Reset**: `phase == "idle"` with active session → `endHealthKitWorkout()` silently, no summary
+
+### Watch Requirements
+
+- Requires physical iPhone + Apple Watch (WatchConnectivity and HealthKit do not work in simulator for end-to-end testing)
+- Both devices must be on the same Apple ID
+- Watch app must be open (foreground or recently backgrounded) to receive `sendMessage` immediately; `updateApplicationContext` delivers as fallback when Watch app next wakes
 
 ### iOS Pro Access
 
