@@ -23,6 +23,12 @@ dist/
 # iOS
 ios/BurpeePacer/BurpeePacer/GoogleService-Info.plist
 
+# Android — contains Google API key and Firebase project config; never commit
+android/app/google-services.json
+
+# User-generated review files (personal, not committed)
+docs/*_review.md
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
