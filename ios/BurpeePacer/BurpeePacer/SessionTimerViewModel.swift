@@ -53,10 +53,16 @@ class SessionTimerViewModel: Identifiable {
             case "start":        self.startTimer()
             case "pause":        self.pauseTimer()
             case "reset":        self.resetTimer()
-            case "incrementRep": self.incrementRep()
+            case "incrementRep": self.incrementRep(fromWatch: true)
             case "decrementRep": self.decrementRep()
             default: break
             }
+        }
+        // When Watch connects, push state immediately and try to bring Watch app
+        // to foreground (covers the case where Watch app was backgrounded).
+        PhoneSessionManager.shared.onWatchReachable = { [weak self] in
+            self?.pushWatchState()
+            HealthManager.shared.startWatchApp()
         }
     }
 
@@ -79,18 +85,20 @@ class SessionTimerViewModel: Identifiable {
     }
 
     func pushWatchState() {
+        let countdown = secondsToNextRep.flatMap { (1...4).contains($0) ? $0 : nil } ?? 0
         let state = WorkoutState(
             phase: watchPhase,
             secondsLeft: Int(timeRemaining),
             totalSeconds: 20 * 60,
             prepareSecondsLeft: countdownRemaining ?? 0,
-            currentRep: currentReps,
+            currentRep: currentDisplayRep,
             totalReps: currentPhaseGoal,
             isActive: isRunning,
             mode: workoutMode.rawValue,
             modeLabel: watchModeLabel,
             hybridPhaseIndex: hybridPhaseIndex,
-            track: level.track.rawValue
+            track: level.track.rawValue,
+            countdownToNextRep: countdown
         )
         PhoneSessionManager.shared.push(state)
     }
@@ -192,7 +200,7 @@ class SessionTimerViewModel: Identifiable {
     /// Shows the rep you're currently on (1-based) while running, so the display
     /// opens at "1" instead of "0". When idle or finished, shows completed count.
     var currentDisplayRep: Int {
-        guard isRunning else { return currentReps }
+        guard isRunning || isCountingDown else { return currentReps }
         return min(currentReps + 1, currentPhaseGoal)
     }
 
@@ -248,7 +256,7 @@ class SessionTimerViewModel: Identifiable {
         pushWatchState()
     }
 
-    func incrementRep() {
+    func incrementRep(fromWatch: Bool = false) {
         currentReps += 1
         pushWatchState()
     }
@@ -277,6 +285,10 @@ class SessionTimerViewModel: Identifiable {
         hasEverStarted = true
         countdownRemaining = 5
         tickCountdown()
+        Task {
+            await HealthManager.shared.requestAuthorization()
+            HealthManager.shared.startWatchApp()
+        }
     }
 
     private func tickCountdown() {

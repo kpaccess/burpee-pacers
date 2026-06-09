@@ -13,7 +13,27 @@ npm run start    # Start production server
 npm run lint     # Run ESLint (flat config, v9)
 ```
 
-No test runner is configured. There is no `test` script.
+```bash
+# Run all Playwright E2E tests (starts dev server + Firebase emulator automatically)
+npm test
+
+# Run a single test file
+npx playwright test tests/dashboard.spec.ts
+
+# Run a single test by name
+npx playwright test -g "shows admin dashboard heading"
+
+# Run smoke tests against production
+npx playwright test --project=smoke
+
+# Open interactive test UI
+npm run test:ui
+
+# View last HTML report
+npm run test:report
+```
+
+Tests require `web/.env.test.local` (copy from `web/.env.test.local.example`). The emulator is started automatically when `NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true` is set in that file. Java is required for the Firebase emulator (`brew install --cask temurin`). Seeded test accounts: `qa-user@test.com` and `qa-admin@test.com`.
 
 ## Architecture
 

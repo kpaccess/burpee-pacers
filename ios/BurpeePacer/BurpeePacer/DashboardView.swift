@@ -65,7 +65,13 @@ struct DashboardView: View {
 
                     // Calendar
                     WorkoutCalendarGridView(viewModel: viewModel)
-                    
+
+                    // Weighted training (opt-in, shown on workout days only)
+                    if viewModel.weightedTrainingEnabled,
+                       let weightedDay = WeightedTrainingPlan.today() {
+                        WeightedTrainingCard(day: weightedDay)
+                    }
+
                     // Progress Photos
                     ProgressPhotosSection(
                         daysSinceStart: Calendar.current.dateComponents([.day], from: viewModel.startDate, to: Date()).day ?? 0,

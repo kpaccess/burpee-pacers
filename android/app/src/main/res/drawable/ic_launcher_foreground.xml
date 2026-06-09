@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Ring -->
+    <path
+        android:strokeColor="#FF2D55"
+        android:strokeWidth="4"
+        android:pathData="M54,18 A36,36 0 1,1 53.99,18" />
+
+    <!-- Stick Figure -->
+    <!-- Head -->
+    <path
+        android:fillColor="#FF2D55"
+        android:pathData="M54,42m-5,0a5,5 0 1,1 10,0a5,5 0 1,1 -10,0" />
+    <!-- Torso -->
+    <path
+        android:strokeColor="#FF2D55"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M54,47v15" />
+    <!-- Arms -->
+    <path
+        android:strokeColor="#FF2D55"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M42,42 L54,52 L66,42" />
+    <!-- Legs -->
+    <path
+        android:strokeColor="#FF2D55"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M44,75 L54,62 L64,75" />
+</vector>

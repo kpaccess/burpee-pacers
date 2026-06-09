@@ -1,0 +1,20 @@
+# Build output
+.gradle/
+build/
+app/build/
+
+# IDE
+.idea/
+*.iml
+
+# Local config
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Heap dumps
+*.hprof
+
+# Google services (contains API keys)
+app/google-services.json

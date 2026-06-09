@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct WatchIdleView: View {
+    @Environment(WatchSessionManager.self) var session
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "figure.strengthtraining.functional")
@@ -17,10 +19,16 @@ struct WatchIdleView: View {
                 .fontWeight(.black)
                 .foregroundStyle(.red)
 
-            Text("Start workout\non iPhone")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Button {
+                session.tapStart()
+            } label: {
+                Text("Start")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
         }
         .padding()
     }

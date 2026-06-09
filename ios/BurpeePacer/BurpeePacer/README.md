@@ -1,205 +1,102 @@
-# BurpeePacer
+# BurpeePacer — iOS App
 
-A minimalist, high-yield fitness tracker built around 20-minute time-capped burpee workouts following the Busy People Program.
+Native iOS app for BurpeePacer, built with Swift and SwiftUI. Pre-release; not published publicly yet.
 
-## 🏗️ Architecture
+## Requirements
 
-This app follows the **MVVM (Model-View-ViewModel)** architecture pattern with SwiftUI and modern Swift Concurrency.
+- iOS 17.0+, Xcode 15+, Swift 5.10+
+- `GoogleService-Info.plist` (gitignored) — required for Firebase
 
-### Project Structure
+## Getting Started
+
+Open `ios/BurpeePacer/BurpeePacer.xcodeproj` in Xcode:
+- **iPhone app** — select the `BurpeePacer` scheme, run on an iPhone simulator or device.
+- **Apple Watch app** — select the `BurpeePacerWatch Watch App` scheme, run on a paired Watch simulator or physical Watch.
+
+WatchConnectivity and HealthKit end-to-end testing require physical hardware (iPhone + Apple Watch on the same Apple ID).
+
+## Architecture
+
+MVVM with SwiftUI and the `@Observable` macro.
+
+### Data Flow
 
 ```
-BurpeePacer/
-├── Models.swift                      # Core data models
-├── AppViewModel.swift                # Main app state management
-├── SessionTimerViewModel.swift       # Timer-specific logic
-├── ContentView.swift                 # App entry point
-├── DashboardView.swift              # Main dashboard layout
-├── SessionTimerView.swift           # Workout timer interface
-├── HeaderView.swift                 # Status header component
-├── StatsOverviewCard.swift          # User profile & stats
-├── WorkoutCalendarGridView.swift    # Monthly calendar grid
-├── RecoveryDisclosureGroup.swift    # Warm-up/cool-down guide
-└── ProgressPhotosSection.swift      # Photo tracking
+Firestore ──► FirebaseService (@Observable)
+                     │
+                     ▼
+              AppViewModel (@Observable)
+                     │
+                     ▼
+              SwiftUI Views
+                     │
+                     ▼
+         SessionTimerViewModel (@Observable)
+                     │
+              ┌──────┴──────┐
+              ▼             ▼
+     PhoneSessionManager  HealthManager
+     (WatchConnectivity)  (stub on iOS 17)
 ```
 
-## 🎯 Key Features
+`FirebaseService` owns Auth listeners and a real-time Firestore snapshot. `AppViewModel` derives all UI state from it. The only `UserDefaults` key is `useKilograms` (weight unit preference) — all workout data lives in Firestore at `users/{uid}`, matching the web schema exactly.
 
-### 1. **SessionTimerView** 
-A fully-featured 20-minute countdown timer with:
-- **Smooth countdown** using Combine's Timer publisher
-- **Rep counter** with large tap target and +/- controls
-- **Visual progress ring** showing completion percentage
-- **Color-coded time warnings** (red when < 1 min remaining)
-- **Tutorial video links** specific to each level
-- **Resilient state management** that handles pause/resume
+### Apple Watch Data Flow
 
-**ViewModel (`SessionTimerViewModel`):**
-- Uses `@Observable` macro for modern SwiftUI state management
-- Implements precise timer logic with background resilience
-- Tracks reps and calculates progress
-- Creates WorkoutSession records on completion
-
-### 2. **DashboardView**
-The main hub combining all components:
-- Header with program status and reset option
-- Stats overview with weight tracking and protein calculator
-- Current level card with "Start Workout" button
-- Recovery guidelines (collapsible)
-- Monthly workout calendar
-- Progress photos section
-- CSV export functionality
-- 48-hour rest reminder
-
-### 3. **Workout Calendar**
-Interactive monthly grid displaying:
-- **Mon/Wed/Fri** as workout days (checkable)
-- **Other days** automatically marked as "Rest"
-- **Completed sessions** show level code badge (e.g., "B1", "A3")
-- **Missed workouts** flagged in red with X icon
-- **Today's date** highlighted with red border
-- **Month navigation** with smooth animations
-
-### 4. **Program Tracks**
-
-#### Beginner Track (No Push-ups)
-- B1: 20 reps in 20 min
-- B2: 40 reps in 20 min
-- B3: 55 reps in 20 min
-- B4: 70 reps in 20 min
-- B5: 90 reps in 20 min
-- B6: 110 reps in 20 min
-
-#### Advanced Track (With Push-ups)
-- A1: 30 reps in 20 min
-- A2: 50 reps in 20 min
-- A3: 75 reps in 20 min
-- A4: 100 reps in 20 min
-- A5: 150 reps in 20 min
-
-### 5. **Auto-calculated Metrics**
-- **Protein Target:** Automatically calculates daily protein (1.5g × weight in kg)
-- **Days Since Start:** Tracks program progression
-- **Level Progression:** Auto-advances when workout target is met
-
-### 6. **Data Persistence**
-All data is stored locally using UserDefaults:
-- User profile (weight, start date, current level)
-- Workout session history
-- Progress photos
-- No cloud dependency—complete privacy
-
-### 7. **Data Portability**
-Export complete workout history as CSV file:
-- Date
-- Level ID
-- Reps Completed
-- Target Reps
-- Completion Status
-
-## 🎨 Design System
-
-### Dark Mode First
-- Strict dark mode aesthetic
-- Background: `Color(UIColor.systemBackground)` → `#09090b`
-- Cards: `Color(UIColor.secondarySystemBackground)` → `#1c1c1e`
-
-### Accent Colors
-- **Red/Crimson:** Primary actions, active states, warnings
-- **Green:** Completion, success states, start button
-- **Orange:** Pause, caution states
-
-### Typography
-- **Dynamic Type** support throughout
-- **Rounded system font** for timers and numerical displays
-- **Bold weights** for readability during workouts
-- **Monospaced digits** for timer consistency
-
-### SF Symbols
-All icons use Apple's SF Symbols for native consistency:
-- `figure.strengthtraining.traditional`
-- `timer`
-- `play.circle.fill`
-- `heart.text.square.fill`
-- And many more...
-
-## 🔧 Technical Implementation
-
-### State Management
-- **`@Observable` macro** (Swift 5.10+) for ViewModels
-- **`@State` and `@Binding`** for view-local state
-- Automatic SwiftUI updates on property changes
-
-### Timer Implementation
-```swift
-Timer.publish(every: 0.1, on: .main, in: .common)
-    .autoconnect()
-    .sink { [weak self] _ in
-        self?.updateTimer()
-    }
 ```
-- 0.1 second intervals for smooth countdown
-- Calculates elapsed time from start timestamp
-- Maintains accurate countdown even with UI updates
+SessionTimerViewModel ──► PhoneSessionManager ──► WCSession ──► WatchSessionManager
+```
 
-### Calendar Logic
-- Uses Foundation's `Calendar` APIs
-- Generates monthly grids dynamically
-- Matches workout sessions to calendar dates
-- Auto-flags missed workouts based on date comparison
+`WatchSessionManager` owns the `HKWorkoutSession` and `HKLiveWorkoutBuilder` on the Watch. It starts, pauses, resumes, and ends the HealthKit workout based on the `phase` field received from the iPhone. The Watch sends tap commands back (`start`, `pause`, `reset`, `incrementRep`, `decrementRep`).
 
-### Photo Handling
-- **PhotosUI framework** for native photo picking
-- Stores photos as Data in UserDefaults
-- Converts to SwiftUI `Image` for display
-- 6-month milestone locked until 180 days elapsed
+## Key Files
 
-## 🚀 Getting Started
+### iPhone
 
-### Requirements
-- iOS 17.0+
-- Xcode 15.0+
-- Swift 5.10+
+| File | Purpose |
+|------|---------|
+| `Models.swift` | `ProgramTrack`, `WorkoutMode`, `Level`, `LevelDatabase`, `WorkoutSession`, `UserProfile` |
+| `AppViewModel.swift` | Main `@Observable` ViewModel; derives all state from `FirebaseService` |
+| `FirebaseService.swift` | Firebase Auth + Firestore real-time sync |
+| `SessionTimerViewModel.swift` | 20-min countdown; Hybrid phase crossover; pushes `WorkoutState` to Watch |
+| `PhoneSessionManager.swift` | WatchConnectivity bridge |
+| `HealthManager.swift` | Stub on iOS 17 (Watch owns the `HKWorkoutSession`) |
+| `NotificationManager.swift` | Mon/Wed/Fri workout reminders via `UNUserNotificationCenter` |
+| `DashboardView.swift` | Main hub: level card, calendar, stats, CSV export |
+| `SessionTimerView.swift` | 20-min timer sheet with progress ring and rep counter |
 
-### Running the App
-1. Open the project in Xcode
-2. Build and run on iPhone simulator or device
-3. The app initializes with default beginner settings
-4. Tap "Start Workout" to begin your first session
+### Apple Watch
 
-### First Time Setup
-1. Set your current weight (kg or lbs)
-2. Add a Day 1 baseline photo
-3. Choose your track (Beginner or Advanced)
-4. Review the recovery guidelines
-5. Start your first 20-minute workout
+| File | Purpose |
+|------|---------|
+| `WatchSessionManager.swift` | `@Observable` singleton; owns `HKWorkoutSession`; applies iPhone state |
+| `WatchIdleView.swift` | Shown when no workout is in progress |
+| `WatchWorkoutView.swift` | Live UI: progress ring, countdown, rep counter, heart rate, controls |
+| `WatchSummaryView.swift` | Post-workout summary: reps, duration, calories |
 
-## 📱 User Flow
+## Tracks & Levels
 
-1. **Dashboard** → View stats, current level, calendar
-2. **Tap "Start Workout"** → Opens SessionTimerView sheet
-3. **Start Timer** → 20-minute countdown begins
-4. **Tap Center Button** → Log each completed rep
-5. **Monitor Progress** → Visual ring shows completion %
-6. **Time Expires** → Session auto-pauses
-7. **Close Sheet** → Session saved to history
-8. **Auto-Advance** → If target met, level increases
+**Beginner** (B1–B6): 20 → 40 → 55 → 70 → 90 → 110 burpees in 20 min (no pushups).
 
-## 🎯 Future Enhancements
+**Advanced** — sealsGoal / sixCountsGoal per level:
 
-Potential additions:
-- SwiftData migration for better data modeling
-- HealthKit integration for calories/heart rate
-- Notifications for scheduled workout days
-- Custom workout templates
-- Social sharing features
-- Apple Watch companion app
-- Widgets for quick stats
+| Level | Navy Seals | 5-Count Pushups |
+|-------|-----------|-----------------|
+| 1A    | 0         | 0               |
+| 1B    | 20        | 50              |
+| 1C    | 40        | 100             |
+| 1D    | 60        | 150             |
+| 2     | 80        | 200             |
+| 3     | 100       | 250             |
+| 4     | 120       | 275             |
+| grad  | 150       | 325             |
 
-## 📄 License
+Hybrid rep targets per phase = `ceil(fullGoal / 2)`, each phase is 10 min.
 
-Created by Krishna Pradhan on 2026-05-21.
+## Pro Access (`AppViewModel.hasProAccess`)
 
----
-
-Built with ❤️ using SwiftUI
+Checked in order:
+1. Email allowlist (hardcoded in `AppViewModel`)
+2. `isAdmin == true` in Firestore
+3. StoreKit 2 entitlement (`com.burpeepacers.pro`)
+4. 60-day trial (`daysSinceStart < 60`)

@@ -6,6 +6,7 @@
 import Foundation
 import WatchConnectivity
 import HealthKit
+import WatchKit
 
 @Observable
 final class WatchSessionManager: NSObject {
@@ -23,6 +24,9 @@ final class WatchSessionManager: NSObject {
     var isActive: Bool = false
     var modeLabel: String = ""
     var hybridPhaseIndex: Int = 0
+
+    private var lastCountdownToNextRep: Int = 0
+    private var localTimer: Timer?
 
     // MARK: - Live HealthKit Metrics
 
@@ -73,6 +77,21 @@ final class WatchSessionManager: NSObject {
         currentRep = 0
         totalReps = 0
         secondsLeft = 1200
+        lastCountdownToNextRep = 0
+        stopLocalTimer()
+    }
+
+    private func startLocalTimer() {
+        localTimer?.invalidate()
+        localTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self, self.phase == "active", self.secondsLeft > 0 else { return }
+            self.secondsLeft -= 1
+        }
+    }
+
+    private func stopLocalTimer() {
+        localTimer?.invalidate()
+        localTimer = nil
     }
 
     // MARK: - Authorization
@@ -89,7 +108,7 @@ final class WatchSessionManager: NSObject {
 
     // MARK: - HealthKit Session Lifecycle
 
-    private func startHealthKitWorkout() async {
+    func startHealthKitWorkout() async {
         guard workoutSession == nil else { return }
         let config = HKWorkoutConfiguration()
         config.activityType = .functionalStrengthTraining
@@ -143,26 +162,38 @@ final class WatchSessionManager: NSObject {
         modeLabel          = dict["modeLabel"]          as? String ?? ""
         hybridPhaseIndex   = dict["hybridPhaseIndex"]   as? Int    ?? 0
 
+        let newCountdown = dict["countdownToNextRep"] as? Int ?? 0
+        if newCountdown > 0 && newCountdown != lastCountdownToNextRep {
+            WKInterfaceDevice.current().play(.notification)
+            WatchSoundManager.shared.playCountdownBeep()
+        }
+        lastCountdownToNextRep = newCountdown
+
         switch newPhase {
         case "active":
             if !wasActive {
+                WKInterfaceDevice.current().play(.start)
+                startLocalTimer()
                 if workoutSession == nil {
                     Task { await startHealthKitWorkout() }
-                } else {
+                } else if workoutSession?.state == .paused {
                     workoutSession?.resume()
                 }
             }
         case "paused":
+            stopLocalTimer()
             if wasActive { workoutSession?.pause() }
         case "finished":
+            stopLocalTimer()
+            summaryReps     = currentRep
+            summaryDuration = TimeInterval(totalSeconds - secondsLeft)
+            summaryCalories = activeCalories
+            showSummary     = true
             if workoutSession != nil {
-                summaryReps     = currentRep
-                summaryDuration = TimeInterval(totalSeconds - secondsLeft)
-                summaryCalories = activeCalories
-                showSummary     = true
                 Task { await endHealthKitWorkout() }
             }
         case "idle":
+            stopLocalTimer()
             if workoutSession != nil {
                 Task { await endHealthKitWorkout() }
             }
@@ -177,7 +208,14 @@ final class WatchSessionManager: NSObject {
 extension WatchSessionManager: WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith state: WCSessionActivationState,
-                 error: Error?) {}
+                 error: Error?) {
+        guard state == .activated else { return }
+        // Apply any context the iPhone pushed while the Watch app was closed.
+        let ctx = WCSession.default.receivedApplicationContext
+        if !ctx.isEmpty {
+            DispatchQueue.main.async { self.apply(ctx) }
+        }
+    }
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         DispatchQueue.main.async { self.apply(message) }

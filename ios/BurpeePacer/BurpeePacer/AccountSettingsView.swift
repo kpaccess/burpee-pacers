@@ -21,6 +21,7 @@ struct AccountSettingsView: View {
     var onWorkoutDaysChange: (([Int]) -> Void)? = nil
     var onDeleteAccount: (() async -> (success: Bool, requiresReauth: Bool))? = nil
 
+    @AppStorage("weightedTrainingEnabled") private var weightedTrainingEnabled = false
     @State private var selectedDays: Set<Int> = [2, 4, 6]
     @State private var showingTrackPicker = false
     @State private var remindersEnabled: Bool = NotificationManager.shared.isEnabled
@@ -279,12 +280,17 @@ struct AccountSettingsView: View {
                             Text(bracket.displayName).tag(bracket)
                         }
                     }
-                    
+
                     Picker("Equipment", selection: $equipment) {
                         ForEach(Equipment.allCases, id: \.self) { item in
                             Text(item.displayName).tag(item)
                         }
                     }
+
+                    Toggle(isOn: $weightedTrainingEnabled) {
+                        Label("Weighted Training", systemImage: "dumbbell.fill")
+                    }
+                    .tint(.orange)
                 }
 
                 // Workout Schedule section

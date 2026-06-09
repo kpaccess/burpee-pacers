@@ -28,6 +28,11 @@ class AppViewModel {
         set { UserDefaults.standard.set(newValue, forKey: "useKilograms") }
     }
 
+    var weightedTrainingEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "weightedTrainingEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "weightedTrainingEnabled") }
+    }
+
     // MARK: - Derived from Firestore
 
     /// The user's start date parsed from Firestore "startDate" field.

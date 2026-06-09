@@ -16,7 +16,7 @@ burpee-pacers/
 ├── firebase.json         # Firebase config (Firestore, Storage, Hosting, Emulator)
 ├── firestore.rules       # Firestore security rules
 ├── docker-compose.yml    # Local services
-└── qadetails.md          # QA testing guide
+└── docs/                 # Project docs (QA guide, deploy notes, reviews, analyses)
 ```
 
 ## Commands
@@ -92,7 +92,7 @@ Advanced Track day-of-week defaults:
 
 ## QA / Testing
 
-See `qadetails.md` for the full QA onboarding guide.
+See `docs/qadetails.md` for the full QA onboarding guide.
 
 - Tests run against the Firebase emulator (never production data)
 - Test env file: `web/.env.test.local` (gitignored; copy from `web/.env.test.local.example`)

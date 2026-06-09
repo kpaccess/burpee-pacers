@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BurpeePacer — Web App
+
+The Next.js web app for BurpeePacer, deployed at [burpeepacers.com](https://www.burpeepacers.com).
+
+## Stack
+
+- **Framework:** Next.js 16, React 19, TypeScript 5
+- **UI:** MUI v7, Tailwind CSS v4, Framer Motion
+- **Backend:** Firebase Auth, Firestore, Storage, Firebase Admin SDK
+- **Payments:** Stripe Checkout, Billing Portal, webhooks
+- **Email:** Resend
+- **Testing:** Playwright, Firebase Auth and Firestore emulators
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Configuration lives in `.env.local` (gitignored); copy from `.env.local.example` and fill in Firebase, Stripe, Firebase Admin, and Resend values.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm test             # Run Playwright E2E tests against Firebase emulator
+npm run test:ui      # Playwright interactive UI
+npm run test:report  # Open last HTML test report
+```
 
-## Learn More
+## Testing
 
-To learn more about Next.js, take a look at the following resources:
+Tests run against the Firebase emulator (never production). Requires Java (`brew install --cask temurin`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.test.local.example .env.test.local
+npx playwright install chromium
+npm test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Seeded test accounts: `qa-user@test.com`, `qa-admin@test.com`. See `docs/qadetails.md` for the full QA guide.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Pushes to `main` deploy automatically to Vercel. No manual deploy step needed.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To deploy Firestore rules separately:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+## Key Directories
+
+| Path | Description |
+|------|-------------|
+| `src/app/` | Next.js App Router pages and API routes |
+| `src/components/` | React components (Dashboard, WorkoutTimer, etc.) |
+| `src/hooks/` | Custom hooks (`useWorkoutTimer`, `useUserData`, `useSubscription`) |
+| `src/lib/` | Shared utilities (Firebase, Stripe, Resend, workout logic) |
+| `src/types/` | TypeScript type definitions |
+| `tests/` | Playwright E2E tests |

@@ -52,6 +52,7 @@ import {
 } from "date-fns";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import { useAuth } from "../context/AuthContext";
 import { toDateKey } from "../lib/date";
 import { isAdmin } from "../lib/allowlist";
@@ -191,6 +192,46 @@ const HEALTH_RECOVERY_CONFIG = {
   disclaimer: "If you are over 40, have a pre-existing medical condition, or have been sedentary for more than 6 months, consult your doctor before starting this program. Stop immediately and seek medical attention if you experience sharp pain, chest tightness, dizziness, or shortness of breath. This program is not a substitute for professional medical advice.",
 } as const;
 
+// ── Weighted Training plan ────────────────────────────────────────────────────
+// Mon → Day 1, Wed → Day 2, Fri → Day 3. Mirrors iOS WeightedTrainingPlan.
+// Weekday indices match JS Date.getDay(): 1=Mon, 3=Wed, 5=Fri.
+const WEIGHTED_TRAINING_PLAN: Record<number, {
+  title: string;
+  focus: string;
+  exercises: { name: string; sets: number; reps: string; note?: string }[];
+}> = {
+  1: {
+    title: "Day 1 — Pulling + Biceps",
+    focus: "Biceps · Back · Forearms",
+    exercises: [
+      { name: "Chin-ups (supinated grip)", sets: 4, reps: "Max", note: "Best bicep builder — aim 6–10" },
+      { name: "Barbell or Dumbbell Row",   sets: 3, reps: "8–10", note: "2-sec hold at top" },
+      { name: "Barbell Curl",              sets: 3, reps: "10–12", note: "Strict form, no swing" },
+      { name: "Hammer Curl",               sets: 2, reps: "12", note: "Forearm + brachialis" },
+    ],
+  },
+  3: {
+    title: "Day 2 — Pushing + Shoulders",
+    focus: "Shoulders · Chest · Triceps",
+    exercises: [
+      { name: "Overhead Press",           sets: 4, reps: "8–10",  note: "Barbell or dumbbell" },
+      { name: "Incline Dumbbell Press",   sets: 3, reps: "10–12", note: "Upper chest focus" },
+      { name: "Lateral Raise",            sets: 3, reps: "12–15", note: "Light weight, controlled" },
+      { name: "Tricep Dips or Pushdowns", sets: 3, reps: "10–12" },
+    ],
+  },
+  5: {
+    title: "Day 3 — Legs + Core",
+    focus: "Legs · Glutes · Core",
+    exercises: [
+      { name: "Goblet Squat",      sets: 4, reps: "10–12",  note: "Or barbell squat" },
+      { name: "Romanian Deadlift", sets: 3, reps: "10",     note: "Hinge at hips, hamstring focus" },
+      { name: "Walking Lunges",    sets: 3, reps: "12/leg" },
+      { name: "Plank",             sets: 3, reps: "30–45s" },
+    ],
+  },
+};
+
 const DEFAULT_WORKOUT_DAYS = [2, 4, 6] as const;
 const WORKOUT_DAY_OPTIONS = [
   { weekday: 2, short: "Mon" },
@@ -237,6 +278,11 @@ export default function Dashboard({
   // pulling work section unlocks and auto-expands immediately after completion.
   const [hybridFinishedThisSession, setHybridFinishedThisSession] = useState(false);
   const [pullingWorkExpanded, setPullingWorkExpanded] = useState(false);
+  // ── Weighted Training toggle — persisted in localStorage (off by default) ──
+  const [weightedTrainingEnabled, setWeightedTrainingEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("weightedTrainingEnabled") === "true";
+  });
   // ── Health & Recovery section state ────────────────────────────────────────
   const [healthSectionOpen, setHealthSectionOpen] = useState(false);
   const [healthActiveTab, setHealthActiveTab] = useState<"warmup" | "cooldown">("warmup");
@@ -423,6 +469,14 @@ export default function Dashboard({
     setHealthActiveTab("cooldown");
     setTimeout(() => healthSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   }, []);
+
+  // Weighted Training: persist toggle and resolve today's plan (null on rest days)
+  React.useEffect(() => {
+    localStorage.setItem("weightedTrainingEnabled", String(weightedTrainingEnabled));
+  }, [weightedTrainingEnabled]);
+  const todayWeightedDay = weightedTrainingEnabled
+    ? WEIGHTED_TRAINING_PLAN[today.getDay()] ?? null
+    : null;
 
   // Pulling work unlocks when the Hybrid workout is done this session OR if
   // today's log already shows completed (e.g. user refreshed after finishing).
@@ -637,6 +691,30 @@ export default function Dashboard({
                 Tap days to customize your weekly schedule. Keep at least one
                 workout day selected.
               </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <FitnessCenterIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  <Typography variant="body2">Weighted Training</Typography>
+                </Box>
+                <Box
+                  component="span"
+                  onClick={() => setWeightedTrainingEnabled((v) => !v)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <Chip
+                    label={weightedTrainingEnabled ? "On" : "Off"}
+                    size="small"
+                    color={weightedTrainingEnabled ? "warning" : "default"}
+                    variant={weightedTrainingEnabled ? "filled" : "outlined"}
+                    sx={{ fontWeight: 700 }}
+                  />
+                </Box>
+              </Box>
+              {weightedTrainingEnabled && (
+                <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.4 }}>
+                  Strength card appears on Mon, Wed &amp; Fri after your burpees.
+                </Typography>
+              )}
             </Card>
           </Grid>
 
@@ -1281,6 +1359,12 @@ export default function Dashboard({
           </Box>
         </Card>
 
+        {/* ── Weighted Training Card ──────────────────────────────────────────
+            Opt-in, shown on Mon/Wed/Fri only when the toggle is enabled. */}
+        {todayWeightedDay && (
+          <WeightedTrainingCardWeb day={todayWeightedDay} />
+        )}
+
         {/* Progress Photos */}
         <Typography variant="h5" fontWeight={700} gutterBottom mt={4} mb={2}>
           Progress Photos
@@ -1717,5 +1801,89 @@ export default function Dashboard({
         </Box>
       </motion.div>
     </Box>
+  );
+}
+
+// ── Weighted Training Card ────────────────────────────────────────────────────
+
+function WeightedTrainingCardWeb({
+  day,
+}: {
+  day: { title: string; focus: string; exercises: { name: string; sets: number; reps: string; note?: string }[] };
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <Card
+      sx={{
+        mb: 4,
+        border: "1px solid rgba(255,152,0,0.3)",
+        background: "rgba(255,152,0,0.04)",
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ p: 2, cursor: "pointer", "&:hover": { background: "rgba(255,152,0,0.06)" } }}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Box
+            sx={{
+              width: 34, height: 34,
+              borderRadius: 2,
+              bgcolor: "warning.main",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <FitnessCenterIcon sx={{ fontSize: 18, color: "#000" }} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" fontWeight={700}>
+              {day.title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {day.focus}
+            </Typography>
+          </Box>
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          {expanded ? "▲" : "▼"}
+        </Typography>
+      </Box>
+
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <Divider sx={{ borderColor: "rgba(255,152,0,0.15)" }} />
+        <Stack divider={<Divider sx={{ ml: 7, borderColor: "rgba(255,255,255,0.05)" }} />}>
+          {day.exercises.map((ex) => (
+            <Box key={ex.name} display="flex" alignItems="flex-start" gap={1.5} sx={{ px: 2, py: 1.25 }}>
+              <Typography
+                variant="caption"
+                fontWeight={900}
+                color="warning.main"
+                sx={{ minWidth: 28, pt: 0.25, fontSize: "0.8rem" }}
+              >
+                {ex.sets}×
+              </Typography>
+              <Box sx={{ flex: 1 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                  <Typography variant="body2" fontWeight={600}>{ex.name}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                    {ex.reps}
+                  </Typography>
+                </Box>
+                {ex.note && (
+                  <Typography variant="caption" color="text.disabled" sx={{ display: "block", fontStyle: "italic" }}>
+                    {ex.note}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+      </Collapse>
+    </Card>
   );
 }

@@ -38,6 +38,18 @@ struct SessionTimerView: View {
 
             // Timer display with time-progress ring
             timerSection
+                .contentShape(Circle())
+                .onTapGesture {
+                    if viewModel.isRunning {
+                        viewModel.pauseTimer()
+                    } else if viewModel.canStart {
+                        if !warmupChecked {
+                            showWarmupPrompt = true
+                        } else {
+                            viewModel.startTimer()
+                        }
+                    }
+                }
 
             // Rep pace guide chip (shows when running)
             if viewModel.isRunning {
@@ -75,6 +87,11 @@ struct SessionTimerView: View {
         .overlay {
             if let countdown = viewModel.countdownRemaining {
                 countdownOverlay(value: countdown)
+            }
+        }
+        .onAppear {
+            Task {
+                await HealthManager.shared.requestAuthorization()
             }
         }
     }
