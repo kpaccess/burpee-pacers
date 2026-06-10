@@ -6,6 +6,7 @@
 import SwiftUI
 import UserNotifications
 import StoreKit
+import AuthenticationServices
 
 struct AccountSettingsView: View {
     let email: String?
@@ -20,6 +21,10 @@ struct AccountSettingsView: View {
     var onTrackSwitch: ((String) -> Void)? = nil
     var onWorkoutDaysChange: (([Int]) -> Void)? = nil
     var onDeleteAccount: (() async -> (success: Bool, requiresReauth: Bool))? = nil
+    var isAppleLinked: Bool = false
+    var accountID: String? = nil
+    var connectedSignIns: [String] = []
+    var onConnectApple: ((String, String, PersonNameComponents?) async -> String?)? = nil
 
     @AppStorage("weightedTrainingEnabled") private var weightedTrainingEnabled = false
     @State private var selectedDays: Set<Int> = [2, 4, 6]
@@ -38,6 +43,10 @@ struct AccountSettingsView: View {
     @State private var isRestoring = false
     @State private var isPurchasing = false
     @State private var purchaseError: String? = nil
+    @State private var currentNonce: String?
+    @State private var isConnectingApple = false
+    @State private var appleConnectError: String? = nil
+    @State private var appleConnectSuccess = false
 
     init(email: String?,
          isPro: Bool,
@@ -50,7 +59,11 @@ struct AccountSettingsView: View {
          onSignOut: @escaping () -> Void,
          onTrackSwitch: ((String) -> Void)? = nil,
          onWorkoutDaysChange: (([Int]) -> Void)? = nil,
-         onDeleteAccount: (() async -> (success: Bool, requiresReauth: Bool))? = nil) {
+         onDeleteAccount: (() async -> (success: Bool, requiresReauth: Bool))? = nil,
+         isAppleLinked: Bool = false,
+         accountID: String? = nil,
+         connectedSignIns: [String] = [],
+         onConnectApple: ((String, String, PersonNameComponents?) async -> String?)? = nil) {
         self.email = email
         self.isPro = isPro
         self.storeKit = storeKit
@@ -63,6 +76,10 @@ struct AccountSettingsView: View {
         self.onTrackSwitch = onTrackSwitch
         self.onWorkoutDaysChange = onWorkoutDaysChange
         self.onDeleteAccount = onDeleteAccount
+        self.isAppleLinked = isAppleLinked
+        self.accountID = accountID
+        self.connectedSignIns = connectedSignIns
+        self.onConnectApple = onConnectApple
         _selectedDays = State(initialValue: Set(workoutDays))
     }
 
@@ -134,9 +151,88 @@ struct AccountSettingsView: View {
                             Text("Account Status: \(isPro ? "Pro" : "Standard")")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                            if !connectedSignIns.isEmpty {
+                                Text("Connected: \(connectedSignIns.joined(separator: ", "))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let accountID, !accountID.isEmpty {
+                                Text("Firebase ID: \(accountID)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
                         }
                     }
                     .padding(.vertical, 4)
+
+                    if isAppleLinked {
+                        Label("Apple Sign-In Connected", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else if onConnectApple != nil {
+                        VStack(alignment: .leading, spacing: 8) {
+                            SignInWithAppleButton(.continue) { request in
+                                let nonce = FirebaseService.randomNonceString()
+                                currentNonce = nonce
+                                request.requestedScopes = [.fullName, .email]
+                                request.nonce = FirebaseService.sha256(nonce)
+                            } onCompletion: { result in
+                                Task { @MainActor in
+                                    isConnectingApple = true
+                                    appleConnectError = nil
+                                    appleConnectSuccess = false
+
+                                    switch result {
+                                    case .success(let authorization):
+                                        if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                                           let appleIDToken = appleIDCredential.identityToken,
+                                           let idTokenString = String(data: appleIDToken, encoding: .utf8),
+                                           let nonce = currentNonce {
+                                            let errorMessage = await onConnectApple?(
+                                                idTokenString,
+                                                nonce,
+                                                appleIDCredential.fullName
+                                            )
+                                            appleConnectSuccess = errorMessage == nil
+                                            if let errorMessage {
+                                                appleConnectError = errorMessage
+                                            }
+                                        } else {
+                                            appleConnectError = "Apple Sign-In did not return a valid token. Please try again."
+                                        }
+                                    case .failure(let error):
+                                        let nsError = error as NSError
+                                        if nsError.domain != ASAuthorizationError.errorDomain
+                                            || nsError.code != ASAuthorizationError.canceled.rawValue {
+                                            appleConnectError = error.localizedDescription
+                                        }
+                                    }
+
+                                    isConnectingApple = false
+                                }
+                            }
+                            .frame(height: 44)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .disabled(isConnectingApple)
+
+                            if isConnectingApple {
+                                HStack {
+                                    ProgressView()
+                                    Text("Connecting Apple Sign-In...")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else if appleConnectSuccess {
+                                Label("Apple Sign-In connected", systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
+                            } else if let appleConnectError {
+                                Text(appleConnectError)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
 
                 // Purchases section

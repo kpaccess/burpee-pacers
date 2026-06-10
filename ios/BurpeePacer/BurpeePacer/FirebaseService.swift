@@ -113,53 +113,225 @@ class FirebaseService {
     @MainActor
     func signInWithGoogle() async {
         authError = nil
-        guard let clientID = FirebaseApp.app()?.options.clientID else { return }
-        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        guard configureGoogleSignIn() else { return }
 
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let root  = scene.windows.first?.rootViewController else {
+        guard let root = rootViewController() else {
             authError = "Cannot find root view controller"
             return
         }
 
         do {
-            let result     = try await GIDSignIn.sharedInstance.signIn(withPresenting: root)
-            guard let idToken = result.user.idToken?.tokenString else {
-                authError = "Missing Google ID token"
-                return
-            }
-            let credential = GoogleAuthProvider.credential(
-                withIDToken: idToken,
-                accessToken: result.user.accessToken.tokenString
-            )
-            try await Auth.auth().signIn(with: credential)
-        } catch {
-            authError = error.localizedDescription
+            let credential = try await googleCredential(withPresenting: root)
+            let result = try await Auth.auth().signIn(with: credential)
+            await stampAuthProfile(for: result.user)
+        } catch let error as NSError {
+            await handleProviderSignInError(error, attemptedProviderName: "Google")
         }
     }
 
     /// Handles the Firebase sign-in after Apple authorization is successful.
-    func handleAppleSignIn(idToken: String, rawNonce: String, fullName: PersonNameComponents?) async {
+    @MainActor
+    func handleAppleSignIn(idToken: String, rawNonce: String, fullName: PersonNameComponents?, email: String?) async {
         authError = nil
+        let appleEmail = email ?? Self.emailFromAppleIDToken(idToken)
+
+        guard let appleEmail, !appleEmail.isEmpty else {
+            authError = "Apple did not share an email address. Delete BurpeePacers from Sign in with Apple, then try again and choose Share My Email."
+            return
+        }
+
+        guard !Self.isApplePrivateRelayEmail(appleEmail) else {
+            authError = "Apple is sharing a private relay email. Sign in with Google first, then open Account settings and connect Apple Sign-In."
+            return
+        }
+
         let credential = OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: rawNonce, fullName: fullName)
         
         do {
-            let result = try await Auth.auth().signIn(with: credential)
-            
-            // On first sign-in, Apple provides the name. We should save it to Firestore.
-            if let fullName = fullName {
-                let uid = result.user.uid
-                let name = [fullName.givenName, fullName.familyName]
-                    .compactMap { $0 }
-                    .joined(separator: " ")
-                
-                if !name.isEmpty {
-                    try? await db.collection("users").document(uid).setData(["displayName": name], merge: true)
-                }
+            if try await linkAppleToExistingAccountIfNeeded(credential, email: appleEmail, fullName: fullName) {
+                return
             }
-        } catch {
-            authError = error.localizedDescription
+
+            let result = try await Auth.auth().signIn(with: credential)
+            await stampAuthProfile(for: result.user, fullName: fullName)
+        } catch let error as NSError {
+            await handleProviderSignInError(error, attemptedProviderName: "Apple", fullName: fullName)
         }
+    }
+
+    @MainActor
+    func linkCurrentUserWithApple(idToken: String, rawNonce: String, fullName: PersonNameComponents?) async -> Bool {
+        authError = nil
+        guard let user = Auth.auth().currentUser else {
+            authError = "Sign in with Google first, then connect Apple Sign-In."
+            return false
+        }
+
+        let credential = OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: rawNonce, fullName: fullName)
+
+        do {
+            try await linkCredentialIfNeeded(credential, to: user, providerID: "apple.com")
+            try await user.reload()
+            let refreshedUser = Auth.auth().currentUser ?? user
+            currentUser = refreshedUser
+            await stampAuthProfile(for: refreshedUser, fullName: fullName)
+            return true
+        } catch let error as NSError {
+            if error.domain == AuthErrorDomain,
+               AuthErrorCode(rawValue: error.code) == .credentialAlreadyInUse {
+                authError = "This Apple ID is already connected to another Firebase account. Delete that duplicate Apple account in Firebase, then try again."
+            } else {
+                authError = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    @MainActor
+    private func linkAppleToExistingAccountIfNeeded(
+        _ appleCredential: AuthCredential,
+        email: String,
+        fullName: PersonNameComponents?
+    ) async throws -> Bool {
+        let methods = try await Auth.auth().fetchSignInMethods(forEmail: email)
+        guard methods.contains("google.com"), !methods.contains("apple.com") else {
+            return false
+        }
+        guard let root = rootViewController() else {
+            authError = "Cannot find root view controller"
+            return true
+        }
+
+        guard configureGoogleSignIn() else { return true }
+        let googleCredential = try await googleCredential(withPresenting: root)
+        let result = try await Auth.auth().signIn(with: googleCredential)
+        try await linkCredentialIfNeeded(appleCredential, to: result.user, providerID: "apple.com")
+        try await result.user.reload()
+        let refreshedUser = Auth.auth().currentUser ?? result.user
+        currentUser = refreshedUser
+        await stampAuthProfile(for: refreshedUser, fullName: fullName)
+        return true
+    }
+
+    @MainActor
+    private func handleProviderSignInError(
+        _ error: NSError,
+        attemptedProviderName: String,
+        fullName: PersonNameComponents? = nil
+    ) async {
+        guard error.domain == AuthErrorDomain,
+              AuthErrorCode(rawValue: error.code) == .accountExistsWithDifferentCredential else {
+            authError = error.localizedDescription
+            return
+        }
+
+        let pendingCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+        let email = error.userInfo[AuthErrorUserInfoEmailKey] as? String
+        let methods = (try? await Auth.auth().fetchSignInMethods(forEmail: email ?? "")) ?? []
+
+        if attemptedProviderName == "Apple",
+           methods.contains("google.com"),
+           let pendingCredential,
+           let root = rootViewController() {
+            do {
+                guard configureGoogleSignIn() else { return }
+                let googleCredential = try await googleCredential(withPresenting: root)
+                let result = try await Auth.auth().signIn(with: googleCredential)
+                try await linkCredentialIfNeeded(pendingCredential, to: result.user, providerID: "apple.com")
+                try await result.user.reload()
+                let refreshedUser = Auth.auth().currentUser ?? result.user
+                currentUser = refreshedUser
+                await stampAuthProfile(for: refreshedUser, fullName: fullName)
+                return
+            } catch {
+                authError = "We found an existing Google account for this email, but could not connect Apple Sign-In. Please sign in with Google and try again."
+                return
+            }
+        }
+
+        if methods.contains("password") {
+            authError = "An account already exists with this email. Sign in with email and password first, then try \(attemptedProviderName) again to connect it."
+        } else if methods.contains("apple.com") {
+            authError = "An account already exists with this email. Sign in with Apple first, then try \(attemptedProviderName) again to connect it."
+        } else if methods.contains("google.com") {
+            authError = "An account already exists with this email. Sign in with Google first, then try \(attemptedProviderName) again to connect it."
+        } else {
+            authError = "An account already exists with this email using a different sign-in method."
+        }
+    }
+
+    @MainActor
+    private func rootViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+            return nil
+        }
+        return scene.windows.first { $0.isKeyWindow }?.rootViewController
+            ?? scene.windows.first?.rootViewController
+    }
+
+    @MainActor
+    private func configureGoogleSignIn() -> Bool {
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            authError = "Google Sign-In is not configured"
+            return false
+        }
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        return true
+    }
+
+    @MainActor
+    private func googleCredential(withPresenting root: UIViewController) async throws -> AuthCredential {
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: root)
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw NSError(domain: AuthErrorDomain, code: AuthErrorCode.missingOrInvalidNonce.rawValue, userInfo: [
+                NSLocalizedDescriptionKey: "Missing Google ID token"
+            ])
+        }
+        return GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: result.user.accessToken.tokenString
+        )
+    }
+
+    private func linkCredentialIfNeeded(_ credential: AuthCredential, to user: User, providerID: String) async throws {
+        guard !user.providerData.contains(where: { $0.providerID == providerID }) else {
+            return
+        }
+
+        do {
+            try await user.link(with: credential)
+        } catch let error as NSError {
+            if error.domain == AuthErrorDomain,
+               AuthErrorCode(rawValue: error.code) == .providerAlreadyLinked {
+                return
+            }
+            throw error
+        }
+    }
+
+    private func stampAuthProfile(for user: User, fullName: PersonNameComponents? = nil) async {
+        var payload: [String: Any] = [
+            "authProviderIds": user.providerData.map(\.providerID)
+        ]
+
+        if let email = user.email?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty {
+            payload["email"] = email
+            payload["emailLowercase"] = email.lowercased()
+        }
+
+        if let fullName {
+            let name = [fullName.givenName, fullName.familyName]
+                .compactMap { $0 }
+                .joined(separator: " ")
+
+            if !name.isEmpty {
+                payload["displayName"] = name
+            }
+        } else if let displayName = user.displayName, !displayName.isEmpty {
+            payload["displayName"] = displayName
+        }
+
+        try? await db.collection("users").document(user.uid).setData(payload, merge: true)
     }
 
     func signOut() {
@@ -236,11 +408,18 @@ class FirebaseService {
 
     private func initializeNewUserProfile(uid: String) {
         // workoutTier intentionally omitted — user picks during onboarding
-        let defaultData: [String: Any] = [
+        var defaultData: [String: Any] = [
             "startDate": Self.dateKey(Date()),
             "startWeight": 165.0,
             "workoutLogs": []
         ]
+        if let user = Auth.auth().currentUser, user.uid == uid {
+            if let email = user.email?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty {
+                defaultData["email"] = email
+                defaultData["emailLowercase"] = email.lowercased()
+            }
+            defaultData["authProviderIds"] = user.providerData.map(\.providerID)
+        }
         Task {
             try? await db.collection("users").document(uid).setData(defaultData, merge: true)
         }
@@ -452,5 +631,28 @@ class FirebaseService {
         }.joined()
 
         return hashString
+    }
+
+    private static func isApplePrivateRelayEmail(_ email: String) -> Bool {
+        email.lowercased().hasSuffix("@privaterelay.appleid.com")
+    }
+
+    private static func emailFromAppleIDToken(_ idToken: String) -> String? {
+        let parts = idToken.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+
+        var payload = String(parts[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+
+        let paddingLength = (4 - payload.count % 4) % 4
+        payload += String(repeating: "=", count: paddingLength)
+
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        return json["email"] as? String
     }
 }

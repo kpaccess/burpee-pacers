@@ -41,6 +41,24 @@ struct DashboardView: View {
                         workoutDays: viewModel.workoutDays,
                         onWorkoutDaysChange: { viewModel.updateWorkoutDays($0) },
                         onDeleteAccount: { await viewModel.firebase.deleteAccount() },
+                        isAppleLinked: viewModel.firebase.currentUser?.providerData.contains(where: { $0.providerID == "apple.com" }) == true,
+                        accountID: viewModel.firebase.currentUser?.uid,
+                        connectedSignIns: viewModel.firebase.currentUser?.providerData.map { provider in
+                            switch provider.providerID {
+                            case "google.com": return "Google"
+                            case "apple.com": return "Apple"
+                            case "password": return "Email"
+                            default: return provider.providerID
+                            }
+                        } ?? [],
+                        onConnectApple: { idToken, nonce, fullName in
+                            let success = await viewModel.firebase.linkCurrentUserWithApple(
+                                idToken: idToken,
+                                rawNonce: nonce,
+                                fullName: fullName
+                            )
+                            return success ? nil : viewModel.firebase.authError ?? "Apple Sign-In could not be connected. If you had a duplicate Apple Firebase account, delete it and try again."
+                        },
                         ageBracket: $viewModel.ageBracket,
                         equipment: $viewModel.equipment
                     )

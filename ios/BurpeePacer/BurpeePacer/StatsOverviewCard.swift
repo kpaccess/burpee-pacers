@@ -50,7 +50,7 @@ struct StatsOverviewCard: View {
                     HStack(spacing: 4) {
                         Text("~\(viewModel.proteinTargetGrams)g/day")
                             .font(.headline)
-                        Text("(1.5g × kg)")
+                        Text(proteinFormulaDisplay)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -158,6 +158,10 @@ struct StatsOverviewCard: View {
         viewModel.useKilograms
             ? String(format: "%.1f kg (%.0f lbs)", viewModel.startWeightLbs / 2.20462, viewModel.startWeightLbs)
             : String(format: "%.0f lbs (%.1f kg)", viewModel.startWeightLbs, viewModel.startWeightLbs / 2.20462)
+    }
+
+    private var proteinFormulaDisplay: String {
+        viewModel.useKilograms ? "(1.5g x kg)" : "(0.68g x lb)"
     }
 
     private var editWeightValue: String {

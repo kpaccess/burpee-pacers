@@ -45,7 +45,7 @@ struct SignInView: View {
                         Text(isSignUp ? "Create an account to sync your workouts" : "Sign in to sync your workouts")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Text(isSignUp ? "Choose an email and strong password" : "Use the same method you used to sign up")
+                        Text(isSignUp ? "Choose an email and strong password" : "Existing Gmail users: sign in with Google first, then connect Apple in Account settings")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
@@ -69,7 +69,8 @@ struct SignInView: View {
                                     await firebase.handleAppleSignIn(
                                         idToken: idTokenString,
                                         rawNonce: nonce,
-                                        fullName: appleIDCredential.fullName
+                                        fullName: appleIDCredential.fullName,
+                                        email: appleIDCredential.email
                                     )
                                 }
                             case .failure(let error):

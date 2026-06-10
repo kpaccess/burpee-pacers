@@ -17,6 +17,10 @@ struct HeaderView: View {
     var workoutDays: [Int] = [2, 4, 6]
     var onWorkoutDaysChange: (([Int]) -> Void)? = nil
     var onDeleteAccount: (() async -> (success: Bool, requiresReauth: Bool))? = nil
+    var isAppleLinked: Bool = false
+    var accountID: String? = nil
+    var connectedSignIns: [String] = []
+    var onConnectApple: ((String, String, PersonNameComponents?) async -> String?)? = nil
     @Binding var ageBracket: AgeBracket
     @Binding var equipment: Equipment
 
@@ -69,7 +73,11 @@ struct HeaderView: View {
                 onSignOut: onSignOut,
                 onTrackSwitch: onTrackSwitch,
                 onWorkoutDaysChange: onWorkoutDaysChange,
-                onDeleteAccount: onDeleteAccount
+                onDeleteAccount: onDeleteAccount,
+                isAppleLinked: isAppleLinked,
+                accountID: accountID,
+                connectedSignIns: connectedSignIns,
+                onConnectApple: onConnectApple
             )
         }
     }
