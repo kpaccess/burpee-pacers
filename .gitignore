@@ -22,6 +22,8 @@ dist/
 
 # iOS
 ios/BurpeePacer/BurpeePacer/GoogleService-Info.plist
+**/*.xcuserstate
+**/xcuserdata/
 
 # Android — contains Google API key and Firebase project config; never commit
 android/app/google-services.json

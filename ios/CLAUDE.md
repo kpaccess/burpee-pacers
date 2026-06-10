@@ -92,6 +92,19 @@ Four independent gates, checked in order:
 
 `FirebaseService` mirrors the web schema at `users/{uid}`. When writing workout logs, it always writes `levelCompleted` in the format `"1C(N)"` (level ID + mode char in parens). `parseLevelCompleted` parses this back. `FirebaseService.parse` handles a legacy Firestore typo: `startPictureURl` (capital L) alongside `startPictureUrl`.
 
+### Secondary Features
+
+- **`StoreKitManager.swift`** — `@Observable`; fetches StoreKit 2 products, listens for transactions, and tracks `purchasedProductIDs` for the `com.burpeepacers.pro` entitlement (feeds gate 3 of `hasProAccess`)
+- **`WeightedTrainingModels.swift`** — `WeightedTrainingPlan` returns a Mon/Wed/Fri (`Day 1/2/3`) weighted-training session, surfaced by `WeightedTrainingCard.swift`
+- **`FinisherDatabase.swift`** (iOS) — `StrengthFinisher` recommendations by weekday + `AgeBracket` + `Equipment`, surfaced via `FridayPullingWorkSection.swift`; mirrors the Android `FinisherDatabase` concept but is iOS-specific
+- **`TrackSelectionView.swift`** — shared by onboarding (`currentTrack == nil`) and settings-driven track switching (`onDismiss` non-nil)
+- **`LandingView.swift`** — pre-auth marketing screen shown before `SignInView`
+
+### Dev/Debug-only Files
+
+- **`ComponentGuide.swift`** / **`ExampleUsage.swift`** — reference docs and usage examples for views like `SessionTimerView`; not part of the running app's navigation
+- **`ScreenshotUtility.swift`** — `#if DEBUG` only; provides `MockFirebaseService` and `AppViewModel.screenshotPreview` for generating App Store screenshots with realistic mock data
+
 ## Testing Constraints
 
 - **WatchConnectivity and HKWorkoutSession require physical hardware** — the full phone↔watch sync loop cannot be tested in the simulator
