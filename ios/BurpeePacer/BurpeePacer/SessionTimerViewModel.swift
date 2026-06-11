@@ -98,7 +98,8 @@ class SessionTimerViewModel: Identifiable {
             modeLabel: watchModeLabel,
             hybridPhaseIndex: hybridPhaseIndex,
             track: level.track.rawValue,
-            countdownToNextRep: countdown
+            countdownToNextRep: countdown,
+            endEpoch: isRunning ? Date().timeIntervalSince1970 + timeRemaining : 0
         )
         PhoneSessionManager.shared.push(state)
     }
