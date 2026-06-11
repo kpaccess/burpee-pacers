@@ -23,10 +23,12 @@ final class WatchSessionManager: NSObject {
     var totalReps: Int = 0
     var isActive: Bool = false
     var modeLabel: String = ""
+    var mode: String = "C"
     var hybridPhaseIndex: Int = 0
 
-    private var lastCountdownToNextRep: Int = 0
+    private var lastBeepedSecond: Int = -1
     private var localTimer: Timer?
+    private var endEpoch: Double = 0
 
     // MARK: - Live HealthKit Metrics
 
@@ -77,21 +79,65 @@ final class WatchSessionManager: NSObject {
         currentRep = 0
         totalReps = 0
         secondsLeft = 1200
-        lastCountdownToNextRep = 0
+        lastBeepedSecond = -1
+        endEpoch = 0
         stopLocalTimer()
     }
 
     private func startLocalTimer() {
         localTimer?.invalidate()
-        localTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self, self.phase == "active", self.secondsLeft > 0 else { return }
-            self.secondsLeft -= 1
+        localTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            guard let self, self.phase == "active" else { return }
+            self.syncClock()
         }
+    }
+
+    /// Derives secondsLeft from the wall-clock deadline the iPhone sent, so
+    /// both displays compute the same value from synced clocks instead of
+    /// drifting on independent timers.
+    private func syncClock() {
+        guard endEpoch > 0 else { return }
+        let newSeconds = max(0, Int(endEpoch - Date().timeIntervalSince1970))
+        guard newSeconds != secondsLeft else { return }
+        secondsLeft = newSeconds
+        updatePacingBeep()
     }
 
     private func stopLocalTimer() {
         localTimer?.invalidate()
         localTimer = nil
+    }
+
+    // MARK: - Local Pacing Countdown
+
+    /// Mirrors SessionTimerViewModel.secondsToNextRep on the iPhone so the
+    /// 4-3-2-1 warning beeps fire from the Watch's own clock instead of
+    /// waiting on per-second WatchConnectivity messages.
+    private func updatePacingBeep() {
+        guard totalReps > 0 else { return }
+        let isHybrid = mode == "H"
+        let phaseDuration = isHybrid ? 600.0 : 1200.0
+        let phaseSecondsLeft = isHybrid && secondsLeft > 600 ? secondsLeft - 600 : secondsLeft
+        let intervalSeconds = phaseDuration / Double(totalReps)
+        guard intervalSeconds > 0 else { return }
+
+        let phaseElapsed = phaseDuration - Double(phaseSecondsLeft)
+        // currentRep mirrors the iPhone's currentDisplayRep: the 1-based rep
+        // currently being worked toward.
+        let nextRepAt = Double(currentRep) * intervalSeconds
+        let remaining = Int(ceil(nextRepAt - phaseElapsed))
+
+        if (1...4).contains(remaining), remaining != lastBeepedSecond {
+            lastBeepedSecond = remaining
+            WKInterfaceDevice.current().play(.notification)
+            WatchSoundManager.shared.playCountdownBeep()
+        } else if remaining <= 0, currentRep < totalReps {
+            // Boundary passed before the iPhone's push arrived — advance the
+            // displayed rep locally; the next push will correct any mismatch.
+            currentRep += 1
+            lastBeepedSecond = -1
+            WKInterfaceDevice.current().play(.start)
+        }
     }
 
     // MARK: - Authorization
@@ -145,6 +191,14 @@ final class WatchSessionManager: NSObject {
         }
     }
 
+    private func discardHealthKitWorkout() {
+        guard let session = workoutSession, let builder = workoutBuilder else { return }
+        workoutSession = nil
+        workoutBuilder = nil
+        builder.discardWorkout()
+        session.end()
+    }
+
     // MARK: - Apply UI State from iPhone (WatchConnectivity)
 
     private func apply(_ dict: [String: Any]) {
@@ -153,21 +207,27 @@ final class WatchSessionManager: NSObject {
         let wasActive   = isActive
 
         phase              = newPhase
-        secondsLeft        = dict["secondsLeft"]        as? Int    ?? 1200
         totalSeconds       = dict["totalSeconds"]       as? Int    ?? 1200
         prepareSecondsLeft = dict["prepareSecondsLeft"] as? Int    ?? 10
-        currentRep         = dict["currentRep"]         as? Int    ?? 0
         totalReps          = dict["totalReps"]          as? Int    ?? 0
         isActive           = newIsActive
         modeLabel          = dict["modeLabel"]          as? String ?? ""
+        mode               = dict["mode"]               as? String ?? mode
         hybridPhaseIndex   = dict["hybridPhaseIndex"]   as? Int    ?? 0
 
-        let newCountdown = dict["countdownToNextRep"] as? Int ?? 0
-        if newCountdown > 0 && newCountdown != lastCountdownToNextRep {
-            WKInterfaceDevice.current().play(.notification)
-            WatchSoundManager.shared.playCountdownBeep()
+        // While running, both devices derive the countdown from the same
+        // wall-clock deadline; the pushed secondsLeft is only used when the
+        // timer is stopped (no deadline to compute from).
+        endEpoch = dict["endEpoch"] as? Double ?? 0
+        if newPhase == "active" && endEpoch > 0 {
+            secondsLeft = max(0, Int(endEpoch - Date().timeIntervalSince1970))
+        } else {
+            secondsLeft = dict["secondsLeft"] as? Int ?? 1200
         }
-        lastCountdownToNextRep = newCountdown
+
+        let newRep = dict["currentRep"] as? Int ?? 0
+        if newRep != currentRep { lastBeepedSecond = -1 }
+        currentRep = newRep
 
         switch newPhase {
         case "active":
@@ -195,7 +255,7 @@ final class WatchSessionManager: NSObject {
         case "idle":
             stopLocalTimer()
             if workoutSession != nil {
-                Task { await endHealthKitWorkout() }
+                discardHealthKitWorkout()
             }
         default:
             break

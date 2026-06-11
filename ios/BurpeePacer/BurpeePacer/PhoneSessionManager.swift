@@ -21,10 +21,12 @@ struct WorkoutState {
     var hybridPhaseIndex: Int = 0
     var track: String
     var countdownToNextRep: Int = 0   // 4/3/2/1 when approaching next rep, else 0
+    var endEpoch: Double = 0          // wall-clock time when the timer hits 0 (0 when not running)
 
     var asDictionary: [String: Any] {
         [
             "phase":               phase,
+            "endEpoch":            endEpoch,
             "secondsLeft":         secondsLeft,
             "totalSeconds":        totalSeconds,
             "prepareSecondsLeft":  prepareSecondsLeft,
@@ -53,12 +55,23 @@ final class PhoneSessionManager: NSObject {
         WCSession.default.activate()
     }
 
+    private var lastContextKey = ""
+
     func push(_ state: WorkoutState) {
         guard WCSession.default.activationState == .activated else { return }
         let payload = state.asDictionary
-        try? WCSession.default.updateApplicationContext(payload)
-        if WCSession.default.isReachable {
+        let reachable = WCSession.default.isReachable
+        if reachable {
             WCSession.default.sendMessage(payload, replyHandler: nil)
+        }
+        // The application context is the wake-up fallback. Rewriting it every
+        // second gets throttled by WatchConnectivity and adds latency, so only
+        // refresh it on meaningful state changes — or on every push when the
+        // Watch is unreachable and context is the only delivery channel.
+        let contextKey = "\(state.phase)|\(state.currentRep)|\(state.hybridPhaseIndex)|\(state.isActive)|\(state.mode)"
+        if !reachable || contextKey != lastContextKey {
+            lastContextKey = contextKey
+            try? WCSession.default.updateApplicationContext(payload)
         }
     }
 }

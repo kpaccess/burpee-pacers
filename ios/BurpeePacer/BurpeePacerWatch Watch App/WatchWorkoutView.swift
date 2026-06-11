@@ -7,6 +7,7 @@ import SwiftUI
 
 struct WatchWorkoutView: View {
     @Environment(WatchSessionManager.self) var session
+    @State private var isConfirmingReset = false
 
     private var timeProgress: Double {
         guard session.totalSeconds > 0 else { return 0 }
@@ -85,33 +86,66 @@ struct WatchWorkoutView: View {
     }
 
     private var controlBar: some View {
-        HStack(spacing: 12) {
-            Button(action: session.tapDecrementRep) {
-                Image(systemName: "minus")
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.15))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                Button(action: session.tapDecrementRep) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.15))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
 
-            Button(action: session.isActive ? session.tapPause : session.tapStart) {
-                Image(systemName: session.isActive ? "pause.fill" : "play.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(width: 36, height: 36)
-                    .background(Color.orange.opacity(0.8))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
+                Button(action: session.isActive ? session.tapPause : session.tapStart) {
+                    Image(systemName: session.isActive ? "pause.fill" : "play.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 36, height: 36)
+                        .background(Color.orange.opacity(0.8))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
 
-            Button(action: session.tapIncrementRep) {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(width: 36, height: 36)
-                    .background(Color.red.opacity(0.8))
-                    .clipShape(Circle())
+                Button(action: session.tapIncrementRep) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 36, height: 36)
+                        .background(Color.red.opacity(0.8))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            if !session.isActive {
+                Button(action: {
+                    if isConfirmingReset {
+                        session.tapReset()
+                        isConfirmingReset = false
+                    } else {
+                        withAnimation {
+                            isConfirmingReset = true
+                        }
+                        // Reset the confirmation state after 3 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            withAnimation {
+                                isConfirmingReset = false
+                            }
+                        }
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: isConfirmingReset ? "exclamationmark.triangle.fill" : "arrow.counterclockwise")
+                        Text(isConfirmingReset ? "Confirm Reset?" : "Reset")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 28)
+                    .background(isConfirmingReset ? Color.red.opacity(0.8) : Color.gray.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+            }
         }
         .padding(.bottom, 4)
     }
