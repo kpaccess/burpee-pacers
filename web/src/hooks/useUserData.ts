@@ -148,8 +148,16 @@ export function useUserData() {
       timerVerified: safeLogs.filter((l) => l.completed && l.repsCompleted !== undefined).length,
     };
 
+    // The program "starts" the day the user completes their first workout,
+    // not the day they signed up.
+    const shouldSetStartDate = completed && !userData.startDate;
+
     try {
-      await saveUserData({ workoutLogs: safeLogs, workoutStats });
+      await saveUserData({
+        workoutLogs: safeLogs,
+        workoutStats,
+        ...(shouldSetStartDate ? { startDate: normalizedDate } : {}),
+      });
     } catch (e) {
       console.warn("Handled save error:", e);
     }

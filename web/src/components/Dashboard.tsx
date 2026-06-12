@@ -298,8 +298,8 @@ export default function Dashboard({
   const isBeginnerTrack = !isAdvancedTrack;
   const levelsForTrack = isAdvancedTrack ? ADVANCED_LEVELS : BEGINNER_LEVELS;
 
-  const startDate = new Date(userData.startDate);
-  const milestoneDate = addMonths(startDate, 6);
+  const startDate = userData.startDate ? new Date(userData.startDate) : null;
+  const milestoneDate = startDate ? addMonths(startDate, 6) : null;
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
 
@@ -325,9 +325,12 @@ export default function Dashboard({
   // Show the Pulling Work section only on Fridays for the Advanced Track
   const isFridayAdvanced = isAdvancedTrack && todayDayName === "Fri";
 
-  const isMilestoneReached = isAfter(today, milestoneDate) && !userData.endDate;
-  const daysPassed = differenceInDays(today, startDate);
-  const daysToMilestone = differenceInDays(milestoneDate, today);
+  const isMilestoneReached =
+    !!milestoneDate && isAfter(today, milestoneDate) && !userData.endDate;
+  const daysPassed = startDate ? differenceInDays(today, startDate) : 0;
+  const daysToMilestone = milestoneDate
+    ? differenceInDays(milestoneDate, today)
+    : 0;
 
   // Generate calendar days for the selected month
   const [currentMonth, setCurrentMonth] = useState(() =>
@@ -543,7 +546,9 @@ export default function Dashboard({
               My Burpee Journey
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
-              Day {Math.max(0, daysPassed)} • Busy People Program
+              {startDate
+                ? `Day ${Math.max(0, daysPassed)} • Busy People Program`
+                : "Complete your first workout to start the program • Busy People Program"}
             </Typography>
           </Box>
           <Box display="flex" gap={2} alignItems="center">
@@ -773,7 +778,10 @@ export default function Dashboard({
                   </Box>
                 )}
                 <Typography variant="body2" color="text.secondary">
-                  Start Date: {startDate.toLocaleDateString()}
+                  Start Date:{" "}
+                  {startDate
+                    ? startDate.toLocaleDateString()
+                    : "Not started yet — complete your first workout to begin"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Starting Weight: {userData.startWeight} lbs ({Math.round(userData.startWeight / 2.205)} kg)

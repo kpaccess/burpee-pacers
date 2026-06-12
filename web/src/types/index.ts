@@ -16,7 +16,11 @@ export type WorkoutTier = "beginner" | "advanced";
 
 export interface UserData {
   userId?: string;
-  startDate: string;
+  /**
+   * Set when the user completes their first 20-minute workout, not at signup.
+   * Until then, the program hasn't "started" yet.
+   */
+  startDate?: string;
   startWeight: number;
   startPictureUrl: string | null;
   workoutTier?: WorkoutTier;
