@@ -18,23 +18,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BurpeePacer | The Elite Burpee Tracker",
+  title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
   description:
-    "The official BurpeePacer app. Track your landmarks, set your pace, and master the Busy People Program.",
+    "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
   openGraph: {
-    title: "BurpeePacer | The Elite Burpee Tracker",
+    title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
     description:
-      "The official BurpeePacer app. Track your landmarks, set your pace, and master the Busy People Program.",
+      "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
     url: "https://burpeepacers.com",
-    siteName: "BurpeePacer",
+    siteName: "BurpeePacers",
     images: [{ url: "/opengraph-image.png", width: 1024, height: 1024 }],
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "BurpeePacer | The Elite Burpee Tracker",
+    title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
     description:
-      "The official BurpeePacer app. Track your landmarks, set your pace, and master the Busy People Program.",
+      "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
     images: ["/opengraph-image.png"],
   },
 };
