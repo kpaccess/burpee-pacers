@@ -402,21 +402,18 @@ struct SessionTimerView: View {
     // MARK: - Tutorial Link
 
     private var tutorialLinkSection: some View {
-        let isBeginnerTrack = viewModel.level.track == .beginner
-        return Link(destination: URL(string: viewModel.level.tutorialURL)!) {
-            HStack {
-                Image(systemName: "play.rectangle.fill").font(.title3)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(isBeginnerTrack ? "Open Beginner Video" : "Open Tutorials").font(.headline)
-                    Text("Learn proper form").font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "arrow.up.right").font(.caption)
+        HStack {
+            Image(systemName: "play.rectangle.fill").font(.title3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Coming Soon — Tutorial videos launching soon").font(.headline)
+                Text("Learn proper form").font(.caption).foregroundStyle(.secondary)
             }
-            .padding()
-            .background(Color(UIColor.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            Spacer()
         }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .opacity(0.5)
         .padding(.horizontal)
     }
 

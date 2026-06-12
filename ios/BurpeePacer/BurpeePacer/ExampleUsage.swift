@@ -34,8 +34,7 @@ struct CustomLevelExample: View {
         displayName: "Custom Challenge",
         description: "50 burpees in 20 min.",
         sealsGoal: 0,
-        sixCountsGoal: 50,
-        tutorialURL: "https://www.youtube.com/watch?v=custom"
+        sixCountsGoal: 50
     )
 
     var body: some View {

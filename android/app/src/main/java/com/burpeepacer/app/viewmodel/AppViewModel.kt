@@ -64,7 +64,7 @@ class AppViewModel(private val repository: DataRepository) : ViewModel() {
     fun updateTrack(track: ProgramTrack) {
         viewModelScope.launch {
             val current = userProfile.value
-            val levelId = if (track == ProgramTrack.BEGINNER) "B1" else "1B"
+            val levelId = if (track == ProgramTrack.BEGINNER) "B1" else "F"
             repository.updateUserProfile(current.copy(currentTrack = track, currentLevelID = levelId))
         }
     }

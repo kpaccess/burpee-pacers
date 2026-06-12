@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -206,10 +207,7 @@ fun WorkoutScreen(
                 }
 
                 // Tutorial Link
-                TutorialLink(
-                    url = currentLevel.tutorialURL,
-                    isBeginner = userProfile.currentTrack == ProgramTrack.BEGINNER
-                )
+                TutorialLink()
 
                 Spacer(modifier = Modifier.weight(1f))
             }
@@ -521,25 +519,22 @@ fun CooldownBanner(onSave: () -> Unit, onShowGuidelines: () -> Unit) {
 }
 
 @Composable
-fun TutorialLink(url: String, isBeginner: Boolean) {
+fun TutorialLink() {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Intent to open URL */ },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF18181B))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp).alpha(0.5f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(if (isBeginner) "Open Beginner Video" else "Open Tutorials", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Coming Soon — Tutorial videos launching soon", color = Color.White, fontWeight = FontWeight.Bold)
                 Text("Learn proper form", color = Color(0xFFA1A1AA), fontSize = 12.sp)
             }
-            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFFA1A1AA), modifier = Modifier.size(16.dp))
         }
     }
 }

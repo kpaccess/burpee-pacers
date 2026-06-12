@@ -579,7 +579,7 @@ struct AccountSettingsView: View {
         isPro: false,
         storeKit: StoreKitManager(),
         track: .advanced,
-        levelDisplayName: "Level 1C",
+        levelDisplayName: "Level 1",
         workoutDays: [2, 4, 6],
         ageBracket: .constant(.fiftiesPlus),
         equipment: .constant(.fullGym),

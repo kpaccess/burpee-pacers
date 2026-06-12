@@ -66,7 +66,7 @@ fun LandingScreen(
             Spacer(modifier = Modifier.height(64.dp))
 
             // Value Props
-            LandingValueProp("Structured Levels", "From B1 to Graduation")
+            LandingValueProp("Structured Levels", "From B1 to Elite")
             LandingValueProp("Pacer Metronome", "Hit every rep on time")
             LandingValueProp("Strength Finishers", "Personalized to your age")
 

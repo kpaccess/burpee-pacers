@@ -87,7 +87,7 @@ struct TrackSelectionView: View {
             : "Navy Seals · 5-Count Pushups · Hybrid"
         let bullets: [String] = isBeginner
             ? ["Levels B1–B6 (20–110 burpees)", "20-minute timed sessions", "Free during launch"]
-            : ["Levels 1B–Grad (up to 150 reps)", "Three workout modes per session", "Free during launch"]
+            : ["Levels Foundation–Elite (up to 120/300 reps)", "Three workout modes per session", "Free during launch"]
 
         return Button {
             guard !isCurrent else { return }

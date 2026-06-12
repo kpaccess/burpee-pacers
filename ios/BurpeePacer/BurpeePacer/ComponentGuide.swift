@@ -146,7 +146,6 @@ import SwiftUI
      let track: ProgramTrack
      let displayName: String
      let targetReps: Int
-     let tutorialURL: String
  }
  ```
  

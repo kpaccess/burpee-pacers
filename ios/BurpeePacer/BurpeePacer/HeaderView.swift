@@ -90,7 +90,7 @@ struct HeaderView: View {
         isPro: true,
         storeKit: StoreKitManager(),
         track: .advanced,
-        levelDisplayName: "Level 1C",
+        levelDisplayName: "Level 1",
         onSignOut: {},
         ageBracket: .constant(.fiftiesPlus),
         equipment: .constant(.fullGym)

@@ -22,7 +22,6 @@ interface WorkoutTimerProps {
   sixCountsGoal?: number;
   defaultMode?: WorkoutMode;
   onFinish?: (repsCompleted: number, mode: string) => void;
-  onOpenVideo?: () => void;
   onShowWarmup?: () => void;
   onShowCooldown?: () => void;
 }
@@ -33,7 +32,6 @@ export default function WorkoutTimer({
   sixCountsGoal = 0,
   defaultMode,
   onFinish,
-  onOpenVideo,
   onShowWarmup,
   onShowCooldown,
 }: WorkoutTimerProps) {
@@ -71,7 +69,6 @@ export default function WorkoutTimer({
   const [warmupChecked, setWarmupChecked] = useState(false);
   const [showWarmupPrompt, setShowWarmupPrompt] = useState(false);
 
-  const isBeginnerTrack = tier === "beginner";
   const isPreparing = phase === "prepare";
   const isDone = phase === "done";
   const isHybridMode = activeMode.mode === "H";
@@ -209,10 +206,10 @@ export default function WorkoutTimer({
       <Button
         variant="text"
         startIcon={<VideocamIcon />}
-        onClick={onOpenVideo}
+        disabled
         sx={{ color: "text.secondary" }}
       >
-        {isBeginnerTrack ? "Open Beginner Video" : "Open Tutorials"}
+        Coming Soon — Tutorial videos launching soon
       </Button>
     </Card>
   );

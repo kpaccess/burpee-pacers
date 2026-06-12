@@ -42,8 +42,7 @@ data class Level(
     val displayName: String,
     val description: String,
     val sealsGoal: Int,
-    val sixCountsGoal: Int,
-    val tutorialURL: String
+    val sixCountsGoal: Int
 ) {
     val availableModes: List<WorkoutMode>
         get() = if (track == ProgramTrack.BEGINNER) listOf(WorkoutMode.FIVE_COUNT) 
@@ -66,26 +65,22 @@ data class Level(
 }
 
 object LevelDatabase {
-    private const val BEGINNER_URL = "https://www.youtube.com/watch?v=TU8QYVW0gDU"
-    private const val ADVANCED_URL = "https://www.youtube.com/watch?v=4dF1DOWzf20"
-
     val beginnerLevels = listOf(
-        Level("B1", ProgramTrack.BEGINNER, "Beginner 1", "20 burpees (no pushups) in 20 min.", 0, 20, BEGINNER_URL),
-        Level("B2", ProgramTrack.BEGINNER, "Beginner 2", "40 burpees (no pushups) in 20 min.", 0, 40, BEGINNER_URL),
-        Level("B3", ProgramTrack.BEGINNER, "Beginner 3", "55 burpees (no pushups) in 20 min.", 0, 55, BEGINNER_URL),
-        Level("B4", ProgramTrack.BEGINNER, "Beginner 4", "70 burpees (no pushups) in 20 min.", 0, 70, BEGINNER_URL),
-        Level("B5", ProgramTrack.BEGINNER, "Beginner 5", "90 burpees (no pushups) in 20 min.", 0, 90, BEGINNER_URL),
-        Level("B6", ProgramTrack.BEGINNER, "Beginner 6", "110 burpees (no pushups) in 20 min.", 0, 110, BEGINNER_URL)
+        Level("B1", ProgramTrack.BEGINNER, "Beginner 1", "20 burpees (no pushups) in 20 min.", 0, 20),
+        Level("B2", ProgramTrack.BEGINNER, "Beginner 2", "40 burpees (no pushups) in 20 min.", 0, 40),
+        Level("B3", ProgramTrack.BEGINNER, "Beginner 3", "55 burpees (no pushups) in 20 min.", 0, 55),
+        Level("B4", ProgramTrack.BEGINNER, "Beginner 4", "70 burpees (no pushups) in 20 min.", 0, 70),
+        Level("B5", ProgramTrack.BEGINNER, "Beginner 5", "90 burpees (no pushups) in 20 min.", 0, 90),
+        Level("B6", ProgramTrack.BEGINNER, "Beginner 6", "110 burpees (no pushups) in 20 min.", 0, 110)
     )
 
     val advancedLevels = listOf(
-        Level("1B", ProgramTrack.ADVANCED, "Level 1B", "20 Navy Seals in 20 min, 50 5-count pushups in 20 min.", 20, 50, ADVANCED_URL),
-        Level("1C", ProgramTrack.ADVANCED, "Level 1C", "40 Navy Seals in 20 min, 100 5-count pushups in 20 min.", 40, 100, ADVANCED_URL),
-        Level("1D", ProgramTrack.ADVANCED, "Level 1D", "60 Navy Seals in 20 min, 150 5-count pushups in 20 min.", 60, 150, ADVANCED_URL),
-        Level("2", ProgramTrack.ADVANCED, "Level 2", "80 Navy Seals in 20 min, 200 5-count pushups in 20 min.", 80, 200, ADVANCED_URL),
-        Level("3", ProgramTrack.ADVANCED, "Level 3", "100 Navy Seals in 20 min, 250 5-count pushups in 20 min.", 100, 250, ADVANCED_URL),
-        Level("4", ProgramTrack.ADVANCED, "Level 4", "120 Navy Seals in 20 min, 275 5-count pushups in 20 min.", 120, 275, ADVANCED_URL),
-        Level("grad", ProgramTrack.ADVANCED, "Graduation", "150 Navy Seals in 20 min, 325 5-count pushups in 20 min.", 150, 325, ADVANCED_URL)
+        Level("F", ProgramTrack.ADVANCED, "Foundation", "15 Navy Seals in 20 min, 40 5-count pushups in 20 min.", 15, 40),
+        Level("1", ProgramTrack.ADVANCED, "Level 1", "30 Navy Seals in 20 min, 75 5-count pushups in 20 min.", 30, 75),
+        Level("2", ProgramTrack.ADVANCED, "Level 2", "50 Navy Seals in 20 min, 125 5-count pushups in 20 min.", 50, 125),
+        Level("3", ProgramTrack.ADVANCED, "Level 3", "70 Navy Seals in 20 min, 175 5-count pushups in 20 min.", 70, 175),
+        Level("4", ProgramTrack.ADVANCED, "Level 4", "90 Navy Seals in 20 min, 225 5-count pushups in 20 min.", 90, 225),
+        Level("E", ProgramTrack.ADVANCED, "Elite", "120 Navy Seals in 20 min, 300 5-count pushups in 20 min.", 120, 300)
     )
 
     fun getLevels(track: ProgramTrack): List<Level> {
