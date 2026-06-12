@@ -16,8 +16,7 @@ class WorkoutViewModelTest {
         displayName = "Test Level",
         description = "Test",
         sealsGoal = 100,
-        sixCountsGoal = 200,
-        tutorialURL = ""
+        sixCountsGoal = 200
     )
 
     @Test

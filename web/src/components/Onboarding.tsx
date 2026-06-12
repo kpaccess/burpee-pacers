@@ -62,7 +62,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleTierSelect = (tier: WorkoutTier) => {
     setWorkoutTier(tier);
-    setLevel(tier === "beginner" ? "B1" : "1B");
+    setLevel(tier === "beginner" ? "B1" : "F");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -141,7 +141,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 badgeColor: "primary" as const,
                 bullets: [
                   "Premium multi-phase workouts",
-                  "Graduation track included",
+                  "Elite track included",
                   "Free during launch",
                 ],
               },

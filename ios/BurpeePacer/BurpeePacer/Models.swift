@@ -67,7 +67,6 @@ struct Level: Identifiable, Codable {
     let description: String
     let sealsGoal: Int       // Navy Seals target (0 for beginner)
     let sixCountsGoal: Int   // 5-Count pushups / burpees target
-    let tutorialURL: String
 
     var availableModes: [WorkoutMode] {
         track == .beginner ? [.fiveCount] : [.navySeals, .fiveCount, .hybrid]
@@ -93,52 +92,46 @@ struct Level: Identifiable, Codable {
 // MARK: - Level Database
 
 struct LevelDatabase {
-    private static let beginnerURL = "https://www.youtube.com/watch?v=TU8QYVW0gDU"
-    private static let advancedURL = "https://www.youtube.com/watch?v=4dF1DOWzf20"
-
     static let beginnerLevels: [Level] = [
         Level(id: "B1", track: .beginner, displayName: "Beginner 1",
               description: "20 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 20, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 20),
         Level(id: "B2", track: .beginner, displayName: "Beginner 2",
               description: "40 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 40, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 40),
         Level(id: "B3", track: .beginner, displayName: "Beginner 3",
               description: "55 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 55, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 55),
         Level(id: "B4", track: .beginner, displayName: "Beginner 4",
               description: "70 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 70, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 70),
         Level(id: "B5", track: .beginner, displayName: "Beginner 5",
               description: "90 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 90, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 90),
         Level(id: "B6", track: .beginner, displayName: "Beginner 6",
               description: "110 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 110, tutorialURL: beginnerURL),
+              sealsGoal: 0, sixCountsGoal: 110),
     ]
 
     static let advancedLevels: [Level] = [
-        Level(id: "1B", track: .advanced, displayName: "Level 1B",
-              description: "20 Navy Seals in 20 min, 50 5-count pushups in 20 min.",
-              sealsGoal: 20, sixCountsGoal: 50, tutorialURL: advancedURL),
-        Level(id: "1C", track: .advanced, displayName: "Level 1C",
-              description: "40 Navy Seals in 20 min, 100 5-count pushups in 20 min.",
-              sealsGoal: 40, sixCountsGoal: 100, tutorialURL: advancedURL),
-        Level(id: "1D", track: .advanced, displayName: "Level 1D",
-              description: "60 Navy Seals in 20 min, 150 5-count pushups in 20 min.",
-              sealsGoal: 60, sixCountsGoal: 150, tutorialURL: advancedURL),
+        Level(id: "F", track: .advanced, displayName: "Foundation",
+              description: "15 Navy Seals in 20 min, 40 5-count pushups in 20 min.",
+              sealsGoal: 15, sixCountsGoal: 40),
+        Level(id: "1", track: .advanced, displayName: "Level 1",
+              description: "30 Navy Seals in 20 min, 75 5-count pushups in 20 min.",
+              sealsGoal: 30, sixCountsGoal: 75),
         Level(id: "2", track: .advanced, displayName: "Level 2",
-              description: "80 Navy Seals in 20 min, 200 5-count pushups in 20 min.",
-              sealsGoal: 80, sixCountsGoal: 200, tutorialURL: advancedURL),
+              description: "50 Navy Seals in 20 min, 125 5-count pushups in 20 min.",
+              sealsGoal: 50, sixCountsGoal: 125),
         Level(id: "3", track: .advanced, displayName: "Level 3",
-              description: "100 Navy Seals in 20 min, 250 5-count pushups in 20 min.",
-              sealsGoal: 100, sixCountsGoal: 250, tutorialURL: advancedURL),
+              description: "70 Navy Seals in 20 min, 175 5-count pushups in 20 min.",
+              sealsGoal: 70, sixCountsGoal: 175),
         Level(id: "4", track: .advanced, displayName: "Level 4",
-              description: "120 Navy Seals in 20 min, 275 5-count pushups in 20 min.",
-              sealsGoal: 120, sixCountsGoal: 275, tutorialURL: advancedURL),
-        Level(id: "grad", track: .advanced, displayName: "Graduation",
-              description: "150 Navy Seals in 20 min, 325 5-count pushups in 20 min.",
-              sealsGoal: 150, sixCountsGoal: 325, tutorialURL: advancedURL),
+              description: "90 Navy Seals in 20 min, 225 5-count pushups in 20 min.",
+              sealsGoal: 90, sixCountsGoal: 225),
+        Level(id: "E", track: .advanced, displayName: "Elite",
+              description: "120 Navy Seals in 20 min, 300 5-count pushups in 20 min.",
+              sealsGoal: 120, sixCountsGoal: 300),
     ]
 
     static func levels(for track: ProgramTrack) -> [Level] {

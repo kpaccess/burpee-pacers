@@ -65,7 +65,7 @@ class AppViewModel {
     }
 
     var currentLevelID: String {
-        firebase.userData?.currentLevelId ?? (currentTrack == .beginner ? "B1" : "1B")
+        firebase.userData?.currentLevelId ?? (currentTrack == .beginner ? "B1" : "F")
     }
 
     var currentLevel: Level {
@@ -240,7 +240,7 @@ class AppViewModel {
         }
         NotificationManager.shared.rescheduleIfEnabled(
             track: tier == "advanced" ? .advanced : .beginner,
-            levelDisplayName: tier == "advanced" ? "Level 1B" : "Beginner 1",
+            levelDisplayName: tier == "advanced" ? "Foundation" : "Beginner 1",
             workoutDays: workoutDays)
     }
 

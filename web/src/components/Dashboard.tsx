@@ -263,9 +263,8 @@ export default function Dashboard({
   const router = useRouter();
   // const { isPro } = useSubscription(user?.uid ?? null, user?.email);
   const isPro = true; // Temporarily free for all — subscription disabled until subscriber base grows
-  const [openVideo, setOpenVideo] = useState(false);
   const [openLevelChange, setOpenLevelChange] = useState(false);
-  const [newLevel, setNewLevel] = useState(userData.currentLevelId || "1B");
+  const [newLevel, setNewLevel] = useState(userData.currentLevelId || "F");
   const [workoutMenuAnchor, setWorkoutMenuAnchor] = useState<{
     anchorEl: HTMLElement;
     dateStr: string;
@@ -620,8 +619,8 @@ export default function Dashboard({
               Nice work - you completed Beginner B6
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              You are ready for the Advanced track. Want to move to Level 1B and
-              keep progressing?
+              You are ready for the Advanced track. Want to move to Foundation
+              and keep progressing?
             </Typography>
             <Box display="flex" gap={1.5} flexWrap="wrap">
               <Button
@@ -631,12 +630,12 @@ export default function Dashboard({
                   if (!onUpdateData) return;
                   onUpdateData({
                     workoutTier: "advanced",
-                    currentLevelId: "1B",
+                    currentLevelId: "F",
                   });
                   setDismissedAdvancedSuggestion(true);
                 }}
               >
-                Switch to Advanced (1B)
+                Switch to Advanced (Foundation)
               </Button>
               <Button
                 variant="text"
@@ -848,7 +847,6 @@ export default function Dashboard({
               sealsGoal={currentLevel?.seals ?? 0}
               sixCountsGoal={currentLevel?.sixCounts ?? 0}
               defaultMode={defaultTimerMode}
-              onOpenVideo={() => setOpenVideo(true)}
               onShowWarmup={handleShowWarmup}
               onShowCooldown={handleShowCooldown}
               onFinish={(repsCompleted, mode) => {
@@ -1471,9 +1469,7 @@ export default function Dashboard({
             Program Levels
           </Typography>
           <Grid container spacing={2}>
-            {/* Level 1A ("No Landmark Workout") is hidden — it has no rep targets
-                and adds no useful information for the user in this grid. */}
-            {levelsForTrack.filter((lvl) => lvl.id !== "1A").map((lvl) => (
+            {levelsForTrack.map((lvl) => (
               <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
                 <Card
                   sx={{
@@ -1583,7 +1579,7 @@ export default function Dashboard({
                 label="Level"
                 onChange={(e) => setNewLevel(e.target.value)}
               >
-                {levelsForTrack.filter((lvl) => lvl.id !== "1A").map((lvl) => (
+                {levelsForTrack.map((lvl) => (
                   <MenuItem key={lvl.id} value={lvl.id}>
                     {lvl.name} - {lvl.description}
                   </MenuItem>
@@ -1633,11 +1629,11 @@ export default function Dashboard({
                 color="primary"
                 onClick={() => {
                   if (!onUpdateData) return;
-                  onUpdateData({ workoutTier: "advanced", currentLevelId: "1B" });
+                  onUpdateData({ workoutTier: "advanced", currentLevelId: "F" });
                   setOpenTrackSwitch(false);
                 }}
               >
-                Advanced Track (1B–Grad)
+                Advanced Track (Foundation–Elite)
               </Button>
             </Box>
             <Box mt={3} display="flex" justifyContent="flex-end">
@@ -1646,95 +1642,6 @@ export default function Dashboard({
           </DialogContent>
         </Dialog>
 
-        {/* Video Dialog */}
-        <Dialog
-          open={openVideo}
-          onClose={() => setOpenVideo(false)}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            {isAdvancedTrack ? "Advanced Tutorials" : "Beginner Program Video"}
-          </DialogTitle>
-          <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 1 }}
-            >
-              {!isAdvancedTrack && (
-                <Card sx={{ p: 3, border: "1px dashed rgba(255,255,255,0.2)" }}>
-                  <Typography variant="subtitle1" mb={1} fontWeight="bold">
-                    Beginner Burpee Demo
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    Simple no-pushup burpee demo. Keep this as your baseline
-                    movement for Beginner levels.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    component="a"
-                    href="https://www.youtube.com/shorts/O9E5BSf2l1Q"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Watch beginner video
-                  </Button>
-                </Card>
-              )}
-
-              {isAdvancedTrack && isPro && (
-                <>
-                  <Card sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" mb={1} fontWeight="bold">
-                      Program Intro (Full Video)
-                    </Typography>
-                    <a
-                      href="https://www.youtube.com/watch?v=3Yooen5zgCg&list=PLhE7BYqSXmSEuE2qoJE9w3rLEzuenuoLq&index=1"
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#00E5FF" }}
-                    >
-                      Watch on YouTube
-                    </a>
-                  </Card>
-                  <Card sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" mb={1} fontWeight="bold">
-                      Burpee Form Tutorials
-                    </Typography>
-                    <a
-                      href="https://www.youtube.com/playlist?list=PLhE7BYqSXmSEJFzla9_j34HEmLdEsOrvF"
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#00E5FF" }}
-                    >
-                      View Playlist on YouTube
-                    </a>
-                  </Card>
-                </>
-              )}
-
-              {isAdvancedTrack && !isPro && (
-                <Card sx={{ p: 3, border: "1px solid rgba(245,158,11,0.35)" }}>
-                  <Typography variant="subtitle1" mb={1} fontWeight="bold">
-                    Advanced videos are open during launch
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    Paid plans may come later, but advanced tutorial access is
-                    free right now.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      setOpenVideo(false);
-                      router.push("/pricing");
-                    }}
-                  >
-                    View Launch Access
-                  </Button>
-                </Card>
-              )}
-            </Box>
-          </DialogContent>
-        </Dialog>
         {/* Workout Selection Menu */}
         {isAdvancedTrack && isPro && (
           <Menu
