@@ -82,9 +82,10 @@ export default function LandingPage() {
                 textAlign: { xs: "center", md: "left" },
               }}
             >
-              Free for everyone during launch. Choose the track that fits you,
-              customize your weekly schedule, and build consistent burpee
-              training.
+              A 6-month program combining Navy SEAL burpees, 5-count pushup
+              burpees, and weighted training. Audio pacing and Apple Watch
+              integration built in. Designed for people over 40 who want real
+              results without a gym.
             </Typography>
             <Typography
               variant="body1"
@@ -101,35 +102,6 @@ export default function LandingPage() {
               the recommended starting rhythm, but you can adjust your schedule
               to fit your life.
             </Typography>
-            <Box
-              sx={{
-                width: "100%",
-                maxWidth: 760,
-                mx: { xs: "auto", md: 0 },
-                px: 2,
-                py: 1.5,
-                borderRadius: 2,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                textAlign: { xs: "center", md: "left" },
-              }}
-            >
-              <Typography
-                variant="body2"
-                color="rgba(255,255,255,0.92)"
-                fontWeight={700}
-              >
-                Inspired by the Busy Dad Program by Busy Dad Training.
-              </Typography>
-              <Typography
-                variant="body2"
-                color="rgba(255,255,255,0.72)"
-                sx={{ mt: 0.5 }}
-              >
-                This app is an independent project and is not affiliated with or
-                endorsed by Busy Dad Training.
-              </Typography>
-            </Box>
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
@@ -155,7 +127,7 @@ export default function LandingPage() {
                 size="large"
                 onClick={() => router.push("/pricing")}
               >
-                View Launch Access
+                See How It Works
               </Button>
               <Button
                 variant="text"
