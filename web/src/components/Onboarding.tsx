@@ -25,7 +25,6 @@ import { useAuth } from "../context/AuthContext";
 
 interface OnboardingProps {
   onComplete: (data: {
-    startDate: string;
     startWeight: number;
     startPictureUrl: string | null;
     currentLevelId: string;
@@ -37,9 +36,6 @@ interface OnboardingProps {
 export default function Onboarding({ onComplete }: OnboardingProps) {
   const LAUNCH_ACCESS_DAYS = 365;
   const { user, logout } = useAuth();
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
   const [weight, setWeight] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
   const [level, setLevel] = useState("B1");
@@ -72,12 +68,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!weight || !workoutTier) return;
-    const start = new Date(`${startDate}T00:00:00`);
-    const trialEnds = new Date(start);
+    const trialEnds = new Date();
     trialEnds.setDate(trialEnds.getDate() + LAUNCH_ACCESS_DAYS);
 
     onComplete({
-      startDate,
       startWeight: parseFloat(weight),
       startPictureUrl: pictureUrl,
       currentLevelId: level,
@@ -256,16 +250,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
-            <TextField
-              label="Start Date"
-              type="date"
-              fullWidth
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              required
-            />
-
             <TextField
               label="Weight (lbs/kg)"
               type="number"
