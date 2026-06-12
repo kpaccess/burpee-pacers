@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { UserData, WorkoutLog } from "../types";
 import { useAuth } from "../context/AuthContext";
-import { getUserData, saveUserDataDB } from "../lib/db";
+import { saveUserDataDB, subscribeToUserData } from "../lib/db";
 import { toDateKey } from "../lib/date";
 
 type PersistedWorkoutLog = WorkoutLog & {
@@ -17,39 +17,31 @@ export function useUserData() {
   const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function loadFirebaseData() {
-      if (!user) {
-        setUserData(null);
-        setSyncError(null);
-        return;
-      }
-
-      // Mark as loading for authenticated users while Firestore fetch runs.
-      setUserData(undefined);
-
-      try {
-        const data = await getUserData(user.uid);
-        if (mounted) {
-          setUserData(data || null);
-          setSyncError(null);
-        }
-      } catch (err) {
-        console.error("Failed to load user data from Firebase", err);
-        if (mounted) {
-          // Keep undefined so UI doesn't look like a first-time user.
-          setUserData(undefined);
-          setSyncError("Failed to load your data from Firebase.");
-        }
-      }
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUserData(null);
+      setSyncError(null);
+      return;
     }
 
-    loadFirebaseData();
+    // Mark as loading for authenticated users while the subscription connects.
+    setUserData(undefined);
 
-    return () => {
-      mounted = false;
-    };
+    const unsubscribe = subscribeToUserData(
+      user.uid,
+      (data) => {
+        setUserData(data);
+        setSyncError(null);
+      },
+      (err) => {
+        console.error("Failed to sync user data from Firebase", err);
+        // Keep undefined so UI doesn't look like a first-time user.
+        setUserData(undefined);
+        setSyncError("Failed to load your data from Firebase.");
+      },
+    );
+
+    return unsubscribe;
   }, [user]);
 
   const saveUserData = async (data: Partial<UserData>) => {

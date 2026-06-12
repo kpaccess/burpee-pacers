@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { UserData, WorkoutLog } from '../types';
 
 export const getUserData = async (userId: string): Promise<UserData | null> => {
@@ -10,6 +10,28 @@ export const getUserData = async (userId: string): Promise<UserData | null> => {
     return docSnap.data() as UserData;
   }
   return null;
+};
+
+/**
+ * Subscribes to real-time updates for a user's document, so changes made
+ * from other devices (e.g. the iOS/Android apps) are reflected on web
+ * without requiring a page reload. Returns an unsubscribe function.
+ */
+export const subscribeToUserData = (
+  userId: string,
+  onData: (data: UserData | null) => void,
+  onError: (error: unknown) => void,
+): (() => void) => {
+  if (!db) {
+    onData(null);
+    return () => {};
+  }
+  const docRef = doc(db, 'users', userId);
+  return onSnapshot(
+    docRef,
+    (docSnap) => onData(docSnap.exists() ? (docSnap.data() as UserData) : null),
+    onError,
+  );
 };
 
 export const saveUserDataDB = async (userId: string, data: Partial<UserData>) => {

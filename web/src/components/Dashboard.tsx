@@ -1302,7 +1302,7 @@ export default function Dashboard({
                   >
                     {format(dayObj, "d")}
                   </Typography>
-                  {isWorkoutDay ? (
+                  {isWorkoutDay || isCompleted ? (
                     <Box
                       display="flex"
                       flexDirection="column"
@@ -1665,17 +1665,14 @@ export default function Dashboard({
             >
               {userData.currentLevelId || ""}(C) — 5-Count Pushups
             </MenuItem>
-            {workoutMenuAnchor &&
-              format(new Date(workoutMenuAnchor.dateStr + "T00:00:00"), "EEE") === "Fri" && (
-                <MenuItem
-                  onClick={() => {
-                    handleToggle(workoutMenuAnchor!.dateStr, false, "H");
-                    setWorkoutMenuAnchor(null);
-                  }}
-                >
-                  {userData.currentLevelId || ""}(H) — Hybrid
-                </MenuItem>
-              )}
+            <MenuItem
+              onClick={() => {
+                handleToggle(workoutMenuAnchor!.dateStr, false, "H");
+                setWorkoutMenuAnchor(null);
+              }}
+            >
+              {userData.currentLevelId || ""}(H) — Hybrid
+            </MenuItem>
           </Menu>
         )}
         {/* iOS / Android availability banner */}
