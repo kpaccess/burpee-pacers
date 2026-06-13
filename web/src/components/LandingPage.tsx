@@ -87,21 +87,6 @@ export default function LandingPage() {
               integration built in. Designed for people over 40 who want real
               results without a gym.
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                width: "100%",
-                maxWidth: 760,
-                mx: { xs: "auto", md: 0 },
-                color: "rgba(255,255,255,0.86)",
-                fontWeight: 600,
-                textAlign: { xs: "center", md: "left" },
-              }}
-            >
-              Consistency is the real secret. Three workout days per week is
-              the recommended starting rhythm, but you can adjust your schedule
-              to fit your life.
-            </Typography>
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
