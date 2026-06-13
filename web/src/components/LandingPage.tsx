@@ -194,17 +194,6 @@ export default function LandingPage() {
             or darkness can break the routine. Burpees at home remove that
             barrier. No equipment, little space, anytime in 20 minutes.
           </Typography>
-          <Chip
-            label="Free during launch"
-            sx={{
-              mb: 2.5,
-              bgcolor: "rgba(0,229,255,0.12)",
-              color: "rgba(255,255,255,0.92)",
-              border: "1px solid rgba(0,229,255,0.35)",
-              fontWeight: 800,
-              alignSelf: "flex-start",
-            }}
-          />
           <Typography variant="subtitle1" fontWeight={700} mb={1.2}>
             Recommended Weekly Schedule
           </Typography>
@@ -261,10 +250,6 @@ export default function LandingPage() {
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
             <Chip label="Customize your schedule" color="secondary" />
             <Chip label="Free during launch" color="primary" />
-            <Chip
-              label="Advanced unlocks premium coaching"
-              sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "white" }}
-            />
           </Stack>
         </Card>
 
@@ -304,12 +289,9 @@ export default function LandingPage() {
               Advanced
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
-              Open during launch with premium workout content, advanced
-              tutorials, and full timer features.
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Paid plans may be introduced later, but no checkout is required
-              right now.
+              Full 6-month Navy SEAL program with audio pacing, Apple Watch
+              integration, weighted training, and physique tracking. Free
+              during launch.
             </Typography>
           </Card>
         </Box>
