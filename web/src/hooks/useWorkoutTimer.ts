@@ -10,7 +10,7 @@ import {
   playFinishWhistle,
   playPrepareWarningBeep,
   playRepWarningBeep,
-  playWhistle,
+  playRefereeWhistle,
 } from "../lib/sounds";
 
 const PREPARE_SECONDS = 10;
@@ -135,7 +135,7 @@ export function useWorkoutTimer({
   // ── Prepare: transition to workout once countdown hits 0 ───────────
   useEffect(() => {
     if (phase === "prepare" && prepareSecondsLeft <= 0) {
-      playWhistle();
+      playRefereeWhistle();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase("workout");
       setIsActive(true);
@@ -169,7 +169,7 @@ export function useWorkoutTimer({
           if (currPhaseIdx > prevPhaseIdx) {
             // Reset rep counter for Phase 2 and signal the transition
             setCurrentRep(0);
-            playWhistle();
+            playRefereeWhistle();
             // Workout is NOT done yet — fall through to return clampedNextValue
             return clampedNextValue;
           }
@@ -211,7 +211,7 @@ export function useWorkoutTimer({
 
             if (rep > previousRep) {
               setCurrentRep(rep);
-              playWhistle();
+              playRefereeWhistle();
               onRepBoundaryRef.current?.(rep, phase.mode);
             }
           }
@@ -269,7 +269,7 @@ export function useWorkoutTimer({
 
           if (rep > previousRep) {
             setCurrentRep(rep);
-            playWhistle();
+            playRefereeWhistle();
             onRepBoundaryRef.current?.(rep, activeMode.mode);
           }
         }

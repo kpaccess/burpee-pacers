@@ -75,43 +75,57 @@ export function playRepWarningBeep() {
   playTone(880, 0.15, 0.5, "square");
 }
 
-/** Loud whistle: pea whistle with warbling/trilling effect */
-export function playWhistle() {
+/** Referee whistle: sharp dual-tone trill blast */
+export function playRefereeWhistle() {
   try {
     const ctx = getAudioContext();
-    const osc = ctx.createOscillator();
-    const lfo = ctx.createOscillator();
-    const gain = ctx.createGain();
+
+    // Two main oscillators for the clashing dual-tone
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+
+    // Low-frequency oscillator (LFO) to create the "trill" (vibrato)
+    const trillLFO = ctx.createOscillator();
     const lfoGain = ctx.createGain();
 
-    // Main oscillator - high pitched whistle
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(2800, ctx.currentTime);
+    // Master gain for the sharp volume envelope
+    const mainGain = ctx.createGain();
 
-    // LFO for warble/trill effect (rapid frequency modulation)
-    lfo.type = "sine";
-    lfo.frequency.setValueAtTime(6, ctx.currentTime); // 6 Hz warble
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(3000, ctx.currentTime); // 3.0 kHz
 
-    // LFO gain to control depth of wobble
-    lfoGain.gain.setValueAtTime(350, ctx.currentTime); // 350 Hz depth
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(3300, ctx.currentTime); // 3.3 kHz
 
-    // Main volume envelope
-    gain.gain.setValueAtTime(0.85, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+    // Trill effect (rattling at 30Hz)
+    trillLFO.type = "sine";
+    trillLFO.frequency.setValueAtTime(30, ctx.currentTime);
+    lfoGain.gain.setValueAtTime(150, ctx.currentTime); // Intensity of the trill
 
-    // Connect LFO to frequency for warble effect
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
+    trillLFO.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
 
-    // Connect oscillator to gain
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    // Volume envelope: sharp attack, sudden cutoff for a strict warning blast
+    const startTime = ctx.currentTime;
+    const duration = 0.25; // Short, decisive 250ms burst
 
-    osc.start(ctx.currentTime);
-    lfo.start(ctx.currentTime);
+    mainGain.gain.setValueAtTime(0, startTime);
+    mainGain.gain.linearRampToValueAtTime(0.8, startTime + 0.01); // Instant attack
+    mainGain.gain.setValueAtTime(0.8, startTime + duration - 0.02);
+    mainGain.gain.linearRampToValueAtTime(0, startTime + duration); // Sharp cutoff
 
-    osc.stop(ctx.currentTime + 0.7);
-    lfo.stop(ctx.currentTime + 0.7);
+    osc1.connect(mainGain);
+    osc2.connect(mainGain);
+    mainGain.connect(ctx.destination);
+
+    osc1.start(startTime);
+    osc2.start(startTime);
+    trillLFO.start(startTime);
+
+    osc1.stop(startTime + duration);
+    osc2.stop(startTime + duration);
+    trillLFO.stop(startTime + duration);
   } catch {
     // Silently ignore – audio is non-critical
   }
