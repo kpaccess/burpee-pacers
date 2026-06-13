@@ -65,8 +65,7 @@ import WorkoutTimer from "./WorkoutTimer";
 // work on Fridays supports shoulder health, posture, and longevity — especially
 // for users over 40/50. Extend this array to add more options in the future.
 //
-// videoId  → used for both the YouTube thumbnail image and the watch link
-// formCues → 3 concise technique reminders shown below the thumbnail
+// formCues → 3 concise technique reminders for each exercise
 const PULLING_WORK_CONFIG = [
   {
     id: "home",
@@ -78,8 +77,6 @@ const PULLING_WORK_CONFIG = [
         sets: "3 sets",
         reps: "10–15 reps",
         benefit: "Builds upper back strength",
-        videoId: "roCP6wCXPqo",
-        videoLabel: "How to Perfect Your Dumbbell Row — Men's Health",
         formCues: [
           "Rest one knee and hand on a bench for support",
           "Keep your back flat — pull elbow straight to hip",
@@ -91,8 +88,6 @@ const PULLING_WORK_CONFIG = [
         sets: "3 sets",
         reps: "10–15 reps",
         benefit: "Balances pushing muscles",
-        videoId: "IyQAMOV0WAc",
-        videoLabel: "How to Perform the Kettlebell Row",
         formCues: [
           "Hinge at hips, keep back flat and neutral",
           "Pull kettlebell to your hip, elbow close to body",
@@ -104,8 +99,6 @@ const PULLING_WORK_CONFIG = [
         sets: "2 sets",
         reps: "15–20 reps",
         benefit: "Protects shoulders",
-        videoId: "LoBBo1dtY6I",
-        videoLabel: "Band Pull-Aparts for Shoulder Stability",
         formCues: [
           "Hold the band at shoulder height, arms straight",
           "Pull band apart until it touches your chest",
@@ -124,8 +117,6 @@ const PULLING_WORK_CONFIG = [
         sets: "3 sets",
         reps: "10–15 reps",
         benefit: "Builds upper back strength",
-        videoId: "CAwf7n6Luuc",
-        videoLabel: "How To: Lat Pulldown | 3 Golden Rules",
         formCues: [
           "Sit tall, lean back slightly (15–20°)",
           "Pull bar to your upper chest, drive elbows down",
@@ -137,8 +128,6 @@ const PULLING_WORK_CONFIG = [
         sets: "3 sets",
         reps: "10–15 reps",
         benefit: "Improves posture",
-        videoId: "EU7bOadUsNI",
-        videoLabel: "Seated Cable Row — Proper Form & Technique",
         formCues: [
           "Sit tall, keep your back straight throughout",
           "Pull the handle to your lower chest or belly button",
@@ -150,8 +139,6 @@ const PULLING_WORK_CONFIG = [
         sets: "2 sets",
         reps: "15–20 reps",
         benefit: "Reduces injury risk",
-        videoId: "eIq5CB9JfKE",
-        videoLabel: "Stop Doing Face Pulls Like This — Athlean-X",
         formCues: [
           "Set cable at face height or slightly above",
           "Pull rope to your face, hands splitting apart",
@@ -476,7 +463,7 @@ export default function Dashboard({
   React.useEffect(() => {
     localStorage.setItem("weightedTrainingEnabled", String(weightedTrainingEnabled));
   }, [weightedTrainingEnabled]);
-  const todayWeightedDay = weightedTrainingEnabled
+  const todayWeightedDay = weightedTrainingEnabled && today.getDay() !== 5
     ? WEIGHTED_TRAINING_PLAN[today.getDay()] ?? null
     : null;
 
@@ -1023,12 +1010,12 @@ export default function Dashboard({
             <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
               <Box>
                 <Typography variant="h6" fontWeight={700} color={pullingWorkUnlocked ? "secondary" : "text.secondary"}>
-                  Pulling Work: Balance Your Body
+                  Friday Strength Work
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   {pullingWorkUnlocked
-                    ? "Great job finishing your Hybrid workout! Now balance your body with pulling work."
-                    : "Complete your Hybrid workout above to unlock Friday Pulling Work."}
+                    ? "Great job finishing your Hybrid workout! Now balance your body with pulling and finish strong with legs and core."
+                    : "Complete your Hybrid workout above to unlock Friday Strength Work."}
                 </Typography>
               </Box>
 
@@ -1041,7 +1028,7 @@ export default function Dashboard({
                   onClick={() => setPullingWorkExpanded((v) => !v)}
                   sx={{ whiteSpace: "nowrap" }}
                 >
-                  {pullingWorkExpanded ? "Hide" : "View Pulling Options"}
+                  {pullingWorkExpanded ? "Hide" : "View Strength Work"}
                 </Button>
               )}
             </Box>
@@ -1066,6 +1053,10 @@ export default function Dashboard({
                   Burpees are powerful, but they are mostly pushing movements.
                   Add pulling work on Friday to keep your shoulders healthy,
                   improve posture, and build a balanced body.
+                </Typography>
+
+                <Typography variant="subtitle1" fontWeight={700} color="secondary" gutterBottom>
+                  Pulling + Biceps
                 </Typography>
 
                 <Grid container spacing={2}>
@@ -1100,59 +1091,6 @@ export default function Dashboard({
                                 border: "1px solid rgba(255,255,255,0.07)",
                               }}
                             >
-                              {/* ── Clickable YouTube thumbnail ── */}
-                              <Box
-                                component="a"
-                                href={`https://www.youtube.com/watch?v=${ex.videoId}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={`Watch ${ex.name} tutorial on YouTube`}
-                                sx={{
-                                  display: "block",
-                                  position: "relative",
-                                  lineHeight: 0,
-                                  "&:hover .play-overlay": { bgcolor: "rgba(0,0,0,0.55)" },
-                                }}
-                              >
-                                <Box
-                                  component="img"
-                                  src={`https://img.youtube.com/vi/${ex.videoId}/hqdefault.jpg`}
-                                  alt={`${ex.name} demonstration`}
-                                  sx={{
-                                    width: "100%",
-                                    height: 130,
-                                    objectFit: "cover",
-                                    display: "block",
-                                  }}
-                                />
-                                {/* Play button overlay */}
-                                <Box
-                                  className="play-overlay"
-                                  sx={{
-                                    position: "absolute",
-                                    top: 0, left: 0, right: 0, bottom: 0,
-                                    bgcolor: "rgba(0,0,0,0.35)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    transition: "background 0.2s",
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: 38, height: 38,
-                                      borderRadius: "50%",
-                                      bgcolor: "rgba(255,255,255,0.88)",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                    }}
-                                  >
-                                    <Typography sx={{ fontSize: 13, color: "#000", ml: "2px" }}>▶</Typography>
-                                  </Box>
-                                </Box>
-                              </Box>
-
                               {/* ── Exercise details ── */}
                               <Box sx={{ p: 1.5 }}>
                                 <Box display="flex" alignItems="baseline" gap={0.75} mb={0.5}>
@@ -1175,22 +1113,6 @@ export default function Dashboard({
                                     </Box>
                                   ))}
                                 </Stack>
-
-                                {/* Watch link */}
-                                <Typography
-                                  component="a"
-                                  variant="caption"
-                                  href={`https://www.youtube.com/watch?v=${ex.videoId}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  sx={{
-                                    color: "secondary.main",
-                                    textDecoration: "none",
-                                    "&:hover": { textDecoration: "underline" },
-                                  }}
-                                >
-                                  Watch demo →
-                                </Typography>
                               </Box>
                             </Box>
                           ))}
@@ -1199,6 +1121,46 @@ export default function Dashboard({
                     </Grid>
                   ))}
                 </Grid>
+
+                <Typography variant="subtitle1" fontWeight={700} color="secondary" sx={{ mt: 3 }} gutterBottom>
+                  Legs + Core
+                </Typography>
+
+                <Card
+                  sx={{
+                    p: 2.5,
+                    border: "1px solid #2a2a2a",
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <Stack divider={<Divider sx={{ borderColor: "rgba(255,255,255,0.05)" }} />}>
+                    {WEIGHTED_TRAINING_PLAN[5].exercises.map((ex) => (
+                      <Box key={ex.name} display="flex" alignItems="flex-start" gap={1.5} sx={{ py: 1.25 }}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={900}
+                          color="secondary.main"
+                          sx={{ minWidth: 28, pt: 0.25, fontSize: "0.8rem" }}
+                        >
+                          {ex.sets}×
+                        </Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                            <Typography variant="body2" fontWeight={600}>{ex.name}</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                              {ex.reps}
+                            </Typography>
+                          </Box>
+                          {ex.note && (
+                            <Typography variant="caption" color="text.disabled" sx={{ display: "block", fontStyle: "italic" }}>
+                              {ex.note}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Card>
               </Box>
             )}
           </Card>
