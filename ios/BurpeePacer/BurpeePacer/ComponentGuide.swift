@@ -52,7 +52,7 @@ import SwiftUI
  
  Usage:
  ```swift
- HeaderView(statusText: "Day 30 • Busy People Program") {
+ HeaderView(statusText: "Day 30 • BurpeePacers Program") {
      // Handle reset
  }
  ```

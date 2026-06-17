@@ -102,7 +102,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           color="primary"
           fontWeight={800}
         >
-          Busy People Program
+          BurpeePacers Program
         </Typography>
         <Typography
           variant="body1"
