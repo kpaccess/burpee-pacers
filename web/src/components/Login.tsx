@@ -93,7 +93,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
   const [isLogin, setIsLogin] = useState(!isSignupFlow);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [rawEmail, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState(
@@ -115,6 +115,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
       );
       return;
     }
+    const email = rawEmail.trim();
     try {
       let credential;
       if (isLogin) {
@@ -174,7 +175,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
     setError("");
     setMessage("");
     if (!auth) return;
-    const normalizedEmail = email.trim();
+    const normalizedEmail = rawEmail.trim();
     if (!normalizedEmail) {
       setError("Please enter your email address above to reset your password.");
       return;
@@ -405,7 +406,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               fullWidth
               required
               disabled={isLoading}
-              value={email}
+              value={rawEmail}
               onChange={(e) => setEmail(e.target.value)}
               aria-label="Email"
               sx={{

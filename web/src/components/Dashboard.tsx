@@ -769,15 +769,23 @@ export default function Dashboard({
                     ? startDate.toLocaleDateString()
                     : "Not started yet — complete your first workout to begin"}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Starting Weight: {userData.startWeight} lbs ({Math.round(userData.startWeight / 2.205)} kg)
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Protein target: ~{Math.round((userData.startWeight / 2.205) * 1.5)}g/day
-                  <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
-                    (1.5g × kg)
+                {userData.startWeight != null && !isNaN(userData.startWeight) ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Starting Weight: {userData.startWeight} lbs ({Math.round(userData.startWeight / 2.205)} kg)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Protein target: ~{Math.round((userData.startWeight / 2.205) * 1.5)}g/day
+                      <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
+                        (1.5g × kg)
+                      </Typography>
+                    </Typography>
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                    Starting Weight: not set
                   </Typography>
-                </Typography>
+                )}
                 {isBeginnerTrack && (
                   <Typography variant="body2" color="text.secondary" mt={1}>
                     Workout option: Burpee without pushups
