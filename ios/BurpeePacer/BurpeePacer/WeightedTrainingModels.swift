@@ -48,7 +48,7 @@ enum WeightedTrainingPlan {
         title: "Day 2 — Pushing + Shoulders",
         focus: "Shoulders · Chest · Triceps",
         exercises: [
-            WeightedExercise(name: "Overhead Press",           sets: 4, reps: "8–10",  note: "Barbell or dumbbell"),
+            WeightedExercise(name: "Face Pulls",               sets: 3, reps: "15–20", note: "Cable or band at face height — protects rotator cuff"),
             WeightedExercise(name: "Incline Dumbbell Press",   sets: 3, reps: "10–12", note: "Upper chest focus"),
             WeightedExercise(name: "Lateral Raise",            sets: 3, reps: "12–15", note: "Light weight, controlled"),
             WeightedExercise(name: "Tricep Dips or Pushdowns", sets: 3, reps: "10–12", note: nil),

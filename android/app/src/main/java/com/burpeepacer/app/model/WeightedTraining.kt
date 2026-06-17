@@ -41,7 +41,7 @@ object WeightedTrainingPlan {
         title = "Day 2 — Pushing + Shoulders",
         focus = "Shoulders · Chest · Triceps",
         exercises = listOf(
-            WeightedExercise("Overhead Press",           4, "8–10",  "Barbell or dumbbell"),
+            WeightedExercise("Face Pulls",               3, "15–20", "Cable or band at face height — protects rotator cuff"),
             WeightedExercise("Incline Dumbbell Press",   3, "10–12", "Upper chest focus"),
             WeightedExercise("Lateral Raise",            3, "12–15", "Light weight, controlled"),
             WeightedExercise("Tricep Dips or Pushdowns", 3, "10–12"),

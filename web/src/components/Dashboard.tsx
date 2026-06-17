@@ -214,7 +214,7 @@ const WEIGHTED_TRAINING_PLAN: Record<number, {
     title: "Day 2 — Pushing + Shoulders",
     focus: "Shoulders · Chest · Triceps",
     exercises: [
-      { name: "Overhead Press",           sets: 4, reps: "8–10",  note: "Barbell or dumbbell" },
+      { name: "Face Pulls",               sets: 3, reps: "15–20", note: "Cable or band at face height — protects rotator cuff" },
       { name: "Incline Dumbbell Press",   sets: 3, reps: "10–12", note: "Upper chest focus" },
       { name: "Lateral Raise",            sets: 3, reps: "12–15", note: "Light weight, controlled" },
       { name: "Tricep Dips or Pushdowns", sets: 3, reps: "10–12" },
