@@ -86,7 +86,7 @@ fitness,workout,timer,reps,burpees,strength,cardio,daily,goals,program,routine,d
 
 **Description (copy/edit as needed):**
 ```
-BurpeePacer is a minimalist fitness tracker built around the Busy People Program — 20-minute time-capped burpee workouts, 3 days a week.
+BurpeePacer is a minimalist fitness tracker built around the BurpeePacers Program — 20-minute time-capped burpee workouts, 3 days a week.
 
 SIMPLE. EFFECTIVE. PROVEN.
 Follow a structured progression from beginner to advanced, logging each rep as you go. The 20-minute countdown keeps you honest.

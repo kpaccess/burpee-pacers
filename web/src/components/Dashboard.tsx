@@ -533,8 +533,8 @@ export default function Dashboard({
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               {startDate
-                ? `Day ${Math.max(0, daysPassed)} • Busy People Program`
-                : "Complete your first workout to start the program • Busy People Program"}
+                ? `Day ${Math.max(0, daysPassed)} • BurpeePacers Program`
+                : "Complete your first workout to start the program • BurpeePacers Program"}
             </Typography>
           </Box>
           <Box display="flex" gap={2} alignItems="center">

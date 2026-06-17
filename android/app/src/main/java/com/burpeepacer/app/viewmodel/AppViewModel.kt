@@ -36,7 +36,7 @@ class AppViewModel(private val repository: DataRepository) : ViewModel() {
 
     val programStatusText: Flow<String> = userProfile.map { profile ->
         val days = java.time.temporal.ChronoUnit.DAYS.between(profile.startDate, LocalDate.now())
-        "Day ${maxOf(1, days + 1)} • Busy People Program"
+        "Day ${maxOf(1, days + 1)} • BurpeePacers Program"
     }
 
     val todayFinisher: Flow<Finisher?> = userProfile.map { profile ->

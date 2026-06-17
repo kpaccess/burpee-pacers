@@ -157,11 +157,11 @@ class AppViewModel {
         FirebaseService.sessions(from: firebase.userData?.workoutLogs ?? [])
     }
 
-    // MARK: - Status text (matches web "Day X • Busy People Program")
+    // MARK: - Status text (matches web "Day X • BurpeePacers Program")
 
     var programStatusText: String {
         let days = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        return "Day \(max(1, days + 1)) • Busy People Program"
+        return "Day \(max(1, days + 1)) • BurpeePacers Program"
     }
 
     // MARK: - Protein target

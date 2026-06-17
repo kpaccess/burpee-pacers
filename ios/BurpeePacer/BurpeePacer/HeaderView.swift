@@ -85,7 +85,7 @@ struct HeaderView: View {
 
 #Preview {
     HeaderView(
-        statusText: "Day 30 • Busy People Program",
+        statusText: "Day 30 • BurpeePacers Program",
         email: "user@gmail.com",
         isPro: true,
         storeKit: StoreKitManager(),
