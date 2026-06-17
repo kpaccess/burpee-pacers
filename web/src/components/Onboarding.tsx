@@ -67,12 +67,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weight || !workoutTier) return;
+    const trimmedWeight = weight.trim();
+    const parsedWeight = parseFloat(trimmedWeight);
+    if (!trimmedWeight || isNaN(parsedWeight) || parsedWeight <= 0 || !workoutTier) return;
     const trialEnds = new Date();
     trialEnds.setDate(trialEnds.getDate() + LAUNCH_ACCESS_DAYS);
 
     onComplete({
-      startWeight: parseFloat(weight),
+      startWeight: parsedWeight,
       startPictureUrl: pictureUrl,
       currentLevelId: level,
       workoutTier,
@@ -154,6 +156,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 onClick={() => handleTierSelect(tier)}
                 sx={{
                   flex: 1,
+                  minWidth: 0,
                   border: selected ? "2px solid" : "2px solid transparent",
                   borderColor: selected
                     ? tier === "beginner"
@@ -179,23 +182,39 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   },
                 }}
               >
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mb: 1, minWidth: 0 }}
+                >
                   <Box
                     sx={{
                       color:
                         tier === "beginner" ? "success.main" : "primary.main",
+                      flexShrink: 0,
                     }}
                   >
                     {icon}
                   </Box>
-                  <Typography variant="h6" fontWeight={700}>
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {label}
                   </Typography>
                   <Chip
                     label={badge}
                     color={badgeColor}
                     size="small"
-                    sx={{ ml: "auto" }}
+                    sx={{ flexShrink: 0 }}
                   />
                 </Stack>
                 <Stack spacing={0.5}>
