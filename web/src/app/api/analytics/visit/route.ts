@@ -1,14 +1,32 @@
-import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { NextRequest, NextResponse } from "next/server";
+import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
+import { getAuth } from "firebase-admin/auth";
+import { isAdmin } from "@/lib/allowlist";
 import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * POST /api/analytics/visit
  * Atomically increments the page-view counter in Firestore.
  * Called client-side from LandingPage on every mount.
+ * If the request includes a valid ID token belonging to an admin, the visit
+ * is silently skipped so admin page-loads don't inflate the counter.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    // Skip counting if the request comes from an admin user.
+    const authHeader = req.headers.get("authorization") ?? "";
+    const idToken = authHeader.replace("Bearer ", "").trim();
+    if (idToken) {
+      try {
+        const decoded = await getAuth(getAdminApp()).verifyIdToken(idToken);
+        if (isAdmin(decoded.email)) {
+          return NextResponse.json({ ok: true, skipped: true });
+        }
+      } catch {
+        // Invalid token — treat as anonymous visitor and count normally.
+      }
+    }
+
     const db = getAdminDb();
     const statsRef = db.collection("analytics").doc("stats");
     const today = new Date().toISOString().slice(0, 10);

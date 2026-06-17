@@ -5,12 +5,14 @@ import { getAuth, UserRecord } from "firebase-admin/auth";
 
 export interface UserRow {
   serialNo: number;
+  uid: string;
   firstName: string;
   lastName: string;
   email: string;
   created: string;
   lastLogin: string;
   isPro: boolean;
+  isTestUser: boolean;
   tier: string;
   level: string;
   startDate: string;
@@ -78,12 +80,14 @@ export async function GET(req: NextRequest) {
       const lastName = nameParts.slice(1).join(" ");
       return {
         serialNo: i + 1,
+        uid: u.uid,
         firstName,
         lastName,
         email: u.email ?? "(no email)",
         created: u.metadata.creationTime,
         lastLogin: u.metadata.lastSignInTime ?? "Never",
         isPro: data.isPro ?? false,
+        isTestUser: data.isTestUser ?? false,
         tier: data.workoutTier ?? "",
         level: data.currentLevelId ?? "",
         startDate: data.startDate ?? "",

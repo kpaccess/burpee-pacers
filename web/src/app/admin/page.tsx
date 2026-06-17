@@ -16,6 +16,7 @@ import {
   IconButton,
   InputAdornment,
   Paper,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -23,6 +24,8 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -31,6 +34,7 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ScienceIcon from "@mui/icons-material/Science";
 import StarIcon from "@mui/icons-material/Star";
 
 interface AllowlistEntry {
@@ -53,6 +57,31 @@ export default function AdminPage() {
   const [addError, setAddError] = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
   const [removeLoadingEmail, setRemoveLoadingEmail] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<"all" | "real">("all");
+  const [togglingUid, setTogglingUid] = useState<string | null>(null);
+
+  const toggleTestUser = async (uid: string, current: boolean) => {
+    setTogglingUid(uid);
+    try {
+      const token = await user!.getIdToken();
+      await fetch("/api/admin/toggle-test-user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid, isTestUser: !current }),
+      });
+      setStats((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map((u) =>
+            u.uid === uid ? { ...u, isTestUser: !current } : u
+          ),
+        };
+      });
+    } finally {
+      setTogglingUid(null);
+    }
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -177,6 +206,10 @@ export default function AdminPage() {
     );
   }
 
+  const displayedUsers = filterMode === "real"
+    ? stats!.users.filter((u) => !u.isTestUser)
+    : stats!.users;
+
   return (
     <Box
       sx={{
@@ -217,8 +250,8 @@ export default function AdminPage() {
         />
         <StatCard
           icon={<PeopleAltIcon sx={{ fontSize: 40, color: "primary.main" }} />}
-          label="Total Sign-ups"
-          value={stats!.signupCount}
+          label={filterMode === "real" ? "Real Sign-ups" : "Total Sign-ups"}
+          value={displayedUsers.length}
         />
       </Box>
 
@@ -382,23 +415,34 @@ export default function AdminPage() {
       </TableContainer>
 
       {/* Users table */}
-      <Typography variant="h6" fontWeight={800} mb={2}>
-        Users
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h6" fontWeight={800}>
+          Users
+        </Typography>
+        <ToggleButtonGroup
+          value={filterMode}
+          exclusive
+          onChange={(_, val) => { if (val) setFilterMode(val); }}
+          size="small"
+        >
+          <ToggleButton value="all">All Users</ToggleButton>
+          <ToggleButton value="real">Real Users Only</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       <TableContainer component={Paper} sx={{ bgcolor: "#141414" }}>
         <Table size="small">
           <TableHead>
             <TableRow>
               {[
                 "#", "First Name", "Last Name", "Email", "Joined", "Last Login",
-                "Tier", "Level", "Day", "Workouts", "Timer Verified", "Onboarded", "Pro",
+                "Tier", "Level", "Day", "Workouts", "Timer Verified", "Onboarded", "Pro", "Test",
               ].map((h) => (
                 <TableCell key={h} sx={headerCell}>{h}</TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {stats!.users.map((u: UserRow) => (
+            {displayedUsers.map((u: UserRow) => (
               <TableRow key={u.email} hover>
                 <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>{u.serialNo}</TableCell>
                 <TableCell>{u.firstName || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
@@ -449,6 +493,18 @@ export default function AdminPage() {
                   ) : (
                     <Typography variant="caption" color="text.disabled">—</Typography>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Tooltip title={u.isTestUser ? "Mark as real user" : "Mark as test user"}>
+                    <Switch
+                      size="small"
+                      checked={u.isTestUser}
+                      disabled={togglingUid === u.uid}
+                      onChange={() => toggleTestUser(u.uid, u.isTestUser)}
+                      icon={<ScienceIcon sx={{ fontSize: 14 }} />}
+                      checkedIcon={<ScienceIcon sx={{ fontSize: 14 }} />}
+                    />
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}

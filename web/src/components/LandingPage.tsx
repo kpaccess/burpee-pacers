@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   Alert,
   Box,
@@ -20,10 +21,18 @@ import BurpeeLogoIcon from "@/components/BurpeeLogoIcon";
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetch("/api/analytics/visit", { method: "POST" }).catch(() => {});
-  }, []);
+    const sendVisit = async () => {
+      const token = user ? await user.getIdToken() : null;
+      fetch("/api/analytics/visit", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).catch(() => {});
+    };
+    sendVisit();
+  }, [user]);
   const weeklySchedule = [
     { day: "Mon", train: true },
     { day: "Tue", train: false },
