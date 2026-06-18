@@ -10,6 +10,7 @@ import {
   Chip,
   Container,
   Divider,
+  Grid,
   List,
   ListItem,
   ListItemIcon,
@@ -35,6 +36,24 @@ const BEGINNER_FEATURES = [
   "No-pushup burpee progression",
   "Core progress tracking",
   "Customizable workout schedule",
+];
+
+const APP_PREVIEWS = [
+  {
+    src: "/images/preview-timer.png",
+    alt: "Workout timer screen with pacing and countdown",
+    caption: "Audio-paced timer with whistle cues",
+  },
+  {
+    src: "/images/preview-calendar.png",
+    alt: "Calendar and progress tracking view",
+    caption: "Track every workout day at a glance",
+  },
+  {
+    src: "/images/preview-levels.png",
+    alt: "Level progression screen",
+    caption: "See your level climb as you hit your goals",
+  },
 ];
 
 export default function PricingPage() {
@@ -187,6 +206,64 @@ export default function PricingPage() {
               </List>
             </CardContent>
           </Card>
+        </Box>
+
+        <Box sx={{ mt: 6, mb: 6 }}>
+          <Typography
+            variant="h4"
+            fontWeight={800}
+            color="white"
+            textAlign="center"
+            mb={1}
+          >
+            See what&apos;s waiting for you
+          </Typography>
+          <Typography
+            variant="body1"
+            color="grey.400"
+            textAlign="center"
+            sx={{ maxWidth: 600, mx: "auto", mb: 4 }}
+          >
+            Here&apos;s what you&apos;ll use every day once you sign up.
+          </Typography>
+          <Grid container spacing={3}>
+            {APP_PREVIEWS.map((preview) => (
+              <Grid size={{ xs: 12, md: 4 }} key={preview.src}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    backdropFilter: "blur(10px)",
+                    height: "100%",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={preview.src}
+                    alt={preview.alt}
+                    sx={{
+                      width: "100%",
+                      aspectRatio: "9 / 16",
+                      objectFit: "cover",
+                      display: "block",
+                      borderBottom: "1px solid rgba(255,255,255,0.08)",
+                      backgroundColor: "rgba(255,255,255,0.04)",
+                    }}
+                  />
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="grey.300"
+                      textAlign="center"
+                    >
+                      {preview.caption}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         </Box>
 
         <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
