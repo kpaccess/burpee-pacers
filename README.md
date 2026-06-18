@@ -35,6 +35,7 @@ burpee-pacers/
 ## Tech Stack
 
 ### Web
+
 - **Framework:** Next.js 16, React 19, TypeScript 5
 - **UI:** MUI v7, Tailwind CSS v4, Framer Motion
 - **Backend:** Firebase Auth, Firestore, Storage, Firebase Admin SDK
@@ -43,32 +44,32 @@ burpee-pacers/
 - **Testing:** Playwright, Firebase Auth and Firestore emulators
 
 ### iOS
+
 - **Language:** Swift 5.10+, SwiftUI
 - **Architecture:** MVVM with `@Observable` macro
 - **Backend:** Firebase iOS SDK (Auth + Firestore), Google Sign-In
 - **Extras:** WatchConnectivity (Apple Watch sync), HealthKit, UserNotifications
 
 ### Android
+
 - **Language:** Kotlin, Jetpack Compose + Material3
 - **Architecture:** MVVM with `StateFlow`
 - **Storage:** Jetpack DataStore (local, no Firebase)
 
-## Tracks & Levels
+## Workout Levels
 
 **Beginner** (B1–B6): 20 → 40 → 55 → 70 → 90 → 110 burpees in 20 min (no pushups).
 
 **Advanced** — sealsGoal / sixCountsGoal per level:
 
-| Level | Navy Seals | 5-Count Pushups |
-|-------|-----------|-----------------|
-| 1A    | 0         | 0               |
-| 1B    | 20        | 50              |
-| 1C    | 40        | 100             |
-| 1D    | 60        | 150             |
-| 2     | 80        | 200             |
-| 3     | 100       | 250             |
-| 4     | 120       | 275             |
-| grad  | 150       | 325             |
+| Level      | Navy Seals | 5-Count Pushups |
+| ---------- | ---------- | --------------- |
+| Foundation | 15         | 40              |
+| Level 1    | 30         | 75              |
+| Level 2    | 50         | 125             |
+| Level 3    | 70         | 175             |
+| Level 4    | 90         | 225             |
+| Elite      | 120        | 300             |
 
 Hybrid rep targets per phase = `Math.ceil(fullGoal / 2)` (each phase is 10 min).
 
@@ -116,16 +117,16 @@ cd android && ./gradlew assembleDebug
 
 ## Common Commands
 
-| Location  | Command                     | Description                                    |
-|-----------|-----------------------------|------------------------------------------------|
-| `web/`    | `npm run dev`               | Start the Next.js dev server                   |
-| `web/`    | `npm run build`             | Build the web app for production               |
-| `web/`    | `npm run lint`              | Run ESLint                                     |
-| `web/`    | `npm test`                  | Run Playwright tests against Firebase emulator |
-| `web/`    | `npm run test:ui`           | Open Playwright UI mode                        |
-| `web/`    | `npm run test:report`       | Open the Playwright HTML report                |
-| `android/`| `./gradlew assembleDebug`   | Build debug APK                                |
-| `android/`| `./gradlew assembleRelease` | Build release APK (requires keystore.properties)|
+| Location   | Command                     | Description                                      |
+| ---------- | --------------------------- | ------------------------------------------------ |
+| `web/`     | `npm run dev`               | Start the Next.js dev server                     |
+| `web/`     | `npm run build`             | Build the web app for production                 |
+| `web/`     | `npm run lint`              | Run ESLint                                       |
+| `web/`     | `npm test`                  | Run Playwright tests against Firebase emulator   |
+| `web/`     | `npm run test:ui`           | Open Playwright UI mode                          |
+| `web/`     | `npm run test:report`       | Open the Playwright HTML report                  |
+| `android/` | `./gradlew assembleDebug`   | Build debug APK                                  |
+| `android/` | `./gradlew assembleRelease` | Build release APK (requires keystore.properties) |
 
 ## Testing
 
@@ -156,6 +157,7 @@ firebase deploy --only firestore:rules
 ```
 
 Key data boundaries:
+
 - Users can read and update only their own document.
 - Client writes cannot modify subscription fields (`isPro`, `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`).
 - Subscription state is written server-side via Firebase Admin SDK routes and Stripe webhooks.

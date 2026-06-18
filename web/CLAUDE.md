@@ -66,10 +66,13 @@ User data lives in a single Firestore doc (`users/{userId}`). `useUserData` (`sr
 
 ### Launch Access & Subscription Plumbing
 - **Stripe webhooks** update `isPro` and `subscriptionStatus` in Firestore
-- **Allowlist** (`src/lib/allowlist.ts`): hardcoded emails get free Pro; `isAdmin()` gates `/admin` (verified server-side against `ADMIN_EMAIL`)
+- **Allowlist** (`src/lib/allowlist.ts`, server variant `src/lib/allowlist-server.ts`): emails in `NEXT_PUBLIC_ADMIN_EMAILS` are admins; `NEXT_PUBLIC_ADMIN_EMAILS` + `ALLOWLISTED_EMAILS` get free Pro via `isAllowlisted()`; `isAdmin()` gates `/admin`
 - **Guest checkout**: Stripe session stores email in `pending_subscriptions` collection; claimed via `/api/claim-subscription` after signup
 - `<ProGate>` (`src/components/ProGate.tsx`) is legacy gating UI; current launch copy points users to launch access
 - New onboarding still stores `trialEndsAt` for compatibility, but checkout is hidden during launch
+
+### Admin API Auth
+All `/api/admin/*` routes are protected the same way: the client sends a Firebase ID token in the `Authorization: Bearer <token>` header, the route verifies it server-side with `firebase-admin`'s `verifyIdToken`, then calls `isAdmin(decoded.email)` (checks against `NEXT_PUBLIC_ADMIN_EMAILS`). There is no separate admin secret — see `src/app/api/admin/stats/route.ts` for the canonical pattern.
 
 ### API Routes
 
@@ -81,7 +84,9 @@ User data lives in a single Firestore doc (`users/{userId}`). `useUserData` (`sr
 | `/api/claim-subscription` | Link guest Stripe payment to new Firebase user |
 | `/api/send-welcome-email` | Send welcome email via Resend (deduped via `welcomeEmailSent` flag) |
 | `/api/analytics/visit` | Increment page view counter |
-| `/api/admin/stats` | Admin-only: user list + analytics (verified by Firebase ID token) |
+| `/api/admin/stats` | Admin-only: user list + analytics |
+| `/api/admin/allowlist` | Admin-only: read/manage the `allowlisted_emails` Firestore collection |
+| `/api/admin/toggle-test-user` | Admin-only: flip `isTestUser` on a given user doc |
 
 ### Path Aliases
 `@/*` maps to `src/*`.
@@ -92,5 +97,9 @@ Required (prefix `NEXT_PUBLIC_` for client-side Firebase vars):
 - `FIREBASE_SERVICE_ACCOUNT_KEY` — JSON string for admin SDK (falls back to GCP default credentials)
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
-- `ADMIN_SECRET` — guards admin API routes
+- `NEXT_PUBLIC_ADMIN_EMAILS` — comma-separated admin emails; gates `/admin` and `/api/admin/*`
+- `ALLOWLISTED_EMAILS` — comma-separated emails granted free Pro access (in addition to admins)
 - `EMAIL_FROM` — sender address for Resend (default: `BurpeePacer <hello@burpeepacers.com>`)
+
+### Deployment
+Pushes to `main` deploy automatically to Vercel. Firestore rules deploy separately: `firebase deploy --only firestore:rules`.
