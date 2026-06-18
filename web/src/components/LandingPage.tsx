@@ -143,8 +143,8 @@ export default function LandingPage() {
                         alt={preview.alt}
                         sx={{
                           width: "100%",
-                          aspectRatio: "9 / 16",
-                          objectFit: "cover",
+                          aspectRatio: "1 / 1",
+                          objectFit: "contain",
                           display: "block",
                           borderBottom: "1px solid rgba(255,255,255,0.08)",
                           backgroundColor: "rgba(255,255,255,0.04)",
