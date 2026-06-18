@@ -139,7 +139,7 @@ export default function LandingPage() {
         </motion.div>
 
         <Grid container spacing={3} mb={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ p: 3.5, height: "100%" }}>
               <Typography variant="h5" fontWeight={800} mb={1.5}>
                 Who Started the Burpee?
@@ -160,7 +160,7 @@ export default function LandingPage() {
               </Stack>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ p: 3.5, height: "100%" }}>
               <Typography variant="h5" fontWeight={800} mb={1.5}>
                 Why Burpees Work
@@ -306,7 +306,7 @@ export default function LandingPage() {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card
               sx={{
                 p: 3.5,
@@ -334,7 +334,7 @@ export default function LandingPage() {
               </Typography>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card
               sx={{
                 p: 3.5,

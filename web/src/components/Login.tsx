@@ -93,7 +93,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
   const [isLogin, setIsLogin] = useState(!isSignupFlow);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [rawEmail, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState(
@@ -115,30 +115,27 @@ export default function Login({ onBackToInfo }: LoginProps) {
       );
       return;
     }
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    setEmail(trimmedEmail);
-    setPassword(trimmedPassword);
+    const email = rawEmail.trim();
     try {
       let credential;
       if (isLogin) {
         credential = await signInWithEmailAndPassword(
           auth,
-          trimmedEmail,
-          trimmedPassword,
+          email,
+          password,
         );
       } else {
         credential = await createUserWithEmailAndPassword(
           auth,
-          trimmedEmail,
-          trimmedPassword,
+          email,
+          password,
         );
         const displayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
         if (displayName) {
           await updateProfile(credential.user, { displayName });
         }
         const idToken = await credential.user.getIdToken();
-        const emailSent = await sendWelcomeEmail(credential.user.uid, trimmedEmail, idToken);
+        const emailSent = await sendWelcomeEmail(credential.user.uid, email, idToken);
         if (!emailSent) {
           console.warn("Welcome email failed to send during signup");
           setMessage(
@@ -148,8 +145,8 @@ export default function Login({ onBackToInfo }: LoginProps) {
       }
 
       const idToken = await credential.user.getIdToken();
-      await stampAdminIfAllowlisted(credential.user.uid, trimmedEmail);
-      await claimPendingSubscription(credential.user.uid, trimmedEmail, idToken);
+      await stampAdminIfAllowlisted(credential.user.uid, email);
+      await claimPendingSubscription(credential.user.uid, email, idToken);
 
       const nextPath =
         typeof window !== "undefined"
@@ -182,7 +179,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
     setError("");
     setMessage("");
     if (!auth) return;
-    const normalizedEmail = email.trim();
+    const normalizedEmail = rawEmail.trim();
     if (!normalizedEmail) {
       setError("Please enter your email address above to reset your password.");
       return;
@@ -413,7 +410,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               fullWidth
               required
               disabled={isLoading}
-              value={email}
+              value={rawEmail}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => setEmail((prev) => prev.trim())}
               aria-label="Email"
@@ -447,7 +444,6 @@ export default function Login({ onBackToInfo }: LoginProps) {
               disabled={isLoading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => setPassword((prev) => prev.trim())}
               aria-label="Password"
               slotProps={{
                 input: {

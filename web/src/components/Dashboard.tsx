@@ -636,7 +636,7 @@ export default function Dashboard({
 
         {/* Stats and Video Row */}
         <Grid container spacing={3} mb={4}>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card
               sx={{
                 p: 3,
@@ -709,7 +709,7 @@ export default function Dashboard({
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <Card
               sx={{
                 p: 3,
@@ -769,15 +769,23 @@ export default function Dashboard({
                     ? startDate.toLocaleDateString()
                     : "Not started yet — complete your first workout to begin"}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Starting Weight: {userData.startWeight} lbs ({Math.round(userData.startWeight / 2.205)} kg)
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Protein target: ~{Math.round((userData.startWeight / 2.205) * 1.5)}g/day
-                  <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
-                    (1.5g × kg)
+                {userData.startWeight != null && !isNaN(userData.startWeight) ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Starting Weight: {userData.startWeight} lbs ({Math.round(userData.startWeight / 2.205)} kg)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Protein target: ~{Math.round((userData.startWeight / 2.205) * 1.5)}g/day
+                      <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
+                        (1.5g × kg)
+                      </Typography>
+                    </Typography>
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                    Starting Weight: not set
                   </Typography>
-                </Typography>
+                )}
                 {isBeginnerTrack && (
                   <Typography variant="body2" color="text.secondary" mt={1}>
                     Workout option: Burpee without pushups
@@ -828,7 +836,7 @@ export default function Dashboard({
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <WorkoutTimer
               tier={workoutTier}
               sealsGoal={currentLevel?.seals ?? 0}
@@ -1061,7 +1069,7 @@ export default function Dashboard({
 
                 <Grid container spacing={2}>
                   {PULLING_WORK_CONFIG.map((option) => (
-                    <Grid size={{ xs: 12, md: 6 }} key={option.id}>
+                    <Grid item xs={12} md={6} key={option.id}>
                       <Card
                         sx={{
                           p: 2.5,
@@ -1338,7 +1346,7 @@ export default function Dashboard({
           Progress Photos
         </Typography>
         <Grid container spacing={2} mb={4}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ p: 2, height: "100%" }}>
               <Typography
                 variant="subtitle1"
@@ -1393,7 +1401,7 @@ export default function Dashboard({
               </Box>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ p: 2, height: "100%" }}>
               <Typography
                 variant="subtitle1"
@@ -1432,7 +1440,7 @@ export default function Dashboard({
           </Typography>
           <Grid container spacing={2}>
             {levelsForTrack.map((lvl) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
+              <Grid item xs={12} sm={6} md={3} key={lvl.id}>
                 <Card
                   sx={{
                     p: 3,
