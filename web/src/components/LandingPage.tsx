@@ -19,6 +19,24 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BurpeeLogoIcon from "@/components/BurpeeLogoIcon";
 
+const APP_PREVIEWS = [
+  {
+    src: "/images/preview-timer.png",
+    alt: "Workout timer screen with pacing and countdown",
+    caption: "Audio-paced timer with whistle cues",
+  },
+  {
+    src: "/images/preview-calendar.png",
+    alt: "Calendar and progress tracking view",
+    caption: "Track every workout day at a glance",
+  },
+  {
+    src: "/images/preview-levels.png",
+    alt: "Level progression screen",
+    caption: "See your level climb as you hit your goals",
+  },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -96,6 +114,57 @@ export default function LandingPage() {
               integration built in. Designed for people over 40 who want real
               results without a gym.
             </Typography>
+
+            <Box sx={{ width: "100%", maxWidth: 900, mx: { xs: "auto", md: 0 } }}>
+              <Typography
+                variant="h5"
+                fontWeight={800}
+                textAlign={{ xs: "center", md: "left" }}
+                mb={2}
+              >
+                See what&apos;s waiting for you
+              </Typography>
+              <Grid container spacing={2}>
+                {APP_PREVIEWS.map((preview) => (
+                  <Grid size={{ xs: 12, md: 4 }} key={preview.src}>
+                    <Card
+                      sx={{
+                        borderRadius: 3,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        background: "rgba(255,255,255,0.03)",
+                        backdropFilter: "blur(10px)",
+                        height: "100%",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={preview.src}
+                        alt={preview.alt}
+                        sx={{
+                          width: "100%",
+                          aspectRatio: "9 / 16",
+                          objectFit: "cover",
+                          display: "block",
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                          backgroundColor: "rgba(255,255,255,0.04)",
+                        }}
+                      />
+                      <Box sx={{ p: 1.5 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          textAlign="center"
+                        >
+                          {preview.caption}
+                        </Typography>
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
