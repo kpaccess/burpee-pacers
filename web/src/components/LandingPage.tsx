@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Alert,
@@ -18,6 +18,24 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BurpeeLogoIcon from "@/components/BurpeeLogoIcon";
+
+const APP_PREVIEWS = [
+  {
+    src: "/images/preview-timer-2.png",
+    alt: "Workout timer screen with pacing and countdown",
+    caption: "Audio-paced timer with whistle cues",
+  },
+  {
+    src: "/images/preview-calendar.png",
+    alt: "Calendar and progress tracking view",
+    caption: "Track every workout day at a glance",
+  },
+  {
+    src: "/images/preview-levels.png",
+    alt: "Level progression screen",
+    caption: "See your level climb as you hit your goals",
+  },
+];
 
 export default function LandingPage() {
   const router = useRouter();
@@ -96,6 +114,56 @@ export default function LandingPage() {
               integration built in. Designed for people over 40 who want real
               results without a gym.
             </Typography>
+
+            <Box
+              sx={{ width: "100%", maxWidth: 900, mx: { xs: "auto", md: 0 } }}
+            >
+              <Typography
+                variant="h5"
+                fontWeight={800}
+                textAlign={{ xs: "center", md: "left" }}
+                mb={2}
+              >
+                See what&apos;s waiting for you
+              </Typography>
+              <Grid container spacing={2}>
+                {APP_PREVIEWS.map((preview) => (
+                  <Grid size={{ xs: 12, md: 4 }} key={preview.src}>
+                    <Card
+                      sx={{
+                        borderRadius: 3,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        height: "100%",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={preview.src}
+                        alt={preview.alt}
+                        sx={{
+                          width: "100%",
+                          height: 220,
+                          objectFit: "contain",
+                          display: "block",
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      />
+                      <Box sx={{ p: 1.5 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          textAlign="center"
+                        >
+                          {preview.caption}
+                        </Typography>
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
@@ -299,8 +367,8 @@ export default function LandingPage() {
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
               Full 6-month Navy SEAL program with audio pacing, Apple Watch
-              integration, weighted training, and physique tracking. Free
-              during launch.
+              integration, weighted training, and physique tracking. Free during
+              launch.
             </Typography>
           </Card>
         </Box>
@@ -384,36 +452,40 @@ export default function LandingPage() {
               📱 iOS app in pre-release
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The native iOS app is being tested before public release. Android coming soon.
+              The native iOS app is being tested before public release. Android
+              coming soon.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Chip
               label="iOS — Pre-release"
-              sx={{ bgcolor: "rgba(255,51,102,0.15)", color: "primary.main", fontWeight: 600 }}
+              sx={{
+                bgcolor: "rgba(255,51,102,0.15)",
+                color: "primary.main",
+                fontWeight: 600,
+              }}
             />
             <Chip
               label="Android — Coming Soon"
               variant="outlined"
-              sx={{ borderColor: "rgba(255,255,255,0.2)", color: "text.secondary" }}
+              sx={{
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "text.secondary",
+              }}
             />
           </Stack>
         </Box>
 
-        <Alert
-          severity="warning"
-          sx={{ mt: 4, borderRadius: 2 }}
-          icon={false}
-        >
+        <Alert severity="warning" sx={{ mt: 4, borderRadius: 2 }} icon={false}>
           <Typography variant="subtitle2" fontWeight={700} mb={0.5}>
             ⚠️ Please read before you begin
           </Typography>
           <Typography variant="body2">
-            I am not a coach or medical professional. Please consult your
-            doctor before starting any exercise program. Always start from the
-            very beginning, progress gradually day by day, and only do the
-            burpees you are capable of — strive for a little more each day. It
-            is perfectly fine to stay at one level and get fit there; advancing
+            I am not a coach or medical professional. Please consult your doctor
+            before starting any exercise program. Always start from the very
+            beginning, progress gradually day by day, and only do the burpees
+            you are capable of — strive for a little more each day. It is
+            perfectly fine to stay at one level and get fit there; advancing
             through levels is never required.
           </Typography>
         </Alert>
