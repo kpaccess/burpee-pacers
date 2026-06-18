@@ -115,22 +115,30 @@ export default function Login({ onBackToInfo }: LoginProps) {
       );
       return;
     }
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    setEmail(trimmedEmail);
+    setPassword(trimmedPassword);
     try {
       let credential;
       if (isLogin) {
-        credential = await signInWithEmailAndPassword(auth, email, password);
+        credential = await signInWithEmailAndPassword(
+          auth,
+          trimmedEmail,
+          trimmedPassword,
+        );
       } else {
         credential = await createUserWithEmailAndPassword(
           auth,
-          email,
-          password,
+          trimmedEmail,
+          trimmedPassword,
         );
         const displayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
         if (displayName) {
           await updateProfile(credential.user, { displayName });
         }
         const idToken = await credential.user.getIdToken();
-        const emailSent = await sendWelcomeEmail(credential.user.uid, email, idToken);
+        const emailSent = await sendWelcomeEmail(credential.user.uid, trimmedEmail, idToken);
         if (!emailSent) {
           console.warn("Welcome email failed to send during signup");
           setMessage(
@@ -140,8 +148,8 @@ export default function Login({ onBackToInfo }: LoginProps) {
       }
 
       const idToken = await credential.user.getIdToken();
-      await stampAdminIfAllowlisted(credential.user.uid, email);
-      await claimPendingSubscription(credential.user.uid, email, idToken);
+      await stampAdminIfAllowlisted(credential.user.uid, trimmedEmail);
+      await claimPendingSubscription(credential.user.uid, trimmedEmail, idToken);
 
       const nextPath =
         typeof window !== "undefined"
@@ -407,6 +415,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               disabled={isLoading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setEmail((prev) => prev.trim())}
               aria-label="Email"
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -438,6 +447,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               disabled={isLoading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setPassword((prev) => prev.trim())}
               aria-label="Password"
               slotProps={{
                 input: {

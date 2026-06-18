@@ -636,7 +636,7 @@ export default function Dashboard({
 
         {/* Stats and Video Row */}
         <Grid container spacing={3} mb={4}>
-          <Grid sx={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 p: 3,
@@ -709,7 +709,7 @@ export default function Dashboard({
             </Card>
           </Grid>
 
-          <Grid sx={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 p: 3,
@@ -828,7 +828,7 @@ export default function Dashboard({
             </Card>
           </Grid>
 
-          <Grid sx={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <WorkoutTimer
               tier={workoutTier}
               sealsGoal={currentLevel?.seals ?? 0}
@@ -1061,7 +1061,7 @@ export default function Dashboard({
 
                 <Grid container spacing={2}>
                   {PULLING_WORK_CONFIG.map((option) => (
-                    <Grid sx={{ xs: 12, md: 6 }} key={option.id}>
+                    <Grid size={{ xs: 12, md: 6 }} key={option.id}>
                       <Card
                         sx={{
                           p: 2.5,
@@ -1338,7 +1338,7 @@ export default function Dashboard({
           Progress Photos
         </Typography>
         <Grid container spacing={2} mb={4}>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ p: 2, height: "100%" }}>
               <Typography
                 variant="subtitle1"
@@ -1393,7 +1393,7 @@ export default function Dashboard({
               </Box>
             </Card>
           </Grid>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ p: 2, height: "100%" }}>
               <Typography
                 variant="subtitle1"
@@ -1432,7 +1432,7 @@ export default function Dashboard({
           </Typography>
           <Grid container spacing={2}>
             {levelsForTrack.map((lvl) => (
-              <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
                 <Card
                   sx={{
                     p: 3,

@@ -112,7 +112,7 @@ export default function LandingPage() {
                 variant="contained"
                 size="large"
                 startIcon={<WorkspacePremiumIcon />}
-                onClick={() => router.push("/login")}
+                onClick={() => router.push("/login?signup=1")}
               >
                 Start Free
               </Button>
@@ -139,7 +139,7 @@ export default function LandingPage() {
         </motion.div>
 
         <Grid container spacing={3} mb={3}>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ p: 3.5, height: "100%" }}>
               <Typography variant="h5" fontWeight={800} mb={1.5}>
                 Who Started the Burpee?
@@ -160,7 +160,7 @@ export default function LandingPage() {
               </Stack>
             </Card>
           </Grid>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ p: 3.5, height: "100%" }}>
               <Typography variant="h5" fontWeight={800} mb={1.5}>
                 Why Burpees Work
@@ -299,14 +299,14 @@ export default function LandingPage() {
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
               Full 6-month Navy SEAL program with audio pacing, Apple Watch
-              integration, weighted training, and physique tracking. Free
-              during launch.
+              integration, weighted training, and physique tracking. Free during
+              launch.
             </Typography>
           </Card>
         </Box>
 
         <Grid container spacing={3}>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card
               sx={{
                 p: 3.5,
@@ -334,7 +334,7 @@ export default function LandingPage() {
               </Typography>
             </Card>
           </Grid>
-          <Grid sx={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card
               sx={{
                 p: 3.5,
@@ -384,36 +384,40 @@ export default function LandingPage() {
               📱 iOS app in pre-release
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The native iOS app is being tested before public release. Android coming soon.
+              The native iOS app is being tested before public release. Android
+              coming soon.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Chip
               label="iOS — Pre-release"
-              sx={{ bgcolor: "rgba(255,51,102,0.15)", color: "primary.main", fontWeight: 600 }}
+              sx={{
+                bgcolor: "rgba(255,51,102,0.15)",
+                color: "primary.main",
+                fontWeight: 600,
+              }}
             />
             <Chip
               label="Android — Coming Soon"
               variant="outlined"
-              sx={{ borderColor: "rgba(255,255,255,0.2)", color: "text.secondary" }}
+              sx={{
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "text.secondary",
+              }}
             />
           </Stack>
         </Box>
 
-        <Alert
-          severity="warning"
-          sx={{ mt: 4, borderRadius: 2 }}
-          icon={false}
-        >
+        <Alert severity="warning" sx={{ mt: 4, borderRadius: 2 }} icon={false}>
           <Typography variant="subtitle2" fontWeight={700} mb={0.5}>
             ⚠️ Please read before you begin
           </Typography>
           <Typography variant="body2">
-            I am not a coach or medical professional. Please consult your
-            doctor before starting any exercise program. Always start from the
-            very beginning, progress gradually day by day, and only do the
-            burpees you are capable of — strive for a little more each day. It
-            is perfectly fine to stay at one level and get fit there; advancing
+            I am not a coach or medical professional. Please consult your doctor
+            before starting any exercise program. Always start from the very
+            beginning, progress gradually day by day, and only do the burpees
+            you are capable of — strive for a little more each day. It is
+            perfectly fine to stay at one level and get fit there; advancing
             through levels is never required.
           </Typography>
         </Alert>

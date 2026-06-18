@@ -194,7 +194,7 @@ export default function PricingPage() {
             variant="contained"
             size="large"
             startIcon={<WorkspacePremiumIcon />}
-            onClick={() => router.push(user ? "/" : "/login")}
+            onClick={() => router.push(user ? "/" : "/login?signup=1")}
             sx={{
               py: 1.5,
               px: 4,
