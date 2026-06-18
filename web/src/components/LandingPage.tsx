@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Alert,
@@ -21,7 +21,7 @@ import BurpeeLogoIcon from "@/components/BurpeeLogoIcon";
 
 const APP_PREVIEWS = [
   {
-    src: "/images/preview-timer.png",
+    src: "/images/preview-timer-2.png",
     alt: "Workout timer screen with pacing and countdown",
     caption: "Audio-paced timer with whistle cues",
   },
@@ -115,7 +115,9 @@ export default function LandingPage() {
               results without a gym.
             </Typography>
 
-            <Box sx={{ width: "100%", maxWidth: 900, mx: { xs: "auto", md: 0 } }}>
+            <Box
+              sx={{ width: "100%", maxWidth: 900, mx: { xs: "auto", md: 0 } }}
+            >
               <Typography
                 variant="h5"
                 fontWeight={800}
@@ -131,8 +133,6 @@ export default function LandingPage() {
                       sx={{
                         borderRadius: 3,
                         border: "1px solid rgba(255,255,255,0.08)",
-                        background: "rgba(255,255,255,0.03)",
-                        backdropFilter: "blur(10px)",
                         height: "100%",
                         overflow: "hidden",
                       }}
@@ -143,11 +143,10 @@ export default function LandingPage() {
                         alt={preview.alt}
                         sx={{
                           width: "100%",
-                          aspectRatio: "1 / 1",
+                          height: 220,
                           objectFit: "contain",
                           display: "block",
                           borderBottom: "1px solid rgba(255,255,255,0.08)",
-                          backgroundColor: "rgba(255,255,255,0.04)",
                         }}
                       />
                       <Box sx={{ p: 1.5 }}>
@@ -368,8 +367,8 @@ export default function LandingPage() {
             </Typography>
             <Typography variant="body1" color="text.secondary" mb={1}>
               Full 6-month Navy SEAL program with audio pacing, Apple Watch
-              integration, weighted training, and physique tracking. Free
-              during launch.
+              integration, weighted training, and physique tracking. Free during
+              launch.
             </Typography>
           </Card>
         </Box>
@@ -453,36 +452,40 @@ export default function LandingPage() {
               📱 iOS app in pre-release
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The native iOS app is being tested before public release. Android coming soon.
+              The native iOS app is being tested before public release. Android
+              coming soon.
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Chip
               label="iOS — Pre-release"
-              sx={{ bgcolor: "rgba(255,51,102,0.15)", color: "primary.main", fontWeight: 600 }}
+              sx={{
+                bgcolor: "rgba(255,51,102,0.15)",
+                color: "primary.main",
+                fontWeight: 600,
+              }}
             />
             <Chip
               label="Android — Coming Soon"
               variant="outlined"
-              sx={{ borderColor: "rgba(255,255,255,0.2)", color: "text.secondary" }}
+              sx={{
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "text.secondary",
+              }}
             />
           </Stack>
         </Box>
 
-        <Alert
-          severity="warning"
-          sx={{ mt: 4, borderRadius: 2 }}
-          icon={false}
-        >
+        <Alert severity="warning" sx={{ mt: 4, borderRadius: 2 }} icon={false}>
           <Typography variant="subtitle2" fontWeight={700} mb={0.5}>
             ⚠️ Please read before you begin
           </Typography>
           <Typography variant="body2">
-            I am not a coach or medical professional. Please consult your
-            doctor before starting any exercise program. Always start from the
-            very beginning, progress gradually day by day, and only do the
-            burpees you are capable of — strive for a little more each day. It
-            is perfectly fine to stay at one level and get fit there; advancing
+            I am not a coach or medical professional. Please consult your doctor
+            before starting any exercise program. Always start from the very
+            beginning, progress gradually day by day, and only do the burpees
+            you are capable of — strive for a little more each day. It is
+            perfectly fine to stay at one level and get fit there; advancing
             through levels is never required.
           </Typography>
         </Alert>
