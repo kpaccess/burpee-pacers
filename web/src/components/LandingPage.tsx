@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Box,
@@ -132,6 +132,7 @@ function Section({
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const [activeSection, setActiveSection] = useState("how-it-works");
 
   useEffect(() => {
     const sendVisit = async () => {
@@ -144,12 +145,43 @@ export default function LandingPage() {
     sendVisit();
   }, [user]);
 
+  useEffect(() => {
+    const sectionIds = NAV_ITEMS.map((item) => item.href.replace("#", ""));
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => section !== null);
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (!visibleEntries.length) return;
+
+        setActiveSection(visibleEntries[0].target.id);
+      },
+      {
+        rootMargin: "-25% 0px -55% 0px",
+        threshold: [0.2, 0.35, 0.5, 0.7],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, []);
+
   const scrollToSection = (id: string) => {
+    setActiveSection(id);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <Box
+      id="top"
       sx={{
         minHeight: "100vh",
         px: { xs: 2, md: 4 },
@@ -159,47 +191,84 @@ export default function LandingPage() {
       }}
     >
       <Box sx={{ maxWidth: 1120, mx: "auto" }}>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          alignItems={{ xs: "flex-start", md: "center" }}
-          justifyContent="space-between"
-          spacing={2}
-          sx={{ mb: { xs: 4, md: 5 } }}
+        <Box
+          sx={{
+            position: "sticky",
+            top: { xs: 8, md: 16 },
+            zIndex: 20,
+            mb: { xs: 4, md: 5 },
+          }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <BurpeeLogoIcon size={52} />
-            <Box>
-              <Typography variant="h6" fontWeight={900}>
-                BurpeePacers
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Structured 20-minute conditioning at home
-              </Typography>
-            </Box>
-          </Stack>
-
           <Stack
-            direction={{ xs: "row", md: "row" }}
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            justifyContent={{ xs: "flex-start", md: "flex-end" }}
+            direction={{ xs: "column", md: "row" }}
+            alignItems={{ xs: "flex-start", md: "center" }}
+            justifyContent="space-between"
+            spacing={2}
+            sx={{
+              p: { xs: 1.5, md: 2 },
+              borderRadius: 4,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(10,10,14,0.82)",
+              backdropFilter: "blur(14px)",
+            }}
           >
-            {NAV_ITEMS.map((item) => (
-              <Button
-                key={item.href}
-                href={item.href}
-                sx={{
-                  color: "rgba(255,255,255,0.76)",
-                  px: 1.25,
-                  minWidth: 0,
-                }}
-              >
-                {item.label}
-              </Button>
-            ))}
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <BurpeeLogoIcon size={52} />
+              <Box>
+                <Typography variant="h6" fontWeight={900}>
+                  BurpeePacers
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Structured 20-minute conditioning at home
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack
+              direction={{ xs: "row", md: "row" }}
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              justifyContent={{ xs: "flex-start", md: "flex-end" }}
+            >
+              {NAV_ITEMS.map((item) => (
+                <Button
+                  key={item.href}
+                  href={item.href}
+                  onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+                    event.preventDefault();
+                    scrollToSection(item.href.replace("#", ""));
+                  }}
+                  sx={{
+                    color:
+                      activeSection === item.href.replace("#", "")
+                        ? "common.white"
+                        : "rgba(255,255,255,0.76)",
+                    backgroundColor:
+                      activeSection === item.href.replace("#", "")
+                        ? "rgba(255,51,102,0.16)"
+                        : "transparent",
+                    border:
+                      activeSection === item.href.replace("#", "")
+                        ? "1px solid rgba(255,51,102,0.4)"
+                        : "1px solid transparent",
+                    px: 1.25,
+                    borderRadius: 999,
+                    minWidth: 0,
+                    "&:hover": {
+                      backgroundColor:
+                        activeSection === item.href.replace("#", "")
+                          ? "rgba(255,51,102,0.22)"
+                          : "rgba(255,255,255,0.06)",
+                    },
+                  }}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </Stack>
           </Stack>
-        </Stack>
+        </Box>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <Box
@@ -608,6 +677,7 @@ export default function LandingPage() {
 
         <Card
           sx={{
+            mt: 3,
             p: 2.5,
             borderRadius: 3,
             border: "1px solid rgba(255,255,255,0.08)",
@@ -621,6 +691,16 @@ export default function LandingPage() {
             progress.
           </Typography>
         </Card>
+
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
+          <Button
+            variant="text"
+            href="#top"
+            sx={{ color: "rgba(255,255,255,0.76)" }}
+          >
+            Back to top
+          </Button>
+        </Box>
 
         <Box sx={{ mt: 6, textAlign: "center" }}>
           <Typography variant="caption" color="text.disabled">
