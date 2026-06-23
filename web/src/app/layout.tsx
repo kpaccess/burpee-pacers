@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
+  title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
   description:
-    "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
+    "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
   openGraph: {
-    title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
+    title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
     description:
-      "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
+      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
     url: "https://burpeepacers.com",
     siteName: "BurpeePacers",
     images: [{ url: "/opengraph-image.png", width: 1024, height: 1024 }],
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "BurpeePacers | Navy SEAL & 5-Count Burpee Training",
+    title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
     description:
-      "A 6-month program combining Navy SEAL burpees, 5-count pushup burpees, and weighted training. Audio pacing and Apple Watch integration built in. Designed for people over 40 who want real results without a gym.",
+      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
     images: ["/opengraph-image.png"],
   },
 };
