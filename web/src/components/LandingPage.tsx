@@ -63,12 +63,12 @@ const FAQS = [
   {
     question: "Who is BurpeePacers for?",
     answer:
-      "It is built for adults 40+ who want a simple conditioning routine they can do at home without a gym.",
+      "It is built for adults 40+ who want a simple conditioning routine they can do at home, with no gym required.",
   },
   {
     question: "Do I need equipment?",
     answer:
-      "No. The workouts are designed for home training with no equipment and very little space.",
+      "No. The core workouts are designed for home training with very little space, and you can optionally add strength work if you have access to dumbbells or a gym.",
   },
   {
     question: "How often should I train?",
@@ -246,8 +246,8 @@ export default function LandingPage() {
                   }}
                 >
                   Build fitness, endurance, and consistency with guided burpee
-                  workouts you can do at home — no gym, no equipment, no
-                  complicated routines.
+                  workouts you can do at home with no gym required — plus
+                  optional strength work if you have equipment.
                 </Typography>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -478,7 +478,7 @@ export default function LandingPage() {
             >
               Hi, I&apos;m Krishna. I&apos;m a software developer in my 50s, and I
               built BurpeePacers because I wanted a simple way to stay fit
-              without depending on a gym or complicated workout plans.
+              without depending on a gym schedule or complicated workout plans.
             </Typography>
             <Typography
               variant="body1"
@@ -533,6 +533,9 @@ export default function LandingPage() {
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
                   Workout logging and progress tracking
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Optional weighted strength work on your selected training days
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
                   A simple system focused on consistency instead of complexity

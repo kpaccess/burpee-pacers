@@ -21,11 +21,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
   description:
-    "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
+    "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
   openGraph: {
     title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
     description:
-      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
+      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
     url: "https://burpeepacers.com",
     siteName: "BurpeePacers",
     images: [{ url: "/opengraph-image.png", width: 1024, height: 1024 }],
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
     description:
-      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home without a gym.",
+      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
     images: ["/opengraph-image.png"],
   },
 };
