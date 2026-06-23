@@ -23,17 +23,17 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
 const ADVANCED_FEATURES = [
-  "Advanced workout timer with intervals",
-  "Navy Seals, 5-count pushups, and Hybrid sessions",
-  "Full calendar history",
-  "Export workout data (CSV)",
-  "Customizable workout schedule",
+  "Advanced Navy SEAL, 5-count, and Hybrid training modes",
+  "Guided 20-minute workout pacing",
+  "Full workout history and progress tracking",
+  "Optional weighted strength work on training days",
+  "CSV export and customizable workout schedule",
 ];
 
 const BEGINNER_FEATURES = [
-  "Beginner workout track",
-  "No-pushup burpee progression",
-  "Core progress tracking",
+  "Beginner burpee progression with smoother level steps",
+  "Guided 20-minute home workouts",
+  "Workout logging and progress tracking",
   "Customizable workout schedule",
 ];
 
@@ -57,7 +57,7 @@ export default function PricingPage() {
           onClick={() => router.push("/")}
           sx={{ color: "grey.400", mb: 4, "&:hover": { color: "white" } }}
         >
-          Back to App
+          Back to Home
         </Button>
 
         <Box sx={{ textAlign: "center", mb: 5 }}>
@@ -71,18 +71,18 @@ export default function PricingPage() {
               mb: 1,
             }}
           >
-            Launch Access
+            Simple Web Access
           </Typography>
           <Typography variant="h6" color="grey.300" sx={{ maxWidth: 680, mx: "auto" }}>
-            BurpeePacers is free for everyone during launch. Use either track,
-            customize your schedule, and help shape the app before paid plans
-            are introduced later.
+            BurpeePacers gives adults 40+ a simple way to build conditioning,
+            strength, and consistency with guided 20-minute workouts on the
+            web.
           </Typography>
         </Box>
 
         <Alert severity="success" sx={{ mb: 4, borderRadius: 2 }}>
-          No checkout is required right now. Advanced features are open during
-          launch so early users can train, test, and give feedback.
+          No checkout is required right now. You can start free on the web
+          today while pricing is still paused.
         </Alert>
 
         <Box
@@ -117,7 +117,7 @@ export default function PricingPage() {
                 Free
               </Typography>
               <Typography variant="body2" color="grey.400" sx={{ mb: 3 }}>
-                Included during launch
+                Best for starting simple
               </Typography>
               <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 3 }} />
               <List dense disablePadding>
@@ -169,7 +169,7 @@ export default function PricingPage() {
                 Free
               </Typography>
               <Typography variant="body2" color="grey.400" sx={{ mb: 3 }}>
-                Full launch access
+                For a harder conditioning challenge
               </Typography>
               <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 3 }} />
               <List dense disablePadding>
@@ -221,9 +221,9 @@ export default function PricingPage() {
           }}
         >
           <Typography variant="body2" color="grey.500" textAlign="center">
-            Paid plans may be introduced later for advanced coaching, premium
-            content, or support features. Launch users can use the app free
-            while pricing is paused.
+            Paid plans may be introduced later. For now, the main web
+            experience is open so you can sign up, train, track workouts, and
+            see whether the system fits your routine.
           </Typography>
         </Box>
       </Container>
