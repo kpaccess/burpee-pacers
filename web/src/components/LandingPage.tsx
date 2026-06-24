@@ -17,7 +17,7 @@ import BurpeeLogoIcon from "@/components/BurpeeLogoIcon";
 const NAV_ITEMS = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Programs", href: "#programs" },
-  { label: "Founder Story", href: "#founder-story" },
+  { label: "Why It Exists", href: "#founder-story" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
@@ -26,44 +26,57 @@ const PREVIEW_CARDS = [
   {
     src: "/images/preview-timer-2.png",
     alt: "Workout timer screen with pacing and countdown",
-    caption: "Follow the timer instead of counting reps in your head.",
+    step: "Step 1",
+    title: "Train with a guided timer",
+    caption: "Follow the pace instead of counting reps in your head.",
   },
   {
     src: "/images/preview-calendar.png",
     alt: "Calendar and progress tracking view",
+    step: "Step 2",
+    title: "Keep your training visible",
     caption: "Stay consistent with a simple workout log and history view.",
   },
   {
     src: "/images/preview-levels.png",
     alt: "Level progression screen",
-    caption: "See your level and progression path clearly on the web.",
+    step: "Step 3",
+    title: "Know when to progress",
+    caption: "See your current level and progression path clearly on the web.",
   },
 ];
 
 const HOW_IT_WORKS_STEPS = [
   {
-    title: "1. Choose your starting level",
-    body: "Start with beginner burpees or move into advanced Navy SEAL training when ready.",
+    title: "1. Choose your starting path",
+    body: "Pick the beginner path for a simple entry point or the advanced path if you already want a harder conditioning challenge.",
   },
   {
-    title: "2. Train for 20 minutes",
-    body: "Follow a simple pacing system so you do not have to count, guess, or overthink.",
+    title: "2. Follow a guided 20-minute timer",
+    body: "Train with clear pacing so you do not have to count reps in your head, guess the rhythm, or overthink the session.",
   },
   {
-    title: "3. Track your progress",
-    body: "Log workouts, build consistency, and see your improvement over time.",
+    title: "3. Log each workout and stay consistent",
+    body: "Track completed sessions, keep your training history in one place, and build momentum without complicated planning.",
   },
   {
-    title: "4. Progress when ready",
-    body: "Repeat a level until it feels comfortable, then move up safely.",
+    title: "4. Level up only when ready",
+    body: "Repeat a level until it feels solid, then progress at a pace your form and recovery can support.",
   },
+];
+
+const PROOF_ITEMS = [
+  { title: "Web app live now", body: "Sign up, train, and track progress directly on the web." },
+  { title: "20-minute guided sessions", body: "A simple timer keeps each workout focused and manageable." },
+  { title: "Beginner and advanced paths", body: "Start where you are and progress without guesswork." },
+  { title: "Progress tracking built in", body: "Your workout history stays visible and easy to follow." },
 ];
 
 const FAQS = [
   {
     question: "Who is BurpeePacers for?",
     answer:
-      "It is built for adults 40+ who want a simple conditioning routine they can do at home, with no gym required.",
+      "It is built for adults 40+ who want a simple conditioning routine they can do at home, and it is especially useful for busy people who want more structure without needing a gym.",
   },
   {
     question: "Do I need equipment?",
@@ -99,7 +112,7 @@ function Section({
     <Box
       id={id}
       sx={{
-        scrollMarginTop: 100,
+        scrollMarginTop: { xs: 112, md: 100 },
         py: { xs: 4, md: 5 },
       }}
     >
@@ -196,40 +209,64 @@ export default function LandingPage() {
             position: "sticky",
             top: { xs: 8, md: 16 },
             zIndex: 20,
-            mb: { xs: 4, md: 5 },
+            mb: { xs: 3, md: 5 },
           }}
         >
           <Stack
             direction={{ xs: "column", md: "row" }}
             alignItems={{ xs: "flex-start", md: "center" }}
             justifyContent="space-between"
-            spacing={2}
+            spacing={{ xs: 1.25, md: 2 }}
             sx={{
-              p: { xs: 1.5, md: 2 },
+              p: { xs: 1, md: 2 },
               borderRadius: 4,
               border: "1px solid rgba(255,255,255,0.08)",
               background: "rgba(10,10,14,0.82)",
               backdropFilter: "blur(14px)",
             }}
           >
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <BurpeeLogoIcon size={52} />
-              <Box>
-                <Typography variant="h6" fontWeight={900}>
+            <Stack
+              direction="row"
+              spacing={1.25}
+              alignItems="center"
+              onClick={() => scrollToSection("top")}
+              sx={{ cursor: "pointer" }}
+            >
+              <BurpeeLogoIcon size={44} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h6" fontWeight={900} sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}>
                   BurpeePacers
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    fontSize: { xs: "0.9rem", md: "0.875rem" },
+                    whiteSpace: { xs: "nowrap", md: "normal" },
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: { xs: "100%", md: "none" },
+                  }}
+                >
                   Structured 20-minute conditioning at home
                 </Typography>
               </Box>
             </Stack>
 
             <Stack
-              direction={{ xs: "row", md: "row" }}
+              direction="row"
               spacing={1}
-              flexWrap="wrap"
+              flexWrap="nowrap"
               useFlexGap
               justifyContent={{ xs: "flex-start", md: "flex-end" }}
+              sx={{
+                width: "100%",
+                overflowX: { xs: "auto", md: "visible" },
+                pb: { xs: 0.25, md: 0 },
+                pr: { xs: 0.25, md: 0 },
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
             >
               {NAV_ITEMS.map((item) => (
                 <Button
@@ -253,6 +290,8 @@ export default function LandingPage() {
                         ? "1px solid rgba(255,51,102,0.4)"
                         : "1px solid transparent",
                     px: 1.25,
+                    py: { xs: 0.7, md: 1 },
+                    flex: "0 0 auto",
                     borderRadius: 999,
                     minWidth: 0,
                     "&:hover": {
@@ -293,7 +332,7 @@ export default function LandingPage() {
                   variant="overline"
                   sx={{ letterSpacing: 1.8, color: "secondary.main", fontWeight: 800 }}
                 >
-                  Start where you are. Follow the pace. Progress when ready.
+                  Simple home conditioning for consistency, not complexity.
                 </Typography>
                 <Typography
                   variant="h1"
@@ -304,7 +343,7 @@ export default function LandingPage() {
                     maxWidth: 720,
                   }}
                 >
-                  20-Minute Conditioning for Adults 40+
+                  Simple 20-Minute Home Conditioning You Can Actually Stick With
                 </Typography>
                 <Typography
                   variant="h6"
@@ -314,9 +353,10 @@ export default function LandingPage() {
                     lineHeight: 1.5,
                   }}
                 >
-                  Build fitness, endurance, and consistency with guided burpee
-                  workouts you can do at home with no gym required — plus
-                  optional strength work if you have equipment.
+                  BurpeePacers gives you a guided timer, a clear starting level,
+                  and simple progress tracking so you can train consistently at
+                  home without a gym. Built for adults 40+ who want structure
+                  without overcomplication.
                 </Typography>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -352,6 +392,32 @@ export default function LandingPage() {
                     Already a member? Sign in
                   </Button>
                 </Stack>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                    gap: 1.5,
+                  }}
+                >
+                  {PROOF_ITEMS.map((item) => (
+                    <Card
+                      key={item.title}
+                      sx={{
+                        p: 1.75,
+                        borderRadius: 3,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        background: "rgba(255,255,255,0.04)",
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight={800} mb={0.5}>
+                        {item.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.body}
+                      </Typography>
+                    </Card>
+                  ))}
+                </Box>
               </Stack>
             </Card>
 
@@ -360,44 +426,147 @@ export default function LandingPage() {
                 p: { xs: 2, md: 2.5 },
                 borderRadius: 4,
                 border: "1px solid rgba(0,229,255,0.18)",
-                background: "rgba(9,13,20,0.9)",
+                background:
+                  "linear-gradient(180deg, rgba(6,12,18,0.98) 0%, rgba(7,10,16,0.92) 100%)",
+                overflow: "hidden",
               }}
             >
-              <Stack spacing={2}>
-                <Typography variant="h6" fontWeight={800}>
-                  The complete web training flow
-                </Typography>
+              <Stack spacing={2.25}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: { xs: "flex-start", md: "center" },
+                    justifyContent: "space-between",
+                    gap: 2,
+                    flexDirection: { xs: "column", md: "row" },
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ color: "secondary.main", letterSpacing: 1.6, fontWeight: 800 }}
+                    >
+                      Web Experience
+                    </Typography>
+                    <Typography variant="h5" fontWeight={900} sx={{ mt: 0.5 }}>
+                      The complete training flow
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "rgba(255,255,255,0.62)", maxWidth: 320 }}
+                  >
+                    From first workout to long-term consistency, the core web
+                    app keeps the experience simple and visible.
+                  </Typography>
+                </Box>
                 {PREVIEW_CARDS.map((preview) => (
                   <Box
                     key={preview.src}
                     sx={{
+                      position: "relative",
                       display: "grid",
-                      gridTemplateColumns: "112px minmax(0, 1fr)",
-                      gap: 1.5,
-                      alignItems: "center",
-                      p: 1.25,
-                      borderRadius: 3,
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "minmax(0, 1.15fr) minmax(180px, 0.85fr)",
+                      },
+                      gap: 2,
+                      alignItems: "stretch",
+                      p: { xs: 1.25, md: 1.5 },
+                      borderRadius: 3.5,
                       border: "1px solid rgba(255,255,255,0.08)",
-                      background: "rgba(255,255,255,0.02)",
+                      background:
+                        "linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                     }}
                   >
                     <Box
-                      component="img"
-                      src={preview.src}
-                      alt={preview.alt}
                       sx={{
-                        width: "100%",
-                        height: 124,
-                        objectFit: "contain",
-                        borderRadius: 2,
-                        background: "rgba(255,255,255,0.02)",
+                        position: "relative",
+                        minHeight: { xs: 210, md: 188 },
+                        borderRadius: 3,
+                        overflow: "hidden",
+                        border: "1px solid rgba(0,229,255,0.14)",
+                        background:
+                          "radial-gradient(circle at top, rgba(0,229,255,0.1), transparent 45%), rgba(255,255,255,0.025)",
                       }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {preview.caption}
-                    </Typography>
+                    >
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 12,
+                          left: 12,
+                          zIndex: 1,
+                          px: 1.1,
+                          py: 0.45,
+                          borderRadius: 999,
+                          background: "rgba(8,12,18,0.82)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <Typography variant="caption" fontWeight={800} sx={{ color: "secondary.main" }}>
+                          {preview.step}
+                        </Typography>
+                      </Box>
+                      <Box
+                        component="img"
+                        src={preview.src}
+                        alt={preview.alt}
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                          display: "block",
+                          p: 1.5,
+                        }}
+                      />
+                    </Box>
+                    <Stack
+                      spacing={1}
+                      justifyContent="center"
+                      sx={{ p: { xs: 0.5, md: 0.75 } }}
+                    >
+                      <Typography
+                        variant="overline"
+                        sx={{ color: "rgba(255,255,255,0.5)", letterSpacing: 1.4 }}
+                      >
+                        {preview.step}
+                      </Typography>
+                      <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.15 }}>
+                        {preview.title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "rgba(255,255,255,0.68)", lineHeight: 1.6 }}
+                      >
+                        {preview.caption}
+                      </Typography>
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          width: 44,
+                          height: 2,
+                          borderRadius: 999,
+                          background:
+                            "linear-gradient(90deg, rgba(255,51,102,0.95), rgba(0,229,255,0.9))",
+                        }}
+                      />
+                    </Stack>
                   </Box>
                 ))}
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.025)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    Built to make the next step obvious: start, follow the pace,
+                    log the session, and keep moving.
+                  </Typography>
+                </Box>
               </Stack>
             </Card>
           </Box>
@@ -528,8 +697,8 @@ export default function LandingPage() {
 
         <Section
           id="founder-story"
-          eyebrow="Founder Story"
-          title="Built by Someone Who Uses It"
+          eyebrow="Why It Exists"
+          title="Built From a Real Need for Simpler Training"
         >
           <Card
             sx={{
@@ -539,26 +708,26 @@ export default function LandingPage() {
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.08) 100%)",
             }}
-          >
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ maxWidth: 820, mb: 2 }}
             >
-              Hi, I&apos;m Krishna. I&apos;m a software developer in my 50s, and I
-              built BurpeePacers because I wanted a simple way to stay fit
-              without depending on a gym schedule or complicated workout plans.
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ maxWidth: 820, mb: 3 }}
-            >
-              I was inspired by structured burpee training, but I wanted a
-              better way to pace, log, and progress through my workouts.
-              BurpeePacers is the system I built for myself — now shared with
-              others who want simple, disciplined conditioning at home.
-            </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ maxWidth: 820, mb: 2 }}
+              >
+              Hi, I&apos;m Krishna. I built BurpeePacers because I wanted a
+              simpler way to follow structured conditioning workouts at home
+              without relying on a gym schedule or overcomplicated plans.
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ maxWidth: 820, mb: 3 }}
+              >
+              I created it first for myself, then shaped it into a product for
+              adults who want a clear starting point, guided pacing, and steady
+              progress. The goal is simple: remove friction so people can focus
+              on showing up and training consistently.
+              </Typography>
             <Button
               variant="contained"
               size="large"
@@ -625,8 +794,9 @@ export default function LandingPage() {
                 Launch access
               </Typography>
               <Typography variant="body1" color="text.secondary" mb={3}>
-                Start free on the web today. Pricing details and future plan
-                updates live on the pricing page.
+                Start free on the web today. Create an account, choose your
+                track, and begin your first guided workout right away. Pricing
+                details are available on the pricing page.
               </Typography>
               <Stack spacing={1.5}>
                 <Button

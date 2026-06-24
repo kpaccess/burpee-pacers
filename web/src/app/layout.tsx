@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
+  title: "BurpeePacers | Guided 20-Minute Home Conditioning",
   description:
-    "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
+    "Structured 20-minute burpee workouts with guided pacing, progress tracking, and simple home-friendly training for adults who want consistency without a gym.",
   openGraph: {
-    title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
+    title: "BurpeePacers | Guided 20-Minute Home Conditioning",
     description:
-      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
+      "Structured 20-minute burpee workouts with guided pacing, progress tracking, and simple home-friendly training for adults who want consistency without a gym.",
     url: "https://burpeepacers.com",
     siteName: "BurpeePacers",
     images: [{ url: "/opengraph-image.png", width: 1024, height: 1024 }],
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "BurpeePacers | 20-Minute Conditioning for Adults 40+",
+    title: "BurpeePacers | Guided 20-Minute Home Conditioning",
     description:
-      "Structured 20-minute burpee workouts for adults 40+ who want conditioning, strength, and consistency at home, with no gym required and optional strength work.",
+      "Structured 20-minute burpee workouts with guided pacing, progress tracking, and simple home-friendly training for adults who want consistency without a gym.",
     images: ["/opengraph-image.png"],
   },
 };
