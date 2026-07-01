@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (!decoded.email_verified) {
+      return NextResponse.json({ claimed: false, reason: "email_not_verified" }, { status: 403 });
+    }
+
     const db = getAdminDb();
     const pendingRef = db
       .collection("pending_subscriptions")

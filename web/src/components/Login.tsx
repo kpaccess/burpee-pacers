@@ -19,10 +19,12 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
   signInWithPopup,
   GoogleAuthProvider,
   getAdditionalUserInfo,
+  signOut,
 } from "firebase/auth";
 import { auth, db, missingFirebaseEnvVars } from "../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
@@ -80,6 +82,17 @@ async function sendWelcomeEmail(uid: string, email: string, idToken: string) {
   }
 }
 
+async function sendVerificationEmail() {
+  if (!auth?.currentUser) return false;
+  try {
+    await sendEmailVerification(auth.currentUser);
+    return true;
+  } catch (err) {
+    console.error("Error sending verification email:", err);
+    return false;
+  }
+}
+
 interface LoginProps {
   onBackToInfo?: () => void;
 }
@@ -120,6 +133,14 @@ export default function Login({ onBackToInfo }: LoginProps) {
       let credential;
       if (isLogin) {
         credential = await signInWithEmailAndPassword(auth, email, password);
+        if (credential.user.emailVerified) {
+          const idToken = await credential.user.getIdToken();
+          await sendWelcomeEmail(credential.user.uid, email, idToken);
+        } else {
+          setMessage(
+            "Please verify your email before using BurpeePacers. We can resend the verification email below.",
+          );
+        }
       } else {
         credential = await createUserWithEmailAndPassword(
           auth,
@@ -130,12 +151,14 @@ export default function Login({ onBackToInfo }: LoginProps) {
         if (displayName) {
           await updateProfile(credential.user, { displayName });
         }
-        const idToken = await credential.user.getIdToken();
-        const emailSent = await sendWelcomeEmail(credential.user.uid, email, idToken);
-        if (!emailSent) {
-          console.warn("Welcome email failed to send during signup");
+        const verificationSent = await sendVerificationEmail();
+        if (verificationSent) {
           setMessage(
-            "Account created! We had trouble sending your welcome email — please check your inbox and spam folder.",
+            "Account created. Check your inbox and click the verification link before using BurpeePacers.",
+          );
+        } else {
+          setMessage(
+            "Account created, but we could not send the verification email. Use the resend button below after you sign in again.",
           );
         }
       }
@@ -143,6 +166,16 @@ export default function Login({ onBackToInfo }: LoginProps) {
       const idToken = await credential.user.getIdToken();
       await stampAdminIfAllowlisted(credential.user.uid, email);
       await claimPendingSubscription(credential.user.uid, email, idToken);
+
+      if (!credential.user.emailVerified && !isLogin) {
+        await signOut(auth);
+        setIsLogin(true);
+        setFirstName("");
+        setLastName("");
+        setShowPassword(false);
+        setIsLoading(false);
+        return;
+      }
 
       const nextPath =
         typeof window !== "undefined"
@@ -187,6 +220,42 @@ export default function Login({ onBackToInfo }: LoginProps) {
       );
     } catch (err) {
       setError((err as Error).message);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setError("");
+    setMessage("");
+    setIsLoading(true);
+
+    if (!auth) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      if (!auth.currentUser) {
+        const normalizedEmail = rawEmail.trim();
+        if (!normalizedEmail || !password) {
+          setError("Enter your email and password first so we know which account to verify.");
+          setIsLoading(false);
+          return;
+        }
+        await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      }
+
+      const sent = await sendVerificationEmail();
+      if (!sent) {
+        setError("We could not send the verification email. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setMessage("Verification email sent. Check your inbox and spam folder.");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -487,14 +556,24 @@ export default function Login({ onBackToInfo }: LoginProps) {
 
         {isLogin && (
           <Box display="flex" justifyContent="center" mb={1} mt={1}>
-            <Button
-              variant="text"
-              size="small"
-              onClick={handleResetPassword}
-              disabled={isLoading}
-            >
-              Forgot password?
-            </Button>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleResetPassword}
+                disabled={isLoading}
+              >
+                Forgot password?
+              </Button>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleResendVerification}
+                disabled={isLoading}
+              >
+                Resend verification
+              </Button>
+            </Box>
           </Box>
         )}
 

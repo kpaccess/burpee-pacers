@@ -36,6 +36,7 @@ import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ScienceIcon from "@mui/icons-material/Science";
 import StarIcon from "@mui/icons-material/Star";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 interface AllowlistEntry {
   email: string;
@@ -59,6 +60,7 @@ export default function AdminPage() {
   const [removeLoadingEmail, setRemoveLoadingEmail] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<"all" | "real">("all");
   const [togglingUid, setTogglingUid] = useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
   const toggleTestUser = async (uid: string, current: boolean) => {
     setTogglingUid(uid);
@@ -85,7 +87,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user || !isAdmin(user.email)) {
+    if (!user || !user.emailVerified || !isAdmin(user.email)) {
       router.replace("/");
       return;
     }
@@ -190,6 +192,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleCopyEmails = async () => {
+    const emails = (stats?.users ?? [])
+      .filter((u) => u.emailVerified && !u.isTestUser && !isAdmin(u.email))
+      .map((u) => u.email.trim().toLowerCase())
+      .filter((email) => email && email !== "(no email)" && !isAdmin(email));
+
+    if (!emails.length) {
+      setCopyMessage("No emails available to copy.");
+      return;
+    }
+
+    const uniqueEmails = Array.from(new Set(emails));
+
+    try {
+      await navigator.clipboard.writeText(uniqueEmails.join(", "));
+      setCopyMessage(`Copied ${uniqueEmails.length} email${uniqueEmails.length === 1 ? "" : "s"}.`);
+    } catch {
+      setCopyMessage("Could not copy emails. Check browser clipboard permissions.");
+    }
+  };
+
   if (loading || (!stats && !error)) {
     return (
       <Box sx={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>
@@ -207,7 +230,7 @@ export default function AdminPage() {
   }
 
   const displayedUsers = filterMode === "real"
-    ? stats!.users.filter((u) => !u.isTestUser)
+    ? stats!.users.filter((u) => u.emailVerified && !u.isTestUser && !isAdmin(u.email))
     : stats!.users;
 
   return (
@@ -237,9 +260,9 @@ export default function AdminPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0,1fr))" },
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(4, minmax(0,1fr))" },
           gap: 3,
-          maxWidth: 480,
+          maxWidth: 980,
           mb: 6,
         }}
       >
@@ -250,10 +273,24 @@ export default function AdminPage() {
         />
         <StatCard
           icon={<PeopleAltIcon sx={{ fontSize: 40, color: "primary.main" }} />}
-          label={filterMode === "real" ? "Real Sign-ups" : "Total Sign-ups"}
-          value={displayedUsers.length}
+          label="Verified Real Sign-ups"
+          value={stats!.verifiedRealSignupCount}
+        />
+        <StatCard
+          icon={<PersonAddAltIcon sx={{ fontSize: 40, color: "warning.main" }} />}
+          label="Unverified Sign-ups"
+          value={stats!.unverifiedSignupCount}
+        />
+        <StatCard
+          icon={<ScienceIcon sx={{ fontSize: 40, color: "info.main" }} />}
+          label="Test Users"
+          value={stats!.testUserCount}
         />
       </Box>
+
+      <Alert severity="info" sx={{ mb: 4, maxWidth: 980 }}>
+        Total non-admin accounts: {stats!.totalNonAdminUsers.toLocaleString()}. Verified real users exclude admins and test users. Unverified users are blocked from using the app until they confirm their email.
+      </Alert>
 
       {/* ── Allowlist Management ─────────────────────────────────────── */}
       <Box sx={{ mb: 6 }}>
@@ -419,22 +456,37 @@ export default function AdminPage() {
         <Typography variant="h6" fontWeight={800}>
           Users
         </Typography>
-        <ToggleButtonGroup
-          value={filterMode}
-          exclusive
-          onChange={(_, val) => { if (val) setFilterMode(val); }}
-          size="small"
-        >
-          <ToggleButton value="all">All Users</ToggleButton>
-          <ToggleButton value="real">Real Users Only</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<ContentCopyIcon />}
+            onClick={handleCopyEmails}
+          >
+            Copy Verified Emails
+          </Button>
+          <ToggleButtonGroup
+            value={filterMode}
+            exclusive
+            onChange={(_, val) => { if (val) setFilterMode(val); }}
+            size="small"
+          >
+            <ToggleButton value="all">All Users</ToggleButton>
+          <ToggleButton value="real">Verified Real Users</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
+      {copyMessage ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {copyMessage}
+        </Alert>
+      ) : null}
       <TableContainer component={Paper} sx={{ bgcolor: "#141414" }}>
         <Table size="small">
           <TableHead>
             <TableRow>
               {[
-                "#", "First Name", "Last Name", "Email", "Joined", "Last Login",
+                "#", "First Name", "Last Name", "Email", "Verified", "Joined", "Last Login",
                 "Tier", "Level", "Day", "Workouts", "Timer Verified", "Onboarded", "Pro", "Test",
               ].map((h) => (
                 <TableCell key={h} sx={headerCell}>{h}</TableCell>
@@ -448,6 +500,14 @@ export default function AdminPage() {
                 <TableCell>{u.firstName || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
                 <TableCell>{u.lastName || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
                 <TableCell>{u.email}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={u.emailVerified ? "Yes" : "No"}
+                    size="small"
+                    color={u.emailVerified ? "success" : "default"}
+                    sx={{ fontSize: 11 }}
+                  />
+                </TableCell>
                 <TableCell sx={{ whiteSpace: "nowrap", color: "text.secondary", fontSize: 12 }}>
                   {formatDate(u.created)}
                 </TableCell>

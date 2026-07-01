@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
-import { isAdmin } from "@/lib/allowlist";
+import { isServerAdmin } from "@/lib/admin-emails";
 import { FieldValue } from "firebase-admin/firestore";
 
 /**
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (idToken) {
       try {
         const decoded = await getAuth(getAdminApp()).verifyIdToken(idToken);
-        if (isAdmin(decoded.email)) {
+        if (isServerAdmin(decoded.email)) {
           return NextResponse.json({ ok: true, skipped: true });
         }
       } catch {
