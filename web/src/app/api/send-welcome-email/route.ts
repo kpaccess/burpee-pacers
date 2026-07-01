@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
-import { getAdminEmails } from "@/lib/allowlist";
+import { getServerAdminEmails } from "@/lib/admin-emails";
 import { isAllowlistedServer } from "@/lib/allowlist-server";
 import { getAuth } from "firebase-admin/auth";
 import {
@@ -50,8 +50,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (!force && !decoded.email_verified) {
+      return NextResponse.json({ sent: false, reason: "email_not_verified" });
+    }
+
     if (force) {
-      const adminEmails = getAdminEmails();
+      const adminEmails = getServerAdminEmails();
       if (!decoded.email || !adminEmails.includes(decoded.email.toLowerCase())) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }

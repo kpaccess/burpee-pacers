@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
-import { isAdmin } from "@/lib/allowlist";
+import { isServerAdmin } from "@/lib/admin-emails";
 import { getAuth, UserRecord } from "firebase-admin/auth";
 
 export interface UserRow {
@@ -9,6 +9,7 @@ export interface UserRow {
   firstName: string;
   lastName: string;
   email: string;
+  emailVerified: boolean;
   created: string;
   lastLogin: string;
   isPro: boolean;
@@ -23,14 +24,17 @@ export interface UserRow {
 
 export interface AdminStats {
   pageViews: number;
-  signupCount: number;
+  totalNonAdminUsers: number;
+  verifiedRealSignupCount: number;
+  unverifiedSignupCount: number;
+  testUserCount: number;
   dailyViews: Record<string, number>;
   users: UserRow[];
 }
 
 /**
  * GET /api/admin/stats
- * Returns { pageViews, signupCount, users[] } for the admin dashboard.
+ * Returns analytics counts and users[] for the admin dashboard.
  * Protected: only accessible to the ADMIN_EMAIL account.
  */
 export async function GET(req: NextRequest) {
@@ -43,7 +47,7 @@ export async function GET(req: NextRequest) {
     }
 
     const decoded = await getAuth(getAdminApp()).verifyIdToken(idToken);
-    if (!isAdmin(decoded.email)) {
+    if (!decoded.email_verified || !isServerAdmin(decoded.email)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -84,6 +88,7 @@ export async function GET(req: NextRequest) {
         firstName,
         lastName,
         email: u.email ?? "(no email)",
+        emailVerified: u.emailVerified ?? false,
         created: u.metadata.creationTime,
         lastLogin: u.metadata.lastSignInTime ?? "Never",
         isPro: data.isPro ?? false,
@@ -103,6 +108,17 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    const totalNonAdminUsers = users.filter((u) => !isServerAdmin(u.email)).length;
+    const verifiedRealSignupCount = users.filter(
+      (u) => u.emailVerified && !u.isTestUser && !isServerAdmin(u.email),
+    ).length;
+    const unverifiedSignupCount = users.filter(
+      (u) => !u.emailVerified && !isServerAdmin(u.email),
+    ).length;
+    const testUserCount = users.filter(
+      (u) => u.isTestUser && !isServerAdmin(u.email),
+    ).length;
+
     // Sort: most recently logged in first
     users.sort(
       (a, b) =>
@@ -111,7 +127,15 @@ export async function GET(req: NextRequest) {
     );
     users.forEach((u, i) => { u.serialNo = i + 1; });
 
-    return NextResponse.json({ pageViews, signupCount: authUsers.length, dailyViews, users });
+    return NextResponse.json({
+      pageViews,
+      totalNonAdminUsers,
+      verifiedRealSignupCount,
+      unverifiedSignupCount,
+      testUserCount,
+      dailyViews,
+      users,
+    });
   } catch (err) {
     console.error("Error fetching admin stats:", err);
     return NextResponse.json(

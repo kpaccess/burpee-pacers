@@ -126,8 +126,9 @@ function TrackSelector({ onSelect }: { onSelect: (tier: WorkoutTier) => void }) 
 export default function Home() {
   const { userData, isLoaded, saveUserData, toggleWorkoutLog, syncError } =
     useUserData();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser, logout } = useAuth();
   const [showMilestoneCheckin, setShowMilestoneCheckin] = useState(false);
+  const [verificationRefreshing, setVerificationRefreshing] = useState(false);
 
   if (!isLoaded || authLoading) {
     return (
@@ -146,6 +147,54 @@ export default function Home() {
 
   if (!user) {
     return <LandingPage />;
+  }
+
+  if (!user.emailVerified) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          px: 2,
+        }}
+      >
+        <Card sx={{ p: 4, maxWidth: 520, width: "100%" }}>
+          <Typography variant="h4" gutterBottom align="center" color="primary" fontWeight={800}>
+            Verify Your Email
+          </Typography>
+          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            We sent a verification link to {user.email ?? "your email address"}. Verify your email before onboarding or using the app.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            This helps protect your account and confirms that we can reach you at a real email address.
+          </Alert>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <Button
+              variant="contained"
+              disabled={verificationRefreshing}
+              onClick={async () => {
+                setVerificationRefreshing(true);
+                try {
+                  await refreshUser();
+                } finally {
+                  setVerificationRefreshing(false);
+                }
+              }}
+            >
+              {verificationRefreshing ? <CircularProgress size={20} color="inherit" /> : "I've Verified My Email"}
+            </Button>
+            <Button variant="outlined" onClick={() => window.location.assign("/login")}>
+              Go to Login
+            </Button>
+            <Button variant="text" color="inherit" onClick={() => void logout()}>
+              Sign Out
+            </Button>
+          </Stack>
+        </Card>
+      </Box>
+    );
   }
 
   if (syncError && userData === undefined) {

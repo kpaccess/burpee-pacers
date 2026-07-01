@@ -2,6 +2,7 @@
 
 import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { isAdmin } from "@/lib/allowlist";
 import {
   Box,
   Button,
@@ -144,10 +145,13 @@ function Section({
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState("how-it-works");
 
   useEffect(() => {
+    if (loading) return;
+    if (isAdmin(user?.email)) return;
+
     const sendVisit = async () => {
       const token = user ? await user.getIdToken() : null;
       fetch("/api/analytics/visit", {
@@ -156,7 +160,7 @@ export default function LandingPage() {
       }).catch(() => {});
     };
     sendVisit();
-  }, [user]);
+  }, [loading, user]);
 
   useEffect(() => {
     const sectionIds = NAV_ITEMS.map((item) => item.href.replace("#", ""));

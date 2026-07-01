@@ -1,6 +1,6 @@
 export function getAdminEmails(): string[] {
-  // NEXT_PUBLIC_ prefix makes this available in Client Components (browser).
-  // Server-side code can still read it — NEXT_PUBLIC_ vars are available everywhere.
+  // Client-only helper for UI affordances such as showing the admin button.
+  // Server-side authorization must use ADMIN_EMAILS via src/lib/admin-emails.ts.
   return (
     process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? []
   );
