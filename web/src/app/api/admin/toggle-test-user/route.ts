@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
-import { isServerAdmin } from "@/lib/admin-emails";
+import { isServerAdmin, logAdminCheckFailure } from "@/lib/admin-emails";
 import { getAuth } from "firebase-admin/auth";
 
 export async function PATCH(req: NextRequest) {
@@ -14,6 +14,7 @@ export async function PATCH(req: NextRequest) {
 
     const decoded = await getAuth(getAdminApp()).verifyIdToken(idToken);
     if (!decoded.email_verified || !isServerAdmin(decoded.email)) {
+      logAdminCheckFailure(decoded.email, decoded.email_verified);
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

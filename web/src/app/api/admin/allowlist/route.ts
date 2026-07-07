@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
-import { isServerAdmin } from "@/lib/admin-emails";
+import { isServerAdmin, logAdminCheckFailure } from "@/lib/admin-emails";
 
 /**
  * Verify the request carries a valid Firebase ID token from an admin user.
@@ -18,6 +18,7 @@ async function requireAdmin(req: NextRequest) {
   try {
     const decoded = await getAuth(getAdminApp()).verifyIdToken(idToken);
     if (!decoded.email_verified || !isServerAdmin(decoded.email)) {
+      logAdminCheckFailure(decoded.email, decoded.email_verified);
       return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
     }
     return { decoded };
