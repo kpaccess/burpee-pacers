@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
-import { getServerAdminEmails } from "@/lib/admin-emails";
+import { getServerAdminEmails, isServerAdmin } from "@/lib/admin-emails";
 import { isAllowlistedServer } from "@/lib/allowlist-server";
 import { getAuth } from "firebase-admin/auth";
 import {
@@ -63,13 +63,37 @@ export async function POST(req: NextRequest) {
 
     const db = getAdminDb();
     const userRef = db.collection("users").doc(uid);
-    const userSnap = await userRef.get();
 
-    // Skip if already sent (unless force=true)
-    if (!force && userSnap.exists && userSnap.data()?.welcomeEmailSent === true) {
+    // Use a transaction to atomically check and set the welcomeEmailSent flag
+    let shouldSend = false;
+    await db.runTransaction(async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+
+      // Stamp isAdmin server-side for allowlisted admin emails. This runs
+      // regardless of whether the welcome email was already sent, since the
+      // client can no longer write isAdmin directly (protected by Firestore
+      // rules).
+      if (isServerAdmin(decoded.email)) {
+        transaction.set(userRef, { isAdmin: true }, { merge: true });
+      }
+
+      // Check if already sent (unless force=true)
+      if (!force && userSnap.exists && userSnap.data()?.welcomeEmailSent === true) {
+        shouldSend = false;
+        return;
+      }
+
+      // Mark as sent inside the transaction (before sending the email)
+      transaction.set(userRef, { welcomeEmailSent: true }, { merge: true });
+      shouldSend = true;
+    });
+
+    // If already sent, return early
+    if (!shouldSend) {
       return NextResponse.json({ sent: false, reason: "already_sent" });
     }
 
+    // Now send the email after the transaction commits
     const allowlisted = await isAllowlistedServer(email);
     const subject = allowlisted
       ? "🎉 You're In — Welcome to BurpeePacer!"
@@ -78,15 +102,19 @@ export async function POST(req: NextRequest) {
       ? allowlistWelcomeEmailHtml()
       : signupWelcomeEmailHtml();
 
-    console.log(`[welcome-email] Sending to ${email} (uid: ${uid}, allowlisted: ${allowlisted})`);
-    const sendResult = await resend.emails.send({ from: FROM, to: email, subject, html });
-    console.log(`[welcome-email] Resend response:`, sendResult);
+    try {
+      console.log(`[welcome-email] Sending to ${email} (uid: ${uid}, allowlisted: ${allowlisted})`);
+      const sendResult = await resend.emails.send({ from: FROM, to: email, subject, html });
+      console.log(`[welcome-email] Resend response:`, sendResult);
+      console.log(`[welcome-email] Successfully sent and marked in Firestore`);
 
-    // Mark as sent
-    await userRef.set({ welcomeEmailSent: true }, { merge: true });
-    console.log(`[welcome-email] Successfully sent and marked in Firestore`);
-
-    return NextResponse.json({ sent: true });
+      return NextResponse.json({ sent: true });
+    } catch (sendErr) {
+      // Revert the flag if sending fails
+      console.error(`[welcome-email] Resend failed, reverting welcomeEmailSent flag:`, sendErr);
+      await userRef.set({ welcomeEmailSent: false }, { merge: true });
+      throw sendErr;
+    }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error(`[welcome-email] Error sending to ${email}:`, errorMsg);

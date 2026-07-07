@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import React, { useState } from "react";
-import { Box, Button, Card, Typography, TextField, Stack } from "@mui/material";
+import { Alert, Box, Button, Card, Typography, TextField, Stack } from "@mui/material";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import { motion } from "framer-motion";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "../context/AuthContext";
 
 interface MilestoneCheckinProps {
   onComplete: (data: {
@@ -19,30 +21,73 @@ export default function MilestoneCheckin({
   onComplete,
   onCancel,
 }: MilestoneCheckinProps) {
+  const { user } = useAuth();
   const [endDate, setEndDate] = useState(
     new Date().toISOString().split("T")[0],
   );
   const [weight, setWeight] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [pictureFile, setPictureFile] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPictureUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("File is too large. Maximum size is 5 MB.");
+      e.target.value = "";
+      return;
     }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPhotoError("Invalid file type. Please upload a JPEG, PNG, or WebP image.");
+      e.target.value = "";
+      return;
+    }
+    setPhotoError(null);
+    setPictureFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPictureUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weight) return;
+    if (!weight || !user) return;
+
+    setPhotoError(null);
+    setIsSubmitting(true);
+
+    let endPictureUrl: string | null = null;
+    if (pictureFile) {
+      try {
+        const storage = getStorage();
+        const extensionByType: Record<string, string> = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+        };
+        const ext = extensionByType[pictureFile.type];
+        const path = `users/${user.uid}/photos/checkin_${Date.now()}.${ext}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, pictureFile);
+        endPictureUrl = await getDownloadURL(storageRef);
+      } catch (err) {
+        console.error("Failed to upload photo:", err);
+        setPhotoError("Failed to upload photo. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     onComplete({
       endDate,
       endWeight: parseFloat(weight),
-      endPictureUrl: pictureUrl,
+      endPictureUrl,
     });
   };
 
@@ -149,8 +194,10 @@ export default function MilestoneCheckin({
               </label>
             </Box>
 
+            {photoError && <Alert severity="error">{photoError}</Alert>}
+
             <Stack direction="row" spacing={2} mt={2}>
-              <Button onClick={onCancel} variant="text" size="large" fullWidth>
+              <Button onClick={onCancel} variant="text" size="large" fullWidth disabled={isSubmitting}>
                 Remind Me Later
               </Button>
               <Button
@@ -159,8 +206,9 @@ export default function MilestoneCheckin({
                 color="secondary"
                 size="large"
                 fullWidth
+                disabled={isSubmitting}
               >
-                Log Progress
+                {isSubmitting ? "Saving…" : "Log Progress"}
               </Button>
             </Stack>
           </Stack>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
 import { isServerAdmin } from "@/lib/admin-emails";
 import { getAuth, UserRecord } from "firebase-admin/auth";
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 
 export interface UserRow {
   serialNo: number;
@@ -71,11 +72,16 @@ export async function GET(req: NextRequest) {
       pageToken = result.pageToken;
     } while (pageToken);
 
-    // Fetch all user Firestore docs in parallel
+    // Fetch all user Firestore docs in chunks using getAll
     const authUsers = allUsers;
-    const firestoreDocs = await Promise.all(
-      authUsers.map((u) => db.collection("users").doc(u.uid).get()),
-    );
+    const firestoreDocs: Array<DocumentSnapshot> = [];
+    const chunkSize = 300;
+    for (let i = 0; i < authUsers.length; i += chunkSize) {
+      const chunk = authUsers.slice(i, i + chunkSize);
+      const refs = chunk.map((u) => db.collection("users").doc(u.uid));
+      const docs = await db.getAll(...refs);
+      firestoreDocs.push(...docs);
+    }
 
     const users: UserRow[] = authUsers.map((u, i) => {
       const data = firestoreDocs[i].data() ?? {};

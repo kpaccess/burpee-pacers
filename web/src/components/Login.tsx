@@ -26,9 +26,7 @@ import {
   getAdditionalUserInfo,
   signOut,
 } from "firebase/auth";
-import { auth, db, missingFirebaseEnvVars } from "../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
-import { isAllowlisted } from "../lib/allowlist";
+import { auth, missingFirebaseEnvVars } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 
 // After a user signs up or logs in, check if they paid before creating an account
@@ -47,15 +45,6 @@ async function claimPendingSubscription(uid: string, email: string, idToken: str
     }
   } catch (err) {
     console.error("Failed to claim pending subscription:", err);
-  }
-}
-
-async function stampAdminIfAllowlisted(uid: string, email: string | null) {
-  if (!db || !email || !isAllowlisted(email)) return;
-  try {
-    await setDoc(doc(db, "users", uid), { isAdmin: true }, { merge: true });
-  } catch {
-    // non-critical — swallow silently
   }
 }
 
@@ -126,6 +115,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
       setError(
         `Firebase is not configured in this deployment. Missing env vars: ${missingFirebaseEnvVars.join(", ")}`,
       );
+      setIsLoading(false);
       return;
     }
     const email = rawEmail.trim();
@@ -164,7 +154,6 @@ export default function Login({ onBackToInfo }: LoginProps) {
       }
 
       const idToken = await credential.user.getIdToken();
-      await stampAdminIfAllowlisted(credential.user.uid, email);
       await claimPendingSubscription(credential.user.uid, email, idToken);
 
       if (!credential.user.emailVerified && !isLogin) {
@@ -281,7 +270,6 @@ export default function Login({ onBackToInfo }: LoginProps) {
         await sendWelcomeEmail(credential.user.uid, credential.user.email!, idToken);
       }
 
-      await stampAdminIfAllowlisted(credential.user.uid, credential.user.email);
       await claimPendingSubscription(credential.user.uid, credential.user.email!, idToken);
 
       const nextPath =

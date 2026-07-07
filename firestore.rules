@@ -7,10 +7,12 @@ service cloud.firestore {
     // Each user document stores profile data, workout logs, and
     // subscription state.  Users may only read/write their own document.
     //
-    // Subscription fields (isPro, stripeCustomerId, stripeSubscriptionId,
-    // subscriptionStatus, trialEndsAt) are written exclusively by the
-    // server-side Admin SDK (Stripe webhook + claim-subscription API
-    // route). Admin SDK writes bypass security rules entirely.
+    // Subscription and privilege fields (isPro, stripeCustomerId,
+    // stripeSubscriptionId, subscriptionStatus, trialEndsAt, isAdmin,
+    // isTestUser, welcomeEmailSent) are written exclusively by the
+    // server-side Admin SDK (Stripe webhook + claim-subscription /
+    // send-welcome-email / admin API routes). Admin SDK writes bypass
+    // security rules entirely.
     match /users/{userId} {
 
       // Authenticated users can read ONLY their own document
@@ -24,7 +26,8 @@ service cloud.firestore {
                     && !request.resource.data.keys().hasAny([
                          'isPro', 'stripeCustomerId',
                          'stripeSubscriptionId', 'subscriptionStatus',
-                         'trialEndsAt'
+                         'trialEndsAt', 'isAdmin', 'isTestUser',
+                         'welcomeEmailSent'
                        ]);
 
       // Authenticated users can update their own document but CANNOT
@@ -35,7 +38,8 @@ service cloud.firestore {
                         .hasAny([
                           'isPro', 'stripeCustomerId',
                           'stripeSubscriptionId', 'subscriptionStatus',
-                          'trialEndsAt'
+                          'trialEndsAt', 'isAdmin', 'isTestUser',
+                          'welcomeEmailSent'
                         ]);
 
       // Users should not be able to delete their document from the client

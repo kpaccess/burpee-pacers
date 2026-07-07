@@ -495,7 +495,7 @@ export default function AdminPage() {
           </TableHead>
           <TableBody>
             {displayedUsers.map((u: UserRow) => (
-              <TableRow key={u.email} hover>
+              <TableRow key={u.uid} hover>
                 <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>{u.serialNo}</TableCell>
                 <TableCell>{u.firstName || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
                 <TableCell>{u.lastName || <Typography variant="caption" color="text.disabled">—</Typography>}</TableCell>
@@ -620,7 +620,7 @@ function formatDate(dateStr: string): string {
 
 function getCurrentDay(startDate: string): string {
   if (!startDate) return "—";
-  const diffMs = Date.now() - new Date(startDate).getTime();
+  const diffMs = Date.now() - new Date(startDate + "T00:00:00").getTime();
   const day = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
   if (day < 1 || day > 60) return "—";
   return `Day ${day}`;

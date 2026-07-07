@@ -5,7 +5,7 @@ import { getAuth } from "firebase-admin/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userEmail, plan, successUrl: customSuccessUrl, cancelUrl: customCancelUrl } = await req.json();
+    const { userEmail, plan } = await req.json();
 
     const priceId = plan === "yearly"
       ? process.env.STRIPE_PRO_YEARLY_PRICE_ID
@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
     const { origin } = new URL(req.url);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
-    const successUrl = customSuccessUrl ?? `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = customCancelUrl ?? `${baseUrl}/pricing`;
+    const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/pricing`;
 
     // Determine authenticated userId from token if present
     const authHeader = req.headers.get("authorization") ?? "";

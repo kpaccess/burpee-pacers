@@ -284,7 +284,7 @@ export default function Dashboard({
   const isBeginnerTrack = !isAdvancedTrack;
   const levelsForTrack = isAdvancedTrack ? ADVANCED_LEVELS : BEGINNER_LEVELS;
 
-  const startDate = userData.startDate ? new Date(userData.startDate) : null;
+  const startDate = userData.startDate ? new Date(userData.startDate + "T00:00:00") : null;
   const milestoneDate = startDate ? addMonths(startDate, 6) : null;
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
@@ -384,7 +384,12 @@ export default function Dashboard({
       ]),
     ];
     const csv = rows
-      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+      .map((row) => row.map((cell) => {
+        const cellStr = String(cell);
+        // Guard against formula injection: prefix with single quote if cell starts with =, +, -, or @
+        const guarder = cellStr.match(/^[=+\-@]/) ? "'" : "";
+        return `"${guarder}${cellStr.replace(/"/g, '""')}"`;
+      }).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -728,41 +733,22 @@ export default function Dashboard({
                 <LocalFireDepartmentIcon color="secondary" /> Stats Overview
               </Typography>
               <Box mt={1}>
-                {isAdvancedTrack ? (
-                  <Box display="flex" alignItems="center" gap={2} mb={1}>
-                    <Typography
-                      variant="body1"
-                      color="primary"
-                      fontWeight="bold"
-                    >
-                      Current: {currentLevel?.name ?? "Not set"}
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setOpenLevelChange(true)}
-                    >
-                      {userData.currentLevelId ? "Update" : "Set Level"}
-                    </Button>
-                  </Box>
-                ) : (
-                  <Box display="flex" alignItems="center" gap={2} mb={1}>
-                    <Typography
-                      variant="body1"
-                      color="primary"
-                      fontWeight="bold"
-                    >
-                      Current: {currentLevel?.name ?? "Not set"}
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setOpenLevelChange(true)}
-                    >
-                      {userData.currentLevelId ? "Update" : "Set Level"}
-                    </Button>
-                  </Box>
-                )}
+                <Box display="flex" alignItems="center" gap={2} mb={1}>
+                  <Typography
+                    variant="body1"
+                    color="primary"
+                    fontWeight="bold"
+                  >
+                    Current: {currentLevel?.name ?? "Not set"}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setOpenLevelChange(true)}
+                  >
+                    {userData.currentLevelId ? "Update" : "Set Level"}
+                  </Button>
+                </Box>
                 <Typography variant="body2" color="text.secondary">
                   Start Date:{" "}
                   {startDate

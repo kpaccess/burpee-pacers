@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminApp } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
+import stripe from "@/lib/stripe";
 
 /**
  * POST /api/claim-subscription
@@ -70,6 +71,16 @@ export async function POST(req: NextRequest) {
     );
 
     await pendingRef.delete();
+
+    if (typeof data.stripeSubscriptionId === "string") {
+      try {
+        await stripe.subscriptions.update(data.stripeSubscriptionId, {
+          metadata: { firebaseUserId: uid },
+        });
+      } catch (err) {
+        console.error("Failed to tag Stripe subscription with firebaseUserId:", err);
+      }
+    }
 
     return NextResponse.json({ claimed: true });
   } catch (err) {
