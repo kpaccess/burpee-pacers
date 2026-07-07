@@ -16,6 +16,12 @@ import WarmupPrompt from "./WarmupPrompt";
 import TimerControls from "./TimerControls";
 import CooldownBanner from "./CooldownBanner";
 
+const TUTORIAL_VIDEO_URLS: Partial<Record<WorkoutMode, string>> = {
+  N: "https://www.youtube.com/shorts/aF3CTHJwyww",
+  C: "https://www.youtube.com/shorts/iXkZUM1HupY",
+};
+const BEGINNER_TUTORIAL_VIDEO_URL = "https://www.youtube.com/shorts/Hj-mrGYW_Uo";
+
 interface WorkoutTimerProps {
   tier: WorkoutTier;
   sealsGoal?: number;
@@ -73,6 +79,9 @@ export default function WorkoutTimer({
   const isDone = phase === "done";
   const isHybridMode = activeMode.mode === "H";
   const isIdle = phase === "idle";
+
+  const tutorialVideoUrl =
+    tier === "beginner" ? BEGINNER_TUTORIAL_VIDEO_URL : TUTORIAL_VIDEO_URLS[activeMode.mode];
 
   // ── Pacing values ─────────────────────────────────────────────────────────
   const totalWorkoutSeconds = timerConfig.initialMinutes * 60;
@@ -203,14 +212,28 @@ export default function WorkoutTimer({
 
       {isDone && !showWarmupPrompt && <CooldownBanner onShowCooldown={onShowCooldown} />}
 
-      <Button
-        variant="text"
-        startIcon={<VideocamIcon />}
-        disabled
-        sx={{ color: "text.secondary" }}
-      >
-        Coming Soon — Tutorial videos launching soon
-      </Button>
+      {tutorialVideoUrl ? (
+        <Button
+          variant="text"
+          component="a"
+          href={tutorialVideoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          startIcon={<VideocamIcon />}
+          sx={{ color: "secondary.main" }}
+        >
+          Watch Tutorial Video
+        </Button>
+      ) : (
+        <Button
+          variant="text"
+          startIcon={<VideocamIcon />}
+          disabled
+          sx={{ color: "text.secondary" }}
+        >
+          Coming Soon — Tutorial videos launching soon
+        </Button>
+      )}
     </Card>
   );
 }
