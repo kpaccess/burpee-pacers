@@ -105,19 +105,19 @@ export async function GET(req: NextRequest) {
         timerVerified: data.workoutStats?.timerVerified
           ?? ((data.workoutLogs ?? []) as { completed?: boolean; repsCompleted?: number }[]).filter(
               (l) => l.completed && l.repsCompleted !== undefined
-            ).length,
+        ).length,
       };
-    });
+    }).filter((u) => !isServerAdmin(u.email));
 
-    const totalNonAdminUsers = users.filter((u) => !isServerAdmin(u.email)).length;
+    const totalNonAdminUsers = users.length;
     const verifiedRealSignupCount = users.filter(
-      (u) => u.emailVerified && !u.isTestUser && !isServerAdmin(u.email),
+      (u) => u.emailVerified && !u.isTestUser,
     ).length;
     const unverifiedSignupCount = users.filter(
-      (u) => !u.emailVerified && !isServerAdmin(u.email),
+      (u) => !u.emailVerified,
     ).length;
     const testUserCount = users.filter(
-      (u) => u.isTestUser && !isServerAdmin(u.email),
+      (u) => u.isTestUser,
     ).length;
 
     // Sort: most recently logged in first

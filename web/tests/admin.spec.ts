@@ -70,4 +70,8 @@ test.describe('Admin page — admin user', () => {
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
   });
+
+  test('does not show admin email in the users table', async () => {
+    await expect(page.getByText(adminUser.email, { exact: true })).toHaveCount(0);
+  });
 });
