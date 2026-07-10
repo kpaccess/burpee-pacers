@@ -3,6 +3,23 @@ import stripe from "@/lib/stripe";
 import { getAdminApp } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 
+function sanitizeRedirectUrl(
+  candidate: unknown,
+  fallbackPath: string,
+  baseUrl: string,
+): string {
+  if (typeof candidate !== "string" || !candidate.trim()) {
+    return `${baseUrl}${fallbackPath}`;
+  }
+
+  try {
+    const parsed = new URL(candidate, baseUrl);
+    return parsed.origin === baseUrl ? parsed.toString() : `${baseUrl}${fallbackPath}`;
+  } catch {
+    return `${baseUrl}${fallbackPath}`;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userEmail, plan, successUrl: customSuccessUrl, cancelUrl: customCancelUrl } = await req.json();
@@ -20,10 +37,14 @@ export async function POST(req: NextRequest) {
 
     // Use env var if set (production), otherwise derive from the incoming request origin (local dev)
     const { origin } = new URL(req.url);
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+    const baseUrl = new URL(process.env.NEXT_PUBLIC_APP_URL || origin).origin;
 
-    const successUrl = customSuccessUrl ?? `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = customCancelUrl ?? `${baseUrl}/pricing`;
+    const successUrl = sanitizeRedirectUrl(
+      customSuccessUrl,
+      "/success?session_id={CHECKOUT_SESSION_ID}",
+      baseUrl,
+    );
+    const cancelUrl = sanitizeRedirectUrl(customCancelUrl, "/pricing", baseUrl);
 
     // Determine authenticated userId from token if present
     const authHeader = req.headers.get("authorization") ?? "";

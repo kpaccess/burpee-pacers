@@ -82,6 +82,7 @@ export default function WorkoutTimer({
 
   const tutorialVideoUrl =
     tier === "beginner" ? BEGINNER_TUTORIAL_VIDEO_URL : TUTORIAL_VIDEO_URLS[activeMode.mode];
+  const shouldShowTutorialButton = tier === "beginner" || !isHybridMode;
 
   // ── Pacing values ─────────────────────────────────────────────────────────
   const totalWorkoutSeconds = timerConfig.initialMinutes * 60;
@@ -212,28 +213,29 @@ export default function WorkoutTimer({
 
       {isDone && !showWarmupPrompt && <CooldownBanner onShowCooldown={onShowCooldown} />}
 
-      {tutorialVideoUrl ? (
-        <Button
-          variant="text"
-          component="a"
-          href={tutorialVideoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          startIcon={<VideocamIcon />}
-          sx={{ color: "secondary.main" }}
-        >
-          Watch Tutorial Video
-        </Button>
-      ) : (
-        <Button
-          variant="text"
-          startIcon={<VideocamIcon />}
-          disabled
-          sx={{ color: "text.secondary" }}
-        >
-          Coming Soon — Tutorial videos launching soon
-        </Button>
-      )}
+      {shouldShowTutorialButton &&
+        (tutorialVideoUrl ? (
+          <Button
+            variant="text"
+            component="a"
+            href={tutorialVideoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            startIcon={<VideocamIcon />}
+            sx={{ color: "secondary.main" }}
+          >
+            Watch Tutorial Video
+          </Button>
+        ) : (
+          <Button
+            variant="text"
+            startIcon={<VideocamIcon />}
+            disabled
+            sx={{ color: "text.secondary" }}
+          >
+            Coming Soon — Tutorial videos launching soon
+          </Button>
+        ))}
     </Card>
   );
 }

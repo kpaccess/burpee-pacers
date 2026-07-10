@@ -370,10 +370,10 @@ export default function LandingPage() {
                   <Button
                     variant="contained"
                     size="large"
-                    onClick={() => router.push("/login")}
+                    onClick={() => router.push("/login?signup=1")}
                     sx={{ px: 3, py: 1.4 }}
                   >
-                    Start Free
+                    Create Free Account
                   </Button>
                   <Button
                     variant="outlined"
