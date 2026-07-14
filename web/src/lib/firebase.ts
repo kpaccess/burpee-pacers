@@ -24,6 +24,22 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
+function parseEmulatorHost(hostValue: string | undefined, fallbackHost: string, fallbackPort: number) {
+  if (!hostValue) {
+    return { host: fallbackHost, port: fallbackPort, url: `http://${fallbackHost}:${fallbackPort}` };
+  }
+
+  const normalized = hostValue.startsWith('http') ? new URL(hostValue) : new URL(`http://${hostValue}`);
+  const host = normalized.hostname || fallbackHost;
+  const port = normalized.port ? Number(normalized.port) : fallbackPort;
+
+  return {
+    host,
+    port,
+    url: `${normalized.protocol}//${host}:${port}`,
+  };
+}
+
 // Guard against missing env vars during Next.js SSR/build prerendering
 if (missingFirebaseEnvVars.length === 0) {
   try {
@@ -35,8 +51,19 @@ if (missingFirebaseEnvVars.length === 0) {
     // Connect to local emulators when running QA tests.
     // Only on first init to avoid "already connected" errors from HMR.
     if (isNewApp && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
-      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      const authEmulator = parseEmulatorHost(
+        process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST ?? process.env.FIREBASE_AUTH_EMULATOR_HOST,
+        '127.0.0.1',
+        9099,
+      );
+      const firestoreEmulator = parseEmulatorHost(
+        process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST ?? process.env.FIRESTORE_EMULATOR_HOST,
+        '127.0.0.1',
+        8080,
+      );
+
+      connectAuthEmulator(auth, authEmulator.url, { disableWarnings: true });
+      connectFirestoreEmulator(db, firestoreEmulator.host, firestoreEmulator.port);
     }
   } catch (e) {
     console.error('Firebase initialization error:', e);

@@ -9,7 +9,6 @@ import {
   signupWelcomeEmailHtml,
 } from "@/lib/email";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM ?? "BurpeePacer <hello@burpeepacers.com>";
 
 /**
@@ -78,6 +77,12 @@ export async function POST(req: NextRequest) {
       ? allowlistWelcomeEmailHtml()
       : signupWelcomeEmailHtml();
 
+    if (!process.env.RESEND_API_KEY) {
+      console.warn(`[welcome-email] Skipping send for ${email}: missing RESEND_API_KEY`);
+      return NextResponse.json({ sent: false, reason: "email_disabled" });
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
     console.log(`[welcome-email] Sending to ${email} (uid: ${uid}, allowlisted: ${allowlisted})`);
     const sendResult = await resend.emails.send({ from: FROM, to: email, subject, html });
     console.log(`[welcome-email] Resend response:`, sendResult);

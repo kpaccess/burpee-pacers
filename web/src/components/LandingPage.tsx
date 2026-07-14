@@ -373,7 +373,7 @@ export default function LandingPage() {
                     onClick={() => router.push("/login?signup=1")}
                     sx={{ px: 3, py: 1.4 }}
                   >
-                    Create Free Account
+                    Start Your First Workout
                   </Button>
                   <Button
                     variant="outlined"
@@ -383,19 +383,34 @@ export default function LandingPage() {
                   >
                     See How It Works
                   </Button>
+                </Stack>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={{ xs: 0.5, sm: 1 }}
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                >
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.66)" }}>
+                    New here? Start with your first workout above.
+                  </Typography>
                   <Button
                     variant="text"
-                    size="large"
+                    size="small"
                     onClick={() => router.push("/login")}
                     sx={{
-                      color: "rgba(255,255,255,0.76)",
-                      whiteSpace: "nowrap",
-                      justifyContent: { xs: "center", sm: "flex-start" },
+                      px: 0,
+                      minWidth: 0,
+                      color: "secondary.main",
+                      fontWeight: 700,
+                      justifyContent: "flex-start",
+                      "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
                     }}
                   >
                     Already a member? Sign in
                   </Button>
                 </Stack>
+                <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.66)" }}>
+                  Free during launch. Full web access is currently included.
+                </Typography>
                 <Box
                   sx={{
                     display: "grid",
@@ -722,23 +737,16 @@ export default function LandingPage() {
               simpler way to follow structured conditioning workouts at home
               without relying on a gym schedule or overcomplicated plans.
               </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ maxWidth: 820, mb: 3 }}
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ maxWidth: 820 }}
               >
               I created it first for myself, then shaped it into a product for
               adults who want a clear starting point, guided pacing, and steady
               progress. The goal is simple: remove friction so people can focus
               on showing up and training consistently.
               </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => router.push("/login")}
-            >
-              Start Your First Workout
-            </Button>
           </Card>
         </Section>
 
@@ -795,27 +803,27 @@ export default function LandingPage() {
               }}
             >
               <Typography variant="h5" fontWeight={800} mb={1}>
-                Launch access
+                Free during launch
               </Typography>
               <Typography variant="body1" color="text.secondary" mb={3}>
-                Start free on the web today. Create an account, choose your
-                track, and begin your first guided workout right away. Pricing
-                details are available on the pricing page.
+                Create an account, choose your track, and begin your first guided
+                workout right away. During launch, full web access is currently
+                included, so you can start without a separate pricing decision.
               </Typography>
               <Stack spacing={1.5}>
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => router.push("/login")}
+                  onClick={() => router.push("/login?signup=1")}
                 >
-                  Start Free
+                  Start Your First Workout
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="text"
                   size="large"
                   onClick={() => router.push("/pricing")}
                 >
-                  View Pricing Details
+                  See pricing details
                 </Button>
               </Stack>
             </Card>

@@ -7,6 +7,8 @@ config({ path: path.resolve(__dirname, '.env.local') });
 config({ path: path.resolve(__dirname, '.env.test.local'), override: true });
 
 const useEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
+const appPort = process.env.PLAYWRIGHT_APP_PORT ?? '3001';
+const appBaseUrl = `http://localhost:${appPort}`;
 
 export default defineConfig({
   testDir: './tests',
@@ -14,7 +16,7 @@ export default defineConfig({
   reporter: 'html',
   globalSetup: useEmulator ? './tests/global-setup.ts' : undefined,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: appBaseUrl,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -35,17 +37,17 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run dev',
-      url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
+      command: `/bin/zsh -lc 'set -a; source .env.local >/dev/null 2>&1 || true; source .env.test.local >/dev/null 2>&1 || true; set +a; npm run dev -- --port ${appPort}'`,
+      url: appBaseUrl,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     ...(useEmulator
       ? [
           {
             // Run from repo root where firebase.json lives
-            command: 'cd .. && firebase emulators:start --only auth,firestore --project burpee-workout',
-            url: 'http://127.0.0.1:8080',
+            command: 'cd .. && firebase emulators:start --config firebase.playwright.json --only auth,firestore --project burpee-workout',
+            url: 'http://127.0.0.1:4100',
             reuseExistingServer: !process.env.CI,
             timeout: 60_000,
           },
