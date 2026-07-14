@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://burpeepacers.com"),
   title: "BurpeePacers | Guided 20-Minute Home Conditioning",
   description:
     "Structured 20-minute burpee workouts with guided pacing, progress tracking, and simple home-friendly training for adults who want consistency without a gym.",
@@ -48,6 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

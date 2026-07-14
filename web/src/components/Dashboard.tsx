@@ -2,6 +2,8 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import {
+  AppBar,
+  Avatar,
   Box,
   Card,
   Typography,
@@ -23,12 +25,35 @@ import {
   Divider,
   Tabs,
   Tab,
+  Toolbar,
+  IconButton,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  BottomNavigation,
+  BottomNavigationAction,
+  useMediaQuery,
+  LinearProgress,
+  Tooltip,
 } from "@mui/material";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import DownloadIcon from "@mui/icons-material/Download";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import MenuIcon from "@mui/icons-material/Menu";
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
+import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
+import CalendarViewMonthRoundedIcon from "@mui/icons-material/CalendarViewMonthRounded";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
+import AccessibilityNewRoundedIcon from "@mui/icons-material/AccessibilityNewRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import EmojiEventsRoundedIcon from "@mui/icons-material/EmojiEventsRounded";
+import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   ADVANCED_LEVELS,
@@ -49,6 +74,10 @@ import {
   startOfWeek,
   endOfWeek,
   isSameMonth,
+  subWeeks,
+  subMonths,
+  isSameWeek,
+  parseISO,
 } from "date-fns";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -59,6 +88,7 @@ import { isAdmin } from "../lib/allowlist";
 // import { useSubscription } from "../hooks/useSubscription";
 import { useRouter } from "next/navigation";
 import WorkoutTimer from "./WorkoutTimer";
+import BurpeeLogoIcon from "./BurpeeLogoIcon";
 
 // ── Friday Pulling Work configuration ────────────────────────────────────────
 // Navy Seals and 5-count pushups are mostly pushing movements. Adding pulling
@@ -226,6 +256,71 @@ const WORKOUT_DAY_OPTIONS = [
   { weekday: 6, short: "Fri" },
 ] as const;
 
+const DASHBOARD_SECTIONS = [
+  { id: "dashboard", label: "Dashboard", icon: <DashboardRoundedIcon /> },
+  { id: "workout", label: "Workout", icon: <BoltRoundedIcon /> },
+  { id: "calendar", label: "Calendar", icon: <CalendarViewMonthRoundedIcon /> },
+  { id: "progress", label: "Progress", icon: <ShowChartRoundedIcon /> },
+  { id: "strength", label: "Strength", icon: <AccessibilityNewRoundedIcon /> },
+] as const;
+
+type DashboardSectionId = (typeof DASHBOARD_SECTIONS)[number]["id"];
+
+type SummaryStat = {
+  label: string;
+  value: string;
+  sublabel: string;
+  accent: string;
+  icon: React.ReactNode;
+};
+
+function formatModeLabel(log?: WorkoutLog | null): string {
+  if (!log?.levelCompleted) return "Completed";
+
+  const match = log.levelCompleted.match(/\(([NCH])\)$/);
+  if (!match) return log.levelCompleted;
+
+  const mode = match[1];
+  if (mode === "N") return "Navy Seals";
+  if (mode === "C") return "5-Count";
+  return "Hybrid";
+}
+
+function countScheduledDaysInWeek(weekStart: Date, selectedWorkoutDays: number[]) {
+  return eachDayOfInterval({
+    start: weekStart,
+    end: endOfWeek(weekStart),
+  }).filter((day) => selectedWorkoutDays.includes(day.getDay() + 1)).length;
+}
+
+function getCompletedDates(workoutLogs: WorkoutLog[]) {
+  return workoutLogs
+    .filter((log) => log.completed)
+    .map((log) => toDateKey(log.date))
+    .sort();
+}
+
+function getCurrentStreak(workoutLogs: WorkoutLog[], selectedWorkoutDays: number[], today: Date) {
+  const completedDates = new Set(getCompletedDates(workoutLogs));
+  const cursor = new Date(today);
+  let streak = 0;
+
+  while (cursor >= subMonths(today, 12)) {
+    const weekday = cursor.getDay() + 1;
+    if (selectedWorkoutDays.includes(weekday)) {
+      const dateKey = format(cursor, "yyyy-MM-dd");
+      if (completedDates.has(dateKey)) {
+        streak += 1;
+      } else if (cursor <= today) {
+        break;
+      }
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
 interface DashboardProps {
   userData: UserData;
   onMilestoneCheckin: () => void;
@@ -273,6 +368,18 @@ export default function Dashboard({
   const [healthSectionOpen, setHealthSectionOpen] = useState(false);
   const [healthActiveTab, setHealthActiveTab] = useState<"warmup" | "cooldown">("warmup");
   const healthSectionRef = useRef<HTMLDivElement>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<DashboardSectionId>("dashboard");
+  const sectionRefs = useRef<Record<DashboardSectionId, HTMLElement | null>>({
+    dashboard: null,
+    workout: null,
+    calendar: null,
+    progress: null,
+    strength: null,
+  });
+  const isMobile = useMediaQuery((theme: { breakpoints: { down: (key: string) => string } }) =>
+    theme.breakpoints.down("md"),
+  );
   // Legacy users may not have workoutTier stored yet; keep them on advanced
   // unless they are clearly on a beginner B-level.
   const inferredTier =
@@ -507,57 +614,452 @@ export default function Dashboard({
   );
   const shouldShowAdvancedSuggestion =
     isBeginnerTrack && hasCompletedB6 && !dismissedAdvancedSuggestion;
+  const workoutLogs = [...(userData.workoutLogs ?? [])].sort((a, b) => b.date.localeCompare(a.date));
+  const completedLogs = workoutLogs.filter((log) => log.completed);
+  const currentWeekStart = startOfWeek(today);
+  const previousWeekStart = subWeeks(currentWeekStart, 1);
+  const currentMonthStart = startOfMonth(today);
+  const previousMonthStart = startOfMonth(subMonths(today, 1));
+  const currentWeekCompleted = completedLogs.filter((log) =>
+    isSameWeek(parseISO(log.date), today),
+  ).length;
+  const previousWeekCompleted = completedLogs.filter((log) =>
+    isSameWeek(parseISO(log.date), previousWeekStart),
+  ).length;
+  const scheduledDaysThisWeek = countScheduledDaysInWeek(currentWeekStart, selectedWorkoutDays);
+  const weeklyCompletionPercent = scheduledDaysThisWeek > 0
+    ? Math.min(100, Math.round((currentWeekCompleted / scheduledDaysThisWeek) * 100))
+    : 0;
+  const workoutsThisMonth = completedLogs.filter((log) =>
+    parseISO(log.date) >= currentMonthStart,
+  ).length;
+  const previousMonthWorkouts = completedLogs.filter((log) => {
+    const date = parseISO(log.date);
+    return date >= previousMonthStart && date < currentMonthStart;
+  }).length;
+  const totalTrainingMinutes = completedLogs.length * 20;
+  const personalBest = completedLogs.reduce((best, log) => {
+    if (typeof log.repsCompleted !== "number") return best;
+    return Math.max(best, log.repsCompleted);
+  }, 0);
+  const currentStreak = getCurrentStreak(completedLogs, selectedWorkoutDays, today);
+  const weeklyRingValue = Math.max(0, Math.min(100, weeklyCompletionPercent));
+  const recentHistory = completedLogs.slice(0, 6);
+  const chartWeeks = Array.from({ length: 6 }, (_, index) => {
+    const weekStart = subWeeks(currentWeekStart, 5 - index);
+    const value = completedLogs.filter((log) => isSameWeek(parseISO(log.date), weekStart)).length;
+    return {
+      label: format(weekStart, "MMM d"),
+      value,
+      target: countScheduledDaysInWeek(weekStart, selectedWorkoutDays),
+    };
+  });
+  const chartMonths = Array.from({ length: 6 }, (_, index) => {
+    const monthStart = startOfMonth(subMonths(today, 5 - index));
+    const monthEnd = endOfMonth(monthStart);
+    const value = completedLogs.filter((log) => {
+      const date = parseISO(log.date);
+      return date >= monthStart && date <= monthEnd;
+    }).length;
+    return {
+      label: format(monthStart, "MMM"),
+      value,
+    };
+  });
+  const maxWeeklyChartValue = Math.max(1, ...chartWeeks.map((item) => Math.max(item.value, item.target)));
+  const maxMonthlyChartValue = Math.max(1, ...chartMonths.map((item) => item.value));
+  const currentLevelIndex = currentLevel
+    ? levelsForTrack.findIndex((level) => level.id === currentLevel.id)
+    : -1;
+  const levelProgressPercent = currentLevelIndex >= 0
+    ? Math.round(((currentLevelIndex + 1) / levelsForTrack.length) * 100)
+    : 0;
+  const nextLevel = currentLevelIndex >= 0 ? levelsForTrack[currentLevelIndex + 1] ?? null : null;
+  const nextWorkoutLabel = getWorkoutLabelForWeekday(today.getDay() + 1);
+  const scheduledToday = selectedWorkoutDays.includes(today.getDay() + 1);
+  const hasCompletedToday = !!todayWorkoutLog?.completed;
+  const summaryStats: SummaryStat[] = [
+    {
+      label: "Current streak",
+      value: `${currentStreak} workouts`,
+      sublabel: currentStreak > 0 ? "Keep the chain alive" : "Start a new streak today",
+      accent: "#FF3366",
+      icon: <LocalFireDepartmentIcon />,
+    },
+    {
+      label: "This month",
+      value: `${workoutsThisMonth} workouts`,
+      sublabel: `${Math.max(0, workoutsThisMonth - previousMonthWorkouts)} more than last month`,
+      accent: "#00E5FF",
+      icon: <CheckCircleRoundedIcon />,
+    },
+    {
+      label: "Training time",
+      value: `${totalTrainingMinutes} min`,
+      sublabel: `${completedLogs.length} completed sessions total`,
+      accent: "#4CAF50",
+      icon: <InsightsRoundedIcon />,
+    },
+    {
+      label: "Current level",
+      value: currentLevel?.name ?? "Not set",
+      sublabel: nextLevel ? `Next up: ${nextLevel.name}` : "Top of the current track",
+      accent: "#FFC107",
+      icon: <FlagRoundedIcon />,
+    },
+    {
+      label: "Weekly completion",
+      value: `${weeklyCompletionPercent}%`,
+      sublabel: `${currentWeekCompleted}/${scheduledDaysThisWeek || 0} scheduled workouts`,
+      accent: "#00E5FF",
+      icon: <QueryStatsRoundedIcon />,
+    },
+    {
+      label: "Personal best",
+      value: personalBest > 0 ? `${personalBest} reps` : "No timed PR yet",
+      sublabel: personalBest > 0 ? "Highest timer-verified session" : "Complete a timer workout to set it",
+      accent: "#FF3366",
+      icon: <EmojiEventsRoundedIcon />,
+    },
+  ];
+  const scrollToSection = (sectionId: DashboardSectionId) => {
+    setActiveSection(sectionId);
+    setMobileNavOpen(false);
+    sectionRefs.current[sectionId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  React.useEffect(() => {
+    const sections = DASHBOARD_SECTIONS
+      .map(({ id }) => sectionRefs.current[id])
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible?.target?.id) {
+          setActiveSection(visible.target.id as DashboardSectionId);
+        }
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0.1, 0.3, 0.6] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [todayWeightedDay, isFridayAdvanced]);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        pb: { xs: 10, md: 4 },
+        background:
+          "radial-gradient(circle at top, rgba(255,51,102,0.12), transparent 28%), radial-gradient(circle at 85% 10%, rgba(0,229,255,0.08), transparent 24%), #090909",
+      }}
+    >
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={0}
+        sx={{
+          top: 0,
+          backdropFilter: "blur(18px)",
+          backgroundColor: "rgba(10,10,10,0.88)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        <Toolbar sx={{ maxWidth: 1280, width: "100%", mx: "auto", px: { xs: 2, md: 3 }, gap: 2 }}>
+          <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Avatar sx={{ width: 44, height: 44, bgcolor: "transparent" }}>
+                <Box sx={{ transform: "scale(0.78)" }}>
+                  <BurpeeLogoIcon size={56} />
+                </Box>
+              </Avatar>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.1 }}>
+                BurpeePacers
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {isAdvancedTrack ? "Advanced program" : "Beginner program"}
+              </Typography>
+            </Box>
+          </Box>
+
+          {!isMobile && (
+            <Stack direction="row" spacing={0.75} sx={{ flex: 1, justifyContent: "center" }}>
+              {DASHBOARD_SECTIONS.map((section) => (
+                <Button
+                  key={section.id}
+                  color="inherit"
+                  startIcon={section.icon}
+                  onClick={() => scrollToSection(section.id)}
+                  sx={{
+                    color: activeSection === section.id ? "primary.main" : "text.secondary",
+                    borderBottom: activeSection === section.id ? "2px solid" : "2px solid transparent",
+                    borderRadius: 0,
+                    px: 1.5,
+                  }}
+                >
+                  {section.label}
+                </Button>
+              ))}
+            </Stack>
+          )}
+
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: "auto" }}>
+            {!isMobile && isAdmin(user?.email) && (
+              <Button variant="outlined" color="secondary" onClick={() => router.push("/admin")} size="small">
+                Admin
+              </Button>
+            )}
+            {!isMobile && (
+              <Tooltip title={user?.email ?? "Signed in"}>
+                <Avatar sx={{ width: 36, height: 36, bgcolor: "rgba(255,51,102,0.2)", color: "primary.main" }}>
+                  {(user?.email?.[0] ?? "B").toUpperCase()}
+                </Avatar>
+              </Tooltip>
+            )}
+            {!isMobile && (
+              <Button variant="outlined" color="error" onClick={logout} size="small" startIcon={<LogoutRoundedIcon />}>
+                Log Out
+              </Button>
+            )}
+            {isMobile && (
+              <IconButton color="inherit" onClick={() => setMobileNavOpen(true)} aria-label="Open navigation menu">
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Stack>
+        </Toolbar>
+      </AppBar>
+
+      <Drawer anchor="right" open={mobileNavOpen} onClose={() => setMobileNavOpen(false)}>
+        <Box sx={{ width: 290, p: 2 }}>
+          <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+            <BurpeeLogoIcon size={44} />
+            <Box>
+              <Typography variant="subtitle1" fontWeight={800}>
+                BurpeePacers
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {currentLevel?.name ?? "Program dashboard"}
+              </Typography>
+            </Box>
+          </Box>
+          <List sx={{ py: 0 }}>
+            {DASHBOARD_SECTIONS.map((section) => (
+              <ListItemButton
+                key={section.id}
+                selected={activeSection === section.id}
+                onClick={() => scrollToSection(section.id)}
+                sx={{ borderRadius: 2, mb: 0.5 }}
+              >
+                <Box sx={{ mr: 1.5, color: activeSection === section.id ? "primary.main" : "text.secondary" }}>
+                  {section.icon}
+                </Box>
+                <ListItemText primary={section.label} />
+              </ListItemButton>
+            ))}
+            {isAdmin(user?.email) && (
+              <ListItemButton onClick={() => { setMobileNavOpen(false); router.push("/admin"); }} sx={{ borderRadius: 2, mb: 0.5 }}>
+                <ListItemText primary="Admin" />
+              </ListItemButton>
+            )}
+            <ListItemButton onClick={logout} sx={{ borderRadius: 2 }}>
+              <Box sx={{ mr: 1.5, color: "error.main" }}>
+                <LogoutRoundedIcon />
+              </Box>
+              <ListItemText primary="Log Out / Reset" />
+            </ListItemButton>
+          </List>
+        </Box>
+      </Drawer>
+
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1280, mx: "auto" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Header Section */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={4}
-        >
-          <Box>
-            <Typography
-              variant="h3"
-              fontWeight={800}
-              color="primary"
-              gutterBottom
+        <Grid container spacing={3} mb={4} id="dashboard" ref={(node) => { sectionRefs.current.dashboard = node; }}>
+          <Grid sx={{ xs: 12, lg: 8 }}>
+            <Card
+              sx={{
+                p: { xs: 2.5, md: 3.5 },
+                minHeight: "100%",
+                background:
+                  "linear-gradient(135deg, rgba(255,51,102,0.14), rgba(20,20,20,0.96) 52%, rgba(0,229,255,0.08))",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
             >
-              My Burpee Journey
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
-              {startDate
-                ? `Day ${Math.max(0, daysPassed)} • BurpeePacers Program`
-                : "Complete your first workout to start the program • BurpeePacers Program"}
-            </Typography>
-          </Box>
-          <Box display="flex" gap={2} alignItems="center">
-            {isAdmin(user?.email) && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => router.push("/admin")}
-                size="small"
-              >
-                Admin
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={logout}
-              size="small"
-            >
-              Log Out / Reset
-            </Button>
-          </Box>
-        </Box>
+              <Stack spacing={2.5}>
+                <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap">
+                  <Box>
+                    <Typography variant="overline" sx={{ color: "secondary.main", letterSpacing: "0.18em" }}>
+                      TODAY&apos;S TRAINING
+                    </Typography>
+                    <Typography variant="h3" fontWeight={800} sx={{ mt: 0.5, mb: 1, fontSize: { xs: "2rem", md: "2.8rem" } }}>
+                      Keep your momentum going.
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560 }}>
+                      {scheduledToday
+                        ? `You're scheduled for ${nextWorkoutLabel} today. Stay consistent, keep the reps clean, and protect the streak you're building.`
+                        : "Today is a recovery day. Review your progress, prep for the next session, and keep your weekly rhythm intact."}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      minWidth: 160,
+                      textAlign: "center",
+                      alignSelf: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 124,
+                        height: 124,
+                        borderRadius: "50%",
+                        mx: "auto",
+                        background: `conic-gradient(#00E5FF ${weeklyRingValue * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
+                        p: "10px",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "50%",
+                          bgcolor: "background.paper",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight={800}>
+                          {weeklyCompletionPercent}%
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          weekly completion
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} useFlexGap flexWrap="wrap">
+                  <Chip label={`Current streak: ${currentStreak}`} color="primary" sx={{ fontWeight: 700 }} />
+                  <Chip label={`Level: ${currentLevel?.name ?? "Not set"}`} variant="outlined" sx={{ fontWeight: 700 }} />
+                  <Chip label={startDate ? `Day ${Math.max(0, daysPassed)}` : "Program not started yet"} variant="outlined" />
+                </Stack>
+
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => scrollToSection("workout")}
+                    disabled={hasCompletedToday}
+                  >
+                    {hasCompletedToday ? "Workout Completed Today" : "Start Today's Workout"}
+                  </Button>
+                  <Button variant="outlined" size="large" color="secondary" onClick={() => scrollToSection("calendar")}>
+                    View Schedule
+                  </Button>
+                </Stack>
+              </Stack>
+            </Card>
+          </Grid>
+
+          <Grid sx={{ xs: 12, lg: 4 }}>
+            <Card sx={{ p: { xs: 2.5, md: 3 }, height: "100%" }}>
+              <Typography variant="subtitle2" color="secondary.main" gutterBottom>
+                Program snapshot
+              </Typography>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Current program
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    {isAdvancedTrack ? "Advanced Track" : "Beginner Track"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Today&apos;s session
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    {scheduledToday ? nextWorkoutLabel : "Recovery / reset"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Level progression
+                  </Typography>
+                  <Typography variant="body1" fontWeight={700}>
+                    {currentLevel?.name ?? "Set your active level"}
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={levelProgressPercent}
+                    sx={{
+                      mt: 1,
+                      height: 8,
+                      borderRadius: 999,
+                      bgcolor: "rgba(255,255,255,0.08)",
+                      "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
+                    {nextLevel ? `${levelProgressPercent}% through this track. Next milestone: ${nextLevel.name}.` : "You are at the top of the current progression."}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2} mb={4}>
+          {summaryStats.map((stat) => (
+            <Grid sx={{ xs: 12, sm: 6, xl: 2 }} key={stat.label}>
+              <Card sx={{ p: 2.25, height: "100%" }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1.5}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {stat.label}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={800} sx={{ mt: 0.75, mb: 0.75 }}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {stat.sublabel}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 2,
+                      display: "grid",
+                      placeItems: "center",
+                      color: stat.accent,
+                      bgcolor: `${stat.accent}1A`,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {stat.icon}
+                  </Box>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
 
         {/* Milestone Alert */}
         <AnimatePresence>
@@ -634,8 +1136,98 @@ export default function Dashboard({
           </Card>
         )}
 
-        {/* Stats and Video Row */}
         <Grid container spacing={3} mb={4}>
+          <Grid sx={{ xs: 12, lg: 7 }}>
+            <Card sx={{ p: 3, height: "100%" }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" fontWeight={800}>
+                    Consistency insights
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Weekly completion versus your scheduled training rhythm
+                  </Typography>
+                </Box>
+                <Chip
+                  label={`${currentWeekCompleted} this week`}
+                  color={weeklyCompletionPercent >= 75 ? "success" : "default"}
+                  variant={weeklyCompletionPercent >= 75 ? "filled" : "outlined"}
+                />
+              </Box>
+              <Stack spacing={1.5}>
+                {chartWeeks.map((week) => (
+                  <Box key={week.label}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                      <Typography variant="body2" fontWeight={600}>
+                        Week of {week.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {week.value}/{week.target || 0}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 1, alignItems: "center" }}>
+                      <Box sx={{ height: 10, borderRadius: 999, bgcolor: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                        <Box
+                          sx={{
+                            height: "100%",
+                            width: `${Math.max(10, (week.value / maxWeeklyChartValue) * 100)}%`,
+                            bgcolor: week.value >= week.target && week.target > 0 ? "success.main" : "secondary.main",
+                            borderRadius: 999,
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {week.target > 0 ? `${Math.round((week.value / week.target) * 100) || 0}%` : "0%"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Card>
+          </Grid>
+
+          <Grid sx={{ xs: 12, lg: 5 }}>
+            <Card sx={{ p: 3, height: "100%" }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" fontWeight={800}>
+                    Monthly volume
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Last six months of completed sessions
+                  </Typography>
+                </Box>
+                <Chip label={`${workoutsThisMonth} this month`} color="primary" />
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 1.25, alignItems: "end", minHeight: 220 }}>
+                {chartMonths.map((month) => (
+                  <Box key={month.label} sx={{ textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        height: `${Math.max(16, (month.value / maxMonthlyChartValue) * 150)}px`,
+                        borderRadius: "16px 16px 4px 4px",
+                        background: month.label === format(today, "MMM")
+                          ? "linear-gradient(180deg, rgba(255,51,102,0.95), rgba(255,51,102,0.28))"
+                          : "linear-gradient(180deg, rgba(0,229,255,0.9), rgba(0,229,255,0.2))",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        mb: 1,
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                      {month.label}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {month.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Stats and Video Row */}
+        <Grid container spacing={3} mb={4} id="workout" ref={(node) => { sectionRefs.current.workout = node; }}>
           <Grid sx={{ xs: 12, md: 4 }}>
             <Card
               sx={{
@@ -1003,6 +1595,14 @@ export default function Dashboard({
         {/* ── Friday Pulling Work ──────────────────────────────────────────────
             Visible only on Fridays for Advanced Track users.
             Locked before the Hybrid workout is done; auto-unlocks on completion. */}
+        <Box
+          id={!todayWeightedDay ? "strength" : undefined}
+          ref={(node: HTMLDivElement | null) => {
+            if (!todayWeightedDay) {
+              sectionRefs.current.strength = node;
+            }
+          }}
+        >
         {isFridayAdvanced && (
           <Card
             sx={{
@@ -1173,9 +1773,10 @@ export default function Dashboard({
             )}
           </Card>
         )}
+        </Box>
 
         {/* Monthly Tracker Row */}
-        <Card sx={{ p: 3, mb: 4 }}>
+        <Card sx={{ p: 3, mb: 4 }} id="calendar" ref={(node) => { sectionRefs.current.calendar = node; }}>
           <Box
             display="flex"
             justifyContent="space-between"
@@ -1335,10 +1936,131 @@ export default function Dashboard({
           </Box>
         </Card>
 
+        <Grid container spacing={3} mb={4}>
+          <Grid sx={{ xs: 12, md: 7 }}>
+            <Card sx={{ p: 3, height: "100%" }} id="progress" ref={(node) => { sectionRefs.current.progress = node; }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mb={2}>
+                <Box>
+                  <Typography variant="h6" fontWeight={800}>
+                    Recent workout history
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Your latest completed sessions, pulled from Firestore workout history
+                  </Typography>
+                </Box>
+                <Chip label={`${recentHistory.length} recent`} variant="outlined" />
+              </Box>
+              {recentHistory.length > 0 ? (
+                <Stack spacing={1.25}>
+                  {recentHistory.map((log) => (
+                    <Box
+                      key={`${log.date}-${log.levelCompleted ?? "base"}`}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        bgcolor: "rgba(255,255,255,0.02)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 2,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" fontWeight={700}>
+                          {format(parseISO(log.date), "EEEE, MMM d")}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatModeLabel(log)}{log.repsCompleted ? ` • ${log.repsCompleted} reps` : ""}
+                        </Typography>
+                      </Box>
+                      <Box textAlign={{ xs: "left", sm: "right" }}>
+                        <Typography variant="body2" color="secondary.main" fontWeight={700}>
+                          {formatWorkoutLogLabel(log.levelCompleted) ?? "Completed"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Saved to your workout history
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Complete your first workout and your recent history will start building here.
+                </Typography>
+              )}
+            </Card>
+          </Grid>
+
+          <Grid sx={{ xs: 12, md: 5 }}>
+            <Card sx={{ p: 3, height: "100%" }}>
+              <Typography variant="h6" fontWeight={800} gutterBottom>
+                Current level progression
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                See where you are in the program and what comes next.
+              </Typography>
+              <Stack spacing={2}>
+                <Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                    <Typography variant="body2" fontWeight={700}>
+                      {currentLevel?.name ?? "No level selected"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {currentLevelIndex >= 0 ? `${currentLevelIndex + 1}/${levelsForTrack.length}` : "0/0"}
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={levelProgressPercent}
+                    sx={{
+                      height: 10,
+                      borderRadius: 999,
+                      bgcolor: "rgba(255,255,255,0.08)",
+                      "& .MuiLinearProgress-bar": { bgcolor: "secondary.main" },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Next milestone
+                  </Typography>
+                  <Typography variant="body1" fontWeight={700} sx={{ mt: 0.5 }}>
+                    {nextLevel?.name ?? "Elite / final tier reached"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                    {nextLevel?.description ?? "You've reached the current top of this training track."}
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.16)" }}>
+                  <Typography variant="body2" fontWeight={700}>
+                    This week vs last week
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {currentWeekCompleted === previousWeekCompleted
+                      ? `You matched last week with ${currentWeekCompleted} completed workouts.`
+                      : currentWeekCompleted > previousWeekCompleted
+                        ? `You are ${currentWeekCompleted - previousWeekCompleted} workout ahead of last week.`
+                        : `You are ${previousWeekCompleted - currentWeekCompleted} workout behind last week.`}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Grid>
+        </Grid>
+
         {/* ── Weighted Training Card ──────────────────────────────────────────
             Opt-in, shown on Mon/Wed/Fri only when the toggle is enabled. */}
         {todayWeightedDay && (
-          <WeightedTrainingCardWeb day={todayWeightedDay} />
+          <Box
+            id="strength"
+            ref={(node: HTMLDivElement | null) => {
+              sectionRefs.current.strength = node;
+            }}
+          >
+            <WeightedTrainingCardWeb day={todayWeightedDay} />
+          </Box>
         )}
 
         {/* Progress Photos */}
@@ -1681,7 +2403,70 @@ export default function Dashboard({
             />
           </Stack>
         </Box>
+
+        <Box
+          component="footer"
+          sx={{
+            mt: 4,
+            pt: 3,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle2" fontWeight={800}>
+              BurpeePacers
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Structured 20-minute training for consistency, recovery, and long-term progress.
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Button color="inherit" size="small" onClick={() => scrollToSection("dashboard")}>
+              Dashboard
+            </Button>
+            <Button color="inherit" size="small" onClick={() => scrollToSection("calendar")}>
+              Calendar
+            </Button>
+            <Button color="inherit" size="small" onClick={() => router.push("/privacy")}>
+              Privacy
+            </Button>
+            <Button color="inherit" size="small" onClick={() => router.push("/terms")}>
+              Terms
+            </Button>
+          </Stack>
+        </Box>
       </motion.div>
+      </Box>
+      {isMobile && (
+        <BottomNavigation
+          showLabels
+          value={activeSection}
+          onChange={(_, value: DashboardSectionId) => scrollToSection(value)}
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            bgcolor: "rgba(10,10,10,0.96)",
+            backdropFilter: "blur(14px)",
+          }}
+        >
+          {DASHBOARD_SECTIONS.map((section) => (
+            <BottomNavigationAction
+              key={section.id}
+              value={section.id}
+              label={section.label}
+              icon={section.icon}
+            />
+          ))}
+        </BottomNavigation>
+      )}
     </Box>
   );
 }

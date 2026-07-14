@@ -7,18 +7,32 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#FF3366', // Vibrant pink-red
+      main: '#FF3366',
     },
     secondary: {
-      main: '#00E5FF', // Neon cyan
+      main: '#00E5FF',
+    },
+    success: {
+      main: '#5FCB79',
+    },
+    warning: {
+      main: '#F5B544',
     },
     background: {
-      default: '#0A0A0A',
-      paper: '#141414',
+      default: '#090909',
+      paper: '#121212',
+    },
+    text: {
+      primary: '#F7F7F2',
+      secondary: 'rgba(247, 247, 242, 0.68)',
     },
   },
   typography: {
-    fontFamily: 'var(--font-geist-sans), Roboto, Helvetica, Arial, sans-serif',
+    fontFamily: 'var(--font-geist-sans), "Avenir Next", "Segoe UI", sans-serif',
+    button: {
+      fontWeight: 700,
+      letterSpacing: '0.01em',
+    },
     h1: {
       fontWeight: 800,
       letterSpacing: '-0.02em',
@@ -47,9 +61,16 @@ const theme = createTheme({
         root: {
           borderRadius: 20,
           backgroundImage: 'none',
-          backgroundColor: 'rgba(20, 20, 20, 0.7)',
-          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(18, 18, 18, 0.92)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 18px 60px rgba(0, 0, 0, 0.22)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 999,
         },
       },
     },
