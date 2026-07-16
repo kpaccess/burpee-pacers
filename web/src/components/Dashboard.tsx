@@ -359,6 +359,8 @@ export default function Dashboard({
   // ── Health & Recovery section state ────────────────────────────────────────
   const [healthSectionOpen, setHealthSectionOpen] = useState(false);
   const [healthActiveTab, setHealthActiveTab] = useState<"warmup" | "cooldown">("warmup");
+  const [showProgramSnapshot, setShowProgramSnapshot] = useState(false);
+  const [showSummaryStats, setShowSummaryStats] = useState(false);
   const [showMobileProgressDetails, setShowMobileProgressDetails] = useState(false);
   const healthSectionRef = useRef<HTMLDivElement>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -940,90 +942,199 @@ export default function Dashboard({
             </Card>
           </Grid>
 
-          <Grid sx={{ xs: 12, lg: 4 }}>
+        </Grid>
+
+        <Grid container spacing={3} mb={4}>
+          <Grid sx={{ xs: 12, lg: 6 }}>
             <Card sx={{ p: { xs: 2.5, md: 3 }, height: "100%" }}>
-              <Typography variant="subtitle2" color="secondary.main" gutterBottom>
-                Program snapshot
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+                <Box>
+                  <Typography variant="subtitle2" color="secondary.main" gutterBottom>
+                    Program snapshot
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Track, today&apos;s session, and level progress when you want the full picture.
+                  </Typography>
+                </Box>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  size="small"
+                  endIcon={showProgramSnapshot ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  onClick={() => setShowProgramSnapshot((value) => !value)}
+                >
+                  {showProgramSnapshot ? "Hide" : "Show"}
+                </Button>
+              </Box>
+              <Collapse in={showProgramSnapshot} timeout="auto" unmountOnExit>
+                <Stack spacing={2} sx={{ mt: 2.5 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Current program
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800}>
+                      {isAdvancedTrack ? "Advanced Track" : "Beginner Track"}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Today&apos;s session
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800}>
+                      {scheduledToday ? nextWorkoutLabel : "Recovery / reset"}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Level progression
+                    </Typography>
+                    <Typography variant="body1" fontWeight={700}>
+                      {currentLevel?.name ?? "Set your active level"}
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={levelProgressPercent}
+                      sx={{
+                        mt: 1,
+                        height: 8,
+                        borderRadius: 999,
+                        bgcolor: "rgba(255,255,255,0.08)",
+                        "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
+                      {nextLevel ? `${levelProgressPercent}% through this track. Next milestone: ${nextLevel.name}.` : "You are at the top of the current progression."}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Collapse>
+            </Card>
+          </Grid>
+
+          <Grid sx={{ xs: 12, lg: 6 }}>
+            <Card sx={{ p: { xs: 2.5, md: 3 }, height: "100%" }}>
+              <Typography
+                variant="h6"
+                display="flex"
+                alignItems="center"
+                gap={1}
+              >
+                <CalendarMonthIcon color="secondary" /> Schedule
               </Typography>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Current program
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {isAdvancedTrack ? "Advanced Track" : "Beginner Track"}
-                  </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Do the program on:
+              </Typography>
+              <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
+                {WORKOUT_DAY_OPTIONS.map(({ weekday, short }) => {
+                  const isSelected = selectedWorkoutDays.includes(weekday);
+                  const canToggleOff = !isSelected || selectedWorkoutDays.length > 1;
+
+                  return (
+                    <Chip
+                      key={weekday}
+                      label={`${short} · ${getWorkoutLabelForWeekday(weekday)}`}
+                      color={isSelected ? "primary" : "default"}
+                      variant={isSelected ? "filled" : "outlined"}
+                      onClick={() => handleWorkoutDayToggle(weekday)}
+                      disabled={!canToggleOff || !onUpdateData}
+                      sx={{
+                        fontWeight: 600,
+                        opacity: isSelected || canToggleOff ? 1 : 0.55,
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+                Tap days to customize your weekly schedule. Keep at least one
+                workout day selected.
+              </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mt={2}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <FitnessCenterIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  <Typography variant="body2">Weighted Training</Typography>
                 </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Today&apos;s session
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {scheduledToday ? nextWorkoutLabel : "Recovery / reset"}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Level progression
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700}>
-                    {currentLevel?.name ?? "Set your active level"}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={levelProgressPercent}
-                    sx={{
-                      mt: 1,
-                      height: 8,
-                      borderRadius: 999,
-                      bgcolor: "rgba(255,255,255,0.08)",
-                      "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
-                    }}
+                <Box
+                  component="span"
+                  onClick={() => setWeightedTrainingEnabled((v) => !v)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <Chip
+                    label={weightedTrainingEnabled ? "On" : "Off"}
+                    size="small"
+                    color={weightedTrainingEnabled ? "warning" : "default"}
+                    variant={weightedTrainingEnabled ? "filled" : "outlined"}
+                    sx={{ fontWeight: 700 }}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
-                    {nextLevel ? `${levelProgressPercent}% through this track. Next milestone: ${nextLevel.name}.` : "You are at the top of the current progression."}
-                  </Typography>
                 </Box>
-              </Stack>
+              </Box>
+              {weightedTrainingEnabled && (
+                <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: "block", lineHeight: 1.4 }}>
+                  Strength card appears on Mon, Wed &amp; Fri after your burpees.
+                </Typography>
+              )}
             </Card>
           </Grid>
         </Grid>
 
-        <Grid container spacing={2} mb={4}>
-          {visibleSummaryStats.map((stat) => (
-            <Grid sx={{ xs: 12, sm: 6, xl: 2 }} key={stat.label}>
-              <Card sx={{ p: 2.25, height: "100%" }}>
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1.5}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      {stat.label}
-                    </Typography>
-                    <Typography variant="h5" fontWeight={800} sx={{ mt: 0.75, mb: 0.75 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {stat.sublabel}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 2,
-                      display: "grid",
-                      placeItems: "center",
-                      color: stat.accent,
-                      bgcolor: `${stat.accent}1A`,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {stat.icon}
-                  </Box>
-                </Box>
-              </Card>
+        <Card sx={{ p: { xs: 2.5, md: 3 }, mb: 4 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+            <Box>
+              <Typography variant="subtitle2" color="secondary.main" gutterBottom>
+                Training details
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Current streak, this month, training time, weekly completion, and personal best.
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              endIcon={showSummaryStats ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              onClick={() => setShowSummaryStats((value) => !value)}
+            >
+              {showSummaryStats ? "Hide" : "Show"}
+            </Button>
+          </Box>
+          <Collapse in={showSummaryStats} timeout="auto" unmountOnExit>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              {visibleSummaryStats.map((stat) => (
+                <Grid sx={{ xs: 12, sm: 6, xl: 2 }} key={stat.label}>
+                  <Card sx={{ p: 2.25, height: "100%" }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1.5}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {stat.label}
+                        </Typography>
+                        <Typography variant="h5" fontWeight={800} sx={{ mt: 0.75, mb: 0.75 }}>
+                          {stat.value}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {stat.sublabel}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 2,
+                          display: "grid",
+                          placeItems: "center",
+                          color: stat.accent,
+                          bgcolor: `${stat.accent}1A`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {stat.icon}
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
+          </Collapse>
+        </Card>
 
         {/* Milestone Alert */}
         <AnimatePresence>
@@ -1102,79 +1213,6 @@ export default function Dashboard({
 
         {/* Stats and Video Row */}
         <Grid container spacing={3} mb={4} id="workout" ref={(node) => { sectionRefs.current.workout = node; }}>
-          <Grid sx={{ xs: 12, md: 4, order: { xs: 2, md: 1 } }}>
-            <Card
-              sx={{
-                p: 3,
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-              }}
-            >
-              <Typography
-                variant="h6"
-                display="flex"
-                alignItems="center"
-                gap={1}
-              >
-                <CalendarMonthIcon color="secondary" /> Schedule
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Do the program on:
-              </Typography>
-              <Box display="flex" gap={1} flexWrap="wrap">
-                {WORKOUT_DAY_OPTIONS.map(({ weekday, short }) => {
-                  const isSelected = selectedWorkoutDays.includes(weekday);
-                  const canToggleOff = !isSelected || selectedWorkoutDays.length > 1;
-
-                  return (
-                    <Chip
-                      key={weekday}
-                      label={`${short} · ${getWorkoutLabelForWeekday(weekday)}`}
-                      color={isSelected ? "primary" : "default"}
-                      variant={isSelected ? "filled" : "outlined"}
-                      onClick={() => handleWorkoutDayToggle(weekday)}
-                      disabled={!canToggleOff || !onUpdateData}
-                      sx={{
-                        fontWeight: 600,
-                        opacity: isSelected || canToggleOff ? 1 : 0.55,
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                Tap days to customize your weekly schedule. Keep at least one
-                workout day selected.
-              </Typography>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <FitnessCenterIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                  <Typography variant="body2">Weighted Training</Typography>
-                </Box>
-                <Box
-                  component="span"
-                  onClick={() => setWeightedTrainingEnabled((v) => !v)}
-                  sx={{ cursor: "pointer" }}
-                >
-                  <Chip
-                    label={weightedTrainingEnabled ? "On" : "Off"}
-                    size="small"
-                    color={weightedTrainingEnabled ? "warning" : "default"}
-                    variant={weightedTrainingEnabled ? "filled" : "outlined"}
-                    sx={{ fontWeight: 700 }}
-                  />
-                </Box>
-              </Box>
-              {weightedTrainingEnabled && (
-                <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.4 }}>
-                  Strength card appears on Mon, Wed &amp; Fri after your burpees.
-                </Typography>
-              )}
-            </Card>
-          </Grid>
-
           {!isMobile && (
           <Grid sx={{ xs: 12, md: 4, order: { xs: 3, md: 2 } }}>
             <Card
