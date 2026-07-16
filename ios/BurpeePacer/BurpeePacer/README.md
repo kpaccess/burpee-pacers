@@ -76,27 +76,27 @@ SessionTimerViewModel ──► PhoneSessionManager ──► WCSession ──�
 
 ## Tracks & Levels
 
-**Beginner** (B1–B6): 20 → 40 → 55 → 70 → 90 → 110 burpees in 20 min (no pushups).
+**Beginner** (B1–B6): 20 → 30 → 40 → 55 → 70 → 90 burpees in 20 min (no pushups).
 
 **Advanced** — sealsGoal / sixCountsGoal per level:
 
 | Level | Navy Seals | 5-Count Pushups |
 |-------|-----------|-----------------|
-| 1A    | 0         | 0               |
-| 1B    | 20        | 50              |
-| 1C    | 40        | 100             |
-| 1D    | 60        | 150             |
-| 2     | 80        | 200             |
-| 3     | 100       | 250             |
-| 4     | 120       | 275             |
-| grad  | 150       | 325             |
+| F     | 15        | 40              |
+| 1     | 20        | 50              |
+| 2     | 30        | 65              |
+| 3     | 40        | 80              |
+| 4     | 55        | 100             |
+| E     | 70        | 120             |
 
 Hybrid rep targets per phase = `ceil(fullGoal / 2)`, each phase is 10 min.
 
 ## Pro Access (`AppViewModel.hasProAccess`)
 
 Checked in order:
-1. Email allowlist (hardcoded in `AppViewModel`)
+1. Shared program config launch flag (`launchAccessEnabled`)
 2. `isAdmin == true` in Firestore
-3. StoreKit 2 entitlement (`com.burpeepacers.pro`)
-4. 60-day trial (`daysSinceStart < 60`)
+3. `isPro == true` in Firestore
+
+StoreKit purchase plumbing still exists on iOS, but it no longer acts as the
+access authority while web/Firestore remains the source of truth.

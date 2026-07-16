@@ -7,9 +7,12 @@ import Foundation
 import Combine
 import SwiftUI
 
+private let prepareCountdownSeconds = 10
+
 @Observable
 class SessionTimerViewModel: Identifiable {
     let id = UUID()
+    private let hybridPhaseDuration: TimeInterval = TimeInterval(ProgramCatalog.hybridPhaseDurationMinutes * 60)
 
     // MARK: - Configuration
 
@@ -110,7 +113,7 @@ class SessionTimerViewModel: Identifiable {
 
     /// 0 = first 10 min (Navy Seals), 1 = last 10 min (5-Count Pushups)
     var hybridPhaseIndex: Int {
-        isHybrid && timeRemaining <= 600 ? 1 : 0
+        isHybrid && timeRemaining <= hybridPhaseDuration ? 1 : 0
     }
 
     var hybridPhaseLabel: String {
@@ -120,7 +123,7 @@ class SessionTimerViewModel: Identifiable {
     /// Time remaining within the current hybrid phase (counts 600→0 per phase)
     var currentPhaseTimeRemaining: TimeInterval {
         guard isHybrid else { return timeRemaining }
-        return timeRemaining > 600 ? timeRemaining - 600 : timeRemaining
+        return timeRemaining > hybridPhaseDuration ? timeRemaining - hybridPhaseDuration : timeRemaining
     }
 
     var currentPhaseGoal: Int {
@@ -147,7 +150,7 @@ class SessionTimerViewModel: Identifiable {
 
     /// Time-based progress 0→1 within the current phase (drives the timer ring).
     var timeProgress: Double {
-        let total: TimeInterval = isHybrid ? 600 : 20 * 60
+        let total: TimeInterval = isHybrid ? hybridPhaseDuration : 20 * 60
         let elapsed = total - currentPhaseTimeRemaining
         return min(1.0, max(0, elapsed / total))
     }
@@ -158,7 +161,7 @@ class SessionTimerViewModel: Identifiable {
         let goal = currentPhaseGoal
         guard goal > 0, isRunning else { return nil }
 
-        let phaseDuration: TimeInterval = isHybrid ? 600 : 20 * 60
+        let phaseDuration: TimeInterval = isHybrid ? hybridPhaseDuration : 20 * 60
         let intervalSeconds = phaseDuration / Double(goal)
         guard intervalSeconds > 0 else { return nil }
 
@@ -175,7 +178,7 @@ class SessionTimerViewModel: Identifiable {
         let goal = currentPhaseGoal
         guard goal > 0, isRunning else { return nil }
 
-        let phaseDuration: TimeInterval = isHybrid ? 600 : 20 * 60
+        let phaseDuration: TimeInterval = isHybrid ? hybridPhaseDuration : 20 * 60
         let intervalSeconds = phaseDuration / Double(goal)
         guard intervalSeconds > 0 else { return nil }
 
@@ -231,7 +234,7 @@ class SessionTimerViewModel: Identifiable {
         guard isRunning else { return }
         isRunning = false
         pausedTime = timeRemaining
-        if isHybrid && timeRemaining <= 600 { hybridTransitioned = true }
+        if isHybrid && timeRemaining <= hybridPhaseDuration { hybridTransitioned = true }
         timerCancellable?.cancel()
         timerCancellable = nil
         startTime = nil
@@ -284,7 +287,7 @@ class SessionTimerViewModel: Identifiable {
 
     private func beginCountdown() {
         hasEverStarted = true
-        countdownRemaining = 5
+        countdownRemaining = prepareCountdownSeconds
         tickCountdown()
         Task {
             await HealthManager.shared.requestAuthorization()
@@ -338,7 +341,7 @@ class SessionTimerViewModel: Identifiable {
         // Auto-increment rep counter when a pace interval finishes
         let goal = currentPhaseGoal
         if goal > 0 && isRunning {
-            let phaseDuration: TimeInterval = isHybrid ? 600 : 20 * 60
+            let phaseDuration: TimeInterval = isHybrid ? hybridPhaseDuration : 20 * 60
             let intervalSeconds = phaseDuration / Double(goal)
             if intervalSeconds > 0 {
                 let phaseElapsed = phaseDuration - currentPhaseTimeRemaining
@@ -354,7 +357,7 @@ class SessionTimerViewModel: Identifiable {
         }
 
         // Hybrid phase 0→1 crossover
-        if isHybrid && !hybridTransitioned && timeRemaining <= 600 {
+        if isHybrid && !hybridTransitioned && timeRemaining <= hybridPhaseDuration {
             hybridTransitioned = true
             currentReps = 0
             lastWarnedSecond = -1

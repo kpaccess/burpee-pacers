@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FirebaseAuth
-import StoreKit
 
 struct DashboardView: View {
     @Bindable var viewModel: AppViewModel
@@ -63,9 +62,7 @@ struct DashboardView: View {
                         equipment: $viewModel.equipment
                     )
 
-                    if !viewModel.storeKit.hasPro {
-                        trialStatusCard
-                    }
+                    accessStatusCard
 
                     // Stats Overview
                     StatsOverviewCard(viewModel: viewModel)
@@ -133,74 +130,94 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Trial / Upgrade Card
-    
-    private var trialStatusCard: some View {
+    // MARK: - Access Status Card
+
+    @ViewBuilder
+    private var accessStatusCard: some View {
+        if let configError = viewModel.programConfigErrorMessage {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("PROGRAM CONFIG UNAVAILABLE")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.red)
+                    .tracking(2)
+
+                Text("The shared BurpeePacers workout configuration could not be loaded.")
+                    .font(.headline)
+
+                Text(configError)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color.red.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.red.opacity(0.2), lineWidth: 1)
+            )
+        } else if viewModel.isLaunchAccessEnabled {
+            launchAccessCard
+        } else if !viewModel.hasProAccess {
+            restrictedAccessCard
+        }
+    }
+
+    private var launchAccessCard: some View {
         VStack(spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.isInsideTrialPeriod ? "TRIAL ACTIVE" : "TRIAL EXPIRED")
+                    Text("LAUNCH ACCESS ACTIVE")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundStyle(viewModel.isInsideTrialPeriod ? .blue : .red)
+                        .foregroundStyle(.blue)
                         .tracking(2)
-                    
-                    Text(viewModel.isInsideTrialPeriod ? "\(viewModel.trialDaysRemaining) Days Remaining" : "Unlock Full Access")
+
+                    Text("Full access follows the web launch settings")
                         .font(.headline)
-                    
-                    Text(viewModel.isInsideTrialPeriod 
-                         ? "You have full access to all features during your 60-day trial."
-                         : "Your trial has ended. Upgrade to Pro for lifetime access.")
+
+                    Text("During launch, iPhone access is open to match the web app. Your BurpeePacers account remains the source of truth.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: viewModel.isInsideTrialPeriod ? "clock.fill" : "lock.fill")
+                Image(systemName: "bolt.badge.checkmark")
                     .font(.title)
-                    .foregroundStyle(viewModel.isInsideTrialPeriod ? .blue : .red)
+                    .foregroundStyle(.blue)
             }
-            
-            Button {
-                Task {
-                    if let product = viewModel.storeKit.products.first {
-                        _ = try? await viewModel.storeKit.purchase(product)
-                    }
-                }
-            } label: {
-                Group {
-                    if viewModel.storeKit.isLoading {
-                        ProgressView().tint(viewModel.isInsideTrialPeriod ? .blue : .white)
-                    } else {
-                        Text(viewModel.storeKit.products.first?.displayPrice ?? "Upgrade to Pro")
-                            .fontWeight(.bold)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(viewModel.isInsideTrialPeriod ? Color.blue.opacity(0.15) : Color.red)
-                .foregroundStyle(viewModel.isInsideTrialPeriod ? .blue : .white)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(viewModel.isInsideTrialPeriod ? Color.blue : Color.clear, lineWidth: 1)
-                )
-            }
-            .disabled(viewModel.storeKit.isLoading)
-
-            HStack(spacing: 8) {
-                Link("Terms of Use", destination: AppConstants.termsOfServiceURL)
-                Text("·")
-                Link("Privacy Policy", destination: AppConstants.privacyPolicyURL)
-            }
-            .font(.caption2)
-            .foregroundStyle(.tertiary)
         }
         .padding()
-        .background(viewModel.isInsideTrialPeriod ? Color.blue.opacity(0.05) : Color.red.opacity(0.05))
+        .background(Color.blue.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(viewModel.isInsideTrialPeriod ? Color.blue.opacity(0.2) : Color.red.opacity(0.2), lineWidth: 1)
+                .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    private var restrictedAccessCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ACCOUNT ACCESS REQUIRED")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.red)
+                .tracking(2)
+
+            Text("Your BurpeePacers account does not currently have full access.")
+                .font(.headline)
+
+            Text("Access is managed by your BurpeePacers account status so iPhone behavior stays aligned with the web app.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.red.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.red.opacity(0.2), lineWidth: 1)
         )
     }
     
@@ -333,6 +350,14 @@ struct DashboardView: View {
         .background(Color(UIColor.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .onAppear { refreshDefaultMode() }
+        .onChange(of: viewModel.currentTrack) { _, _ in
+            refreshDefaultMode()
+        }
+        .onChange(of: viewModel.currentLevelID) { _, _ in
+            if !viewModel.currentLevel.availableModes.contains(selectedMode) {
+                refreshDefaultMode()
+            }
+        }
     }
     
     // MARK: - Export Data Button

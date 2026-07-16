@@ -11,6 +11,13 @@ import SwiftUI
 enum ProgramTrack: String, Codable, CaseIterable {
     case beginner = "Beginner"
     case advanced = "Advanced"
+
+    var storageValue: String {
+        switch self {
+        case .beginner: return "beginner"
+        case .advanced: return "advanced"
+        }
+    }
 }
 
 // MARK: - Personalization Enums
@@ -69,7 +76,8 @@ struct Level: Identifiable, Codable {
     let sixCountsGoal: Int   // 5-Count pushups / burpees target
 
     var availableModes: [WorkoutMode] {
-        track == .beginner ? [.fiveCount] : [.navySeals, .fiveCount, .hybrid]
+        let configuredModes = ProgramCatalog.availableModes(for: track)
+        return configuredModes.isEmpty ? (track == .beginner ? [.fiveCount] : [.navySeals, .fiveCount, .hybrid]) : configuredModes
     }
 
     func goal(for mode: WorkoutMode) -> Int {
@@ -86,53 +94,25 @@ struct Level: Identifiable, Codable {
         return Int(ceil(Double(g) / 2))
     }
 
-    var hybridPhaseLabels: [String] { ["Navy Seals", "5-Count Pushups"] }
+    var hybridPhaseLabels: [String] { ProgramCatalog.hybridPhaseLabels }
+
+    static func placeholder(for track: ProgramTrack) -> Level {
+        Level(
+            id: track == .beginner ? "B1" : "F",
+            track: track,
+            displayName: "Program unavailable",
+            description: "Unable to load the shared workout configuration.",
+            sealsGoal: 0,
+            sixCountsGoal: 0
+        )
+    }
 }
 
 // MARK: - Level Database
 
 struct LevelDatabase {
-    static let beginnerLevels: [Level] = [
-        Level(id: "B1", track: .beginner, displayName: "Beginner 1",
-              description: "20 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 20),
-        Level(id: "B2", track: .beginner, displayName: "Beginner 2",
-              description: "40 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 40),
-        Level(id: "B3", track: .beginner, displayName: "Beginner 3",
-              description: "55 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 55),
-        Level(id: "B4", track: .beginner, displayName: "Beginner 4",
-              description: "70 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 70),
-        Level(id: "B5", track: .beginner, displayName: "Beginner 5",
-              description: "90 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 90),
-        Level(id: "B6", track: .beginner, displayName: "Beginner 6",
-              description: "110 burpees (no pushups) in 20 min.",
-              sealsGoal: 0, sixCountsGoal: 110),
-    ]
-
-    static let advancedLevels: [Level] = [
-        Level(id: "F", track: .advanced, displayName: "Foundation",
-              description: "15 Navy Seals in 20 min, 40 5-count pushups in 20 min.",
-              sealsGoal: 15, sixCountsGoal: 40),
-        Level(id: "1", track: .advanced, displayName: "Level 1",
-              description: "30 Navy Seals in 20 min, 75 5-count pushups in 20 min.",
-              sealsGoal: 30, sixCountsGoal: 75),
-        Level(id: "2", track: .advanced, displayName: "Level 2",
-              description: "50 Navy Seals in 20 min, 125 5-count pushups in 20 min.",
-              sealsGoal: 50, sixCountsGoal: 125),
-        Level(id: "3", track: .advanced, displayName: "Level 3",
-              description: "70 Navy Seals in 20 min, 175 5-count pushups in 20 min.",
-              sealsGoal: 70, sixCountsGoal: 175),
-        Level(id: "4", track: .advanced, displayName: "Level 4",
-              description: "90 Navy Seals in 20 min, 225 5-count pushups in 20 min.",
-              sealsGoal: 90, sixCountsGoal: 225),
-        Level(id: "E", track: .advanced, displayName: "Elite",
-              description: "120 Navy Seals in 20 min, 300 5-count pushups in 20 min.",
-              sealsGoal: 120, sixCountsGoal: 300),
-    ]
+    static var beginnerLevels: [Level] { ProgramCatalog.levels(for: .beginner) }
+    static var advancedLevels: [Level] { ProgramCatalog.levels(for: .advanced) }
 
     static func levels(for track: ProgramTrack) -> [Level] {
         track == .beginner ? beginnerLevels : advancedLevels

@@ -50,36 +50,24 @@ final class NotificationManager {
 
     func scheduleReminders(track: ProgramTrack, levelDisplayName: String, workoutDays: [Int] = [2, 4, 6]) {
         cancelReminders()
-
-        let allItems: [(weekday: Int, title: String, body: String)]
-        switch track {
-        case .beginner:
-            allItems = [
-                (2, "Workout Day! 💪", "Time for your burpee session — \(levelDisplayName)"),
-                (4, "Workout Day! 💪", "Time for your burpee session — \(levelDisplayName)"),
-                (6, "Workout Day! 💪", "Time for your burpee session — \(levelDisplayName)"),
-            ]
-        case .advanced:
-            allItems = [
-                (2, "Navy Seals Day! 💪", "Full range burpees today — \(levelDisplayName)"),
-                (4, "5-Count Pushups Day! 💪", "Strict pushup burpees today — \(levelDisplayName)"),
-                (6, "Hybrid Day! 💪", "Navy Seals + 5-Count Pushups today — \(levelDisplayName)"),
-            ]
-        }
-
-        for item in allItems where workoutDays.contains(item.weekday) {
+        for weekday in workoutDays where idsByWeekday[weekday] != nil {
+            let item = ProgramCatalog.reminderContent(
+                for: track,
+                weekday: weekday,
+                levelDisplayName: levelDisplayName
+            )
             let content = UNMutableNotificationContent()
             content.title = item.title
             content.body  = item.body
             content.sound = .default
 
             var comps = DateComponents()
-            comps.weekday = item.weekday
+            comps.weekday = weekday
             comps.hour    = reminderHour
             comps.minute  = reminderMinute
 
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
-            let id = idsByWeekday[item.weekday]!
+            let id = idsByWeekday[weekday]!
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
         }
     }

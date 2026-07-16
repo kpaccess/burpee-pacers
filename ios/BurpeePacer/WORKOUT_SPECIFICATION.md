@@ -2,6 +2,10 @@
 
 This document serves as the definitive technical reference for the BurpeePacer workout logic, ensuring parity between iOS, Web, and Android implementations.
 
+The checked-in shared config artifact at `web/src/config/program-config.json`
+is the canonical source for levels, workout modes, weekday defaults, hybrid
+phase behavior, and launch-access state.
+
 ---
 
 ## 1. Program Structure
@@ -23,22 +27,21 @@ This document serves as the definitive technical reference for the BurpeePacer w
 | Level ID | Display Name | Goal (Reps) | Description |
 |----------|--------------|-------------|-------------|
 | **B1**   | Beginner 1   | 20          | 20 burpees in 20 min |
-| **B2**   | Beginner 2   | 40          | 40 burpees in 20 min |
-| **B3**   | Beginner 3   | 55          | 55 burpees in 20 min |
-| **B4**   | Beginner 4   | 70          | 70 burpees in 20 min |
-| **B5**   | Beginner 5   | 90          | 90 burpees in 20 min |
-| **B6**   | Beginner 6   | 110         | 110 burpees in 20 min |
+| **B2**   | Beginner 2   | 30          | 30 burpees in 20 min |
+| **B3**   | Beginner 3   | 40          | 40 burpees in 20 min |
+| **B4**   | Beginner 4   | 55          | 55 burpees in 20 min |
+| **B5**   | Beginner 5   | 70          | 70 burpees in 20 min |
+| **B6**   | Beginner 6   | 90          | 90 burpees in 20 min |
 
 ### Advanced Track (Multiple Modes)
 | Level ID | Display Name | Navy Seals Goal (N) | 5-Count Goal (C) |
 |----------|--------------|---------------------|------------------|
-| **1B**   | Level 1B     | 20                  | 50               |
-| **1C**   | Level 1C     | 40                  | 100              |
-| **1D**   | Level 1D     | 60                  | 150              |
-| **2**    | Level 2      | 80                  | 200              |
-| **3**    | Level 3      | 100                 | 250              |
-| **4**    | Level 4      | 120                 | 275              |
-| **grad** | Graduation   | 150                 | 325              |
+| **F**    | Foundation   | 15                  | 40               |
+| **1**    | Level 1      | 20                  | 50               |
+| **2**    | Level 2      | 30                  | 65               |
+| **3**    | Level 3      | 40                  | 80               |
+| **4**    | Level 4      | 55                  | 100              |
+| **E**    | Elite        | 70                  | 120              |
 
 ---
 
@@ -68,7 +71,7 @@ The app acts as a metronome to ensure the user hits their target by the end of t
 ### Audio/Visual Cues
 - **Rep Warning**: Beep/Visual cue 4 seconds before the next rep boundary.
 - **Rep Trigger**: Sound/Vibration exactly at the boundary.
-- **Countdown**: 5-second preparation countdown before the 20-minute timer starts.
+- **Countdown**: 10-second preparation countdown before the 20-minute timer starts.
 
 ---
 
@@ -106,7 +109,7 @@ Assigned after the 20-minute burpee session based on Age and Equipment.
   startDate: string;       // "YYYY-MM-DD"
   startWeight: number;     // Always in lbs for the database
   workoutTier: string;     // "beginner" | "advanced"
-  currentLevelId: string;  // e.g., "1C", "B4"
+  currentLevelId: string;  // e.g., "F", "B4"
   workoutDays: number[];   // [2, 4, 6] (ISO weekdays)
   ageBracket: string;      // "30s", "40s", "50+"
   equipment: string;       // "Dumbbells Only", "Full Gym Access"
@@ -114,7 +117,7 @@ Assigned after the 20-minute burpee session based on Age and Equipment.
     {
       date: string;           // "YYYY-MM-DD"
       completed: boolean;
-      levelCompleted: string; // e.g., "1C(N)", "B3(C)"
+      levelCompleted: string; // e.g., "F(N)", "B3(C)"
       repsCompleted: number;
       workoutType: string;    // "with_pushups" | "no_pushups"
     }
@@ -125,6 +128,5 @@ Assigned after the 20-minute burpee session based on Age and Equipment.
 ---
 
 ## 7. Assets & Resources
-- **Beginner Tutorial**: https://www.youtube.com/watch?v=TU8QYVW0gDU
-- **Advanced Tutorial**: https://www.youtube.com/watch?v=4dF1DOWzf20
+- **Workout tutorials**: No iOS workout tutorial links are currently wired in the native timer UI.
 - **Theme**: Dark Mode First (Background: `#09090b`, Cards: `#1c1c1e`, Accent: Crimson Red).

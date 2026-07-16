@@ -85,22 +85,15 @@ struct AccountSettingsView: View {
 
     // MARK: - Workout labels for the reminder preview
 
-    private var mondayWorkout: String {
-        track == .advanced ? "Navy Seals" : "Burpees"
-    }
-    private var wednesdayWorkout: String {
-        track == .advanced ? "5-Count Pushups" : "Burpees"
-    }
-    private var fridayWorkout: String {
-        track == .advanced ? "Hybrid (Navy Seals + 5-Count)" : "Burpees"
-    }
-
     private func workoutLabel(for weekday: Int) -> String {
-        switch (track, weekday) {
-        case (.advanced, 2): return "Navy Seals"
-        case (.advanced, 4): return "5-Count Pushups"
-        case (.advanced, 6): return "Hybrid"
-        default:             return "Burpees"
+        let mode = ProgramCatalog.defaultMode(for: track, weekday: weekday)
+        switch mode {
+        case .hybrid:
+            return "Hybrid (Navy Seals + 5-Count)"
+        case .fiveCount:
+            return track == .beginner ? "Burpees" : mode.displayName
+        case .navySeals:
+            return mode.displayName
         }
     }
 
@@ -148,7 +141,7 @@ struct AccountSettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(email ?? "Unknown")
                                 .font(.subheadline)
-                            Text("Account Status: \(isPro ? "Pro" : "Standard")")
+                            Text("Account Status: \(ProgramCatalog.launchAccessEnabled ? "Launch Access" : (isPro ? "Pro" : "Standard"))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             if !connectedSignIns.isEmpty {
@@ -237,7 +230,15 @@ struct AccountSettingsView: View {
 
                 // Purchases section
                 Section("Purchases") {
-                    if !storeKit.hasPro {
+                    if ProgramCatalog.launchAccessEnabled {
+                        HStack {
+                            Image(systemName: "bolt.badge.checkmark")
+                                .foregroundStyle(.blue)
+                            Text("Launch access is currently enabled. Your BurpeePacers account status, not this device, controls access.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if !storeKit.hasPro {
                         if storeKit.isLoading {
                             HStack {
                                 Image(systemName: "sparkles")
@@ -459,11 +460,11 @@ struct AccountSettingsView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Label("Mon · \(mondayWorkout)", systemImage: "circle.fill")
+                            Label("Mon · \(workoutLabel(for: 2))", systemImage: "circle.fill")
                                 .font(.caption).foregroundStyle(.secondary)
-                            Label("Wed · \(wednesdayWorkout)", systemImage: "circle.fill")
+                            Label("Wed · \(workoutLabel(for: 4))", systemImage: "circle.fill")
                                 .font(.caption).foregroundStyle(.secondary)
-                            Label("Fri · \(fridayWorkout)", systemImage: "circle.fill")
+                            Label("Fri · \(workoutLabel(for: 6))", systemImage: "circle.fill")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
