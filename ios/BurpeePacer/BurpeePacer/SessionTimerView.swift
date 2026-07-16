@@ -77,9 +77,6 @@ struct SessionTimerView: View {
                 saveWorkoutButton
             }
 
-            // Tutorial link
-            tutorialLinkSection
-
             Spacer()
         }
         .padding()
@@ -396,24 +393,6 @@ struct SessionTimerView: View {
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-        .padding(.horizontal)
-    }
-
-    // MARK: - Tutorial Link
-
-    private var tutorialLinkSection: some View {
-        HStack {
-            Image(systemName: "play.rectangle.fill").font(.title3)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Coming Soon — Tutorial videos launching soon").font(.headline)
-                Text("Learn proper form").font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .opacity(0.5)
         .padding(.horizontal)
     }
 

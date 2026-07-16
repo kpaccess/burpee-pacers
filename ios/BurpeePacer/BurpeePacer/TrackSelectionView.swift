@@ -23,6 +23,9 @@ struct TrackSelectionView: View {
         ScrollView {
             VStack(spacing: 28) {
                 header
+                if let configError = ProgramCatalog.configErrorMessage {
+                    configErrorCard(configError)
+                }
                 trackCard(.beginner)
                 trackCard(.advanced)
                 Spacer(minLength: 32)
@@ -79,6 +82,8 @@ struct TrackSelectionView: View {
     private func trackCard(_ track: ProgramTrack) -> some View {
         let isCurrent = track == currentTrack
         let isBeginner = track == .beginner
+        let levels = LevelDatabase.levels(for: track)
+        let configUnavailable = ProgramCatalog.configErrorMessage != nil
 
         let icon     = isBeginner ? "figure.walk" : "figure.strengthtraining.traditional"
         let color: Color = isBeginner ? .blue : .red
@@ -86,11 +91,19 @@ struct TrackSelectionView: View {
             ? "Burpees (no pushups)"
             : "Navy Seals · 5-Count Pushups · Hybrid"
         let bullets: [String] = isBeginner
-            ? ["Levels B1–B6 (20–110 burpees)", "20-minute timed sessions", "Free during launch"]
-            : ["Levels Foundation–Elite (up to 120/300 reps)", "Three workout modes per session", "Free during launch"]
+            ? [
+                "Levels B1–B6 (\(levels.first?.sixCountsGoal ?? 0)–\(levels.last?.sixCountsGoal ?? 0) burpees)",
+                "20-minute timed sessions",
+                ProgramCatalog.launchAccessEnabled ? "Free during launch" : "Access follows your BurpeePacers account"
+              ]
+            : [
+                "Levels \(levels.first?.displayName ?? "Foundation")–\(levels.last?.displayName ?? "Elite") (up to \(levels.last?.sealsGoal ?? 0)/\(levels.last?.sixCountsGoal ?? 0) reps)",
+                "Three workout modes per session",
+                ProgramCatalog.launchAccessEnabled ? "Free during launch" : "Access follows your BurpeePacers account"
+              ]
 
         return Button {
-            guard !isCurrent else { return }
+            guard !isCurrent, !configUnavailable else { return }
             if isOnboarding {
                 onSelect(track == .beginner ? "beginner" : "advanced")
             } else {
@@ -152,7 +165,32 @@ struct TrackSelectionView: View {
             )
         }
         .buttonStyle(.plain)
-        .opacity(isCurrent ? 0.65 : 1.0)
+        .opacity(isCurrent || configUnavailable ? 0.65 : 1.0)
+    }
+
+    private func configErrorCard(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("PROGRAM CONFIG UNAVAILABLE")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.red)
+                .tracking(2)
+
+            Text("The shared BurpeePacers workout configuration could not be loaded.")
+                .font(.headline)
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.red.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.red.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 

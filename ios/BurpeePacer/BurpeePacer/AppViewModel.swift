@@ -8,7 +8,6 @@
 
 import Foundation
 import SwiftUI
-import FirebaseAuth
 
 @Observable
 class AppViewModel {
@@ -65,12 +64,20 @@ class AppViewModel {
     }
 
     var currentLevelID: String {
-        firebase.userData?.currentLevelId ?? (currentTrack == .beginner ? "B1" : "F")
+        let fallbackLevelID = ProgramCatalog.startingLevel(for: currentTrack)?.id ?? (currentTrack == .beginner ? "B1" : "F")
+        guard let levelID = firebase.userData?.currentLevelId else { return fallbackLevelID }
+
+        let validLevelIDs = Set(LevelDatabase.levels(for: currentTrack).map(\.id))
+        return validLevelIDs.contains(levelID) ? levelID : fallbackLevelID
     }
 
     var currentLevel: Level {
         let levels = LevelDatabase.levels(for: currentTrack)
-        return levels.first { $0.id == currentLevelID } ?? levels[0]
+        return levels.first { $0.id == currentLevelID } ?? levels.first ?? Level.placeholder(for: currentTrack)
+    }
+
+    var programConfigErrorMessage: String? {
+        ProgramCatalog.configErrorMessage
     }
 
     var startPictureUrl: String? {
@@ -105,47 +112,13 @@ class AppViewModel {
         Task { await firebase.updatePersonalization(age: age, equipment: equipment) }
     }
 
-    /// Emails that get free Pro access (e.g., developers, early testers).
-    private let allowlistEmails = [
-        "kpaccess@gmail.com",
-        "krishnapradhan88@gmail.com"
-    ]
-
-    /// Users get full access for the first 60 days.
-    var isInsideTrialPeriod: Bool {
-        let daysSinceStart = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        return daysSinceStart < 60
+    var isLaunchAccessEnabled: Bool {
+        ProgramCatalog.launchAccessEnabled
     }
 
-    var trialDaysRemaining: Int {
-        let daysSinceStart = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        return max(0, 60 - daysSinceStart)
-    }
-
-    /// Access is granted if: 
-    /// 1. User is in the 60-day trial
-    /// 2. User purchased Pro (StoreKit)
-    /// 3. User is an Admin (Firestore)
-    /// 4. User is in the Email Allowlist
+    /// Access follows the shared web-owned program config and Firestore account state.
     var hasProAccess: Bool {
-        // 1. Allowlist check
-        if let email = firebase.currentUser?.email?.lowercased(),
-           allowlistEmails.contains(email) {
-            return true
-        }
-
-        // 2. Admin check
-        if firebase.userData?.isAdmin == true {
-            return true
-        }
-
-        // 3. Purchase check
-        if storeKit.hasPro {
-            return true
-        }
-
-        // 4. Trial check
-        return isInsideTrialPeriod
+        isLaunchAccessEnabled || firebase.userData?.isAdmin == true || firebase.userData?.isPro == true
     }
 
     var workoutDays: [Int] {
@@ -194,13 +167,8 @@ class AppViewModel {
     // MARK: - Default timer mode (Mon→N, Wed→C, Fri→H)
 
     func defaultMode(for date: Date = Date()) -> WorkoutMode {
-        guard currentTrack == .advanced else { return .fiveCount }
-        switch Calendar.current.component(.weekday, from: date) {
-        case 2: return .navySeals
-        case 4: return .fiveCount
-        case 6: return .hybrid
-        default: return .navySeals
-        }
+        let weekday = Calendar.current.component(.weekday, from: date)
+        return ProgramCatalog.defaultMode(for: currentTrack, weekday: weekday)
     }
 
     // MARK: - Session management
@@ -240,7 +208,8 @@ class AppViewModel {
         }
         NotificationManager.shared.rescheduleIfEnabled(
             track: tier == "advanced" ? .advanced : .beginner,
-            levelDisplayName: tier == "advanced" ? "Foundation" : "Beginner 1",
+            levelDisplayName: ProgramCatalog.startingLevel(for: tier == "advanced" ? .advanced : .beginner)?.displayName
+                ?? (tier == "advanced" ? "Foundation" : "Beginner 1"),
             workoutDays: workoutDays)
     }
 

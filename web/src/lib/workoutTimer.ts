@@ -1,4 +1,10 @@
-export type SharedWorkoutTier = "beginner" | "advanced";
+import {
+  HYBRID_PHASES,
+  HYBRID_PHASE_DURATION_MINUTES,
+  getHybridPhaseGoal,
+  type SharedWorkoutTier,
+} from "./programConfig";
+
 /** "N" = Navy Seals, "C" = 5-Count Pushups, "H" = Hybrid (Phase 1 N → Phase 2 C) */
 export type WorkoutMode = "N" | "C" | "H";
 
@@ -67,10 +73,10 @@ export function buildWorkoutTimerConfig({
   }
 
   // ── Advanced track ─────────────────────────────────────────────────────────
-  // Hybrid Friday targets: exactly half of the full 20-min goal per phase.
-  // Math.ceil handles odd numbers (e.g. 275 seals → 138 per phase).
-  const hybridSealsGoal = Math.ceil(sealsGoal / 2);
-  const hybridFiveCountGoal = Math.ceil(sixCountsGoal / 2);
+  // Hybrid targets are defined by the shared program config.
+  const hybridSealsGoal = getHybridPhaseGoal(sealsGoal);
+  const hybridFiveCountGoal = getHybridPhaseGoal(sixCountsGoal);
+  const [firstHybridPhase, secondHybridPhase] = HYBRID_PHASES;
 
   return {
     tier,
@@ -97,19 +103,19 @@ export function buildWorkoutTimerConfig({
         mode: "H",
         label: "Hybrid",
         shortLabel: "H",
-        description: `${hybridSealsGoal} Navy Seals (10 min) + ${hybridFiveCountGoal} 5-Count Pushups (10 min)`,
+        description: `${hybridSealsGoal} ${firstHybridPhase.label} (${HYBRID_PHASE_DURATION_MINUTES} min) + ${hybridFiveCountGoal} ${secondHybridPhase.label} (${HYBRID_PHASE_DURATION_MINUTES} min)`,
         goal: 0, // per-phase goals live in hybridPhases
         hybridPhases: [
           {
-            mode: "N",
-            label: "Navy Seals",
-            durationMinutes: 10,
+            mode: firstHybridPhase.mode,
+            label: firstHybridPhase.label,
+            durationMinutes: HYBRID_PHASE_DURATION_MINUTES,
             goal: hybridSealsGoal,
           },
           {
-            mode: "C",
-            label: "5-Count Pushups",
-            durationMinutes: 10,
+            mode: secondHybridPhase.mode,
+            label: secondHybridPhase.label,
+            durationMinutes: HYBRID_PHASE_DURATION_MINUTES,
             goal: hybridFiveCountGoal,
           },
         ],

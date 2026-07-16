@@ -439,7 +439,8 @@ class FirebaseService {
 
     func updateTrack(_ tier: String) async {
         guard let uid = currentUser?.uid else { return }
-        let levelId = tier == "advanced" ? "1B" : "B1"
+        let track: ProgramTrack = tier == "advanced" ? .advanced : .beginner
+        let levelId = ProgramCatalog.startingLevel(for: track)?.id ?? (tier == "advanced" ? "F" : "B1")
         try? await db.collection("users").document(uid)
             .setData(["workoutTier": tier, "currentLevelId": levelId], merge: true)
     }

@@ -116,8 +116,8 @@ final class WatchSessionManager: NSObject {
     private func updatePacingBeep() {
         guard totalReps > 0 else { return }
         let isHybrid = mode == "H"
-        let phaseDuration = isHybrid ? 600.0 : 1200.0
-        let phaseSecondsLeft = isHybrid && secondsLeft > 600 ? secondsLeft - 600 : secondsLeft
+        let phaseDuration = isHybrid ? Double(totalSeconds / 2) : Double(totalSeconds)
+        let phaseSecondsLeft = isHybrid && secondsLeft > Int(phaseDuration) ? secondsLeft - Int(phaseDuration) : secondsLeft
         let intervalSeconds = phaseDuration / Double(totalReps)
         guard intervalSeconds > 0 else { return }
 
