@@ -929,19 +929,19 @@ export default function Dashboard({
                   </Box>
                   <Box
                     sx={{
-                      minWidth: 160,
+                      minWidth: 168,
                       textAlign: "center",
                       alignSelf: "center",
                     }}
                   >
                     <Box
                       sx={{
-                        width: 124,
-                        height: 124,
+                        width: { xs: 128, md: 148 },
+                        height: { xs: 128, md: 148 },
                         borderRadius: "50%",
                         mx: "auto",
                         background: `conic-gradient(#00E5FF ${weeklyRingValue * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
-                        p: "10px",
+                        p: { xs: "10px", md: "12px" },
                       }}
                     >
                       <Box
@@ -954,13 +954,30 @@ export default function Dashboard({
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
+                          px: { xs: 1.75, md: 2.25 },
+                          py: { xs: 1.25, md: 1.5 },
+                          textAlign: "center",
                         }}
                       >
-                        <Typography variant="h4" fontWeight={800}>
+                        <Typography
+                          variant="h4"
+                          fontWeight={800}
+                          sx={{
+                            lineHeight: 1,
+                            fontSize: "2rem",
+                            px: 0.5,
+                          }}
+                        >
                           {weeklyCompletionPercent}%
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          weekly completion
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.75, lineHeight: 1.15, maxWidth: 76 }}
+                        >
+                          weekly
+                          <br />
+                          completion
                         </Typography>
                       </Box>
                     </Box>
