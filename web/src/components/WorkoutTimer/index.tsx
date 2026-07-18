@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Typography } from "@mui/material";
+import { Box, Button, Card, Chip, Stack, Typography } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
@@ -83,6 +83,20 @@ export default function WorkoutTimer({
   const tutorialVideoUrl =
     tier === "beginner" ? BEGINNER_TUTORIAL_VIDEO_URL : TUTORIAL_VIDEO_URLS[activeMode.mode];
   const shouldShowTutorialButton = tier === "beginner" || !isHybridMode;
+  const workoutTitle =
+    tier === "beginner"
+      ? "Beginner Burpees"
+      : activeMode.mode === "N"
+        ? "Navy Seals"
+        : activeMode.mode === "C"
+          ? "5-Count Pushups"
+          : "Hybrid";
+  const workoutSubtitle =
+    tier === "beginner"
+      ? `${sixCountsGoal} burpees · No push-ups`
+      : activeMode.mode === "H"
+        ? `${Math.ceil(sealsGoal / 2)} Navy Seals + ${Math.ceil(sixCountsGoal / 2)} 5-count pushups`
+        : `${activeMode.goal} reps · ${activeMode.description}`;
 
   // ── Pacing values ─────────────────────────────────────────────────────────
   const totalWorkoutSeconds = timerConfig.initialMinutes * 60;
@@ -146,48 +160,81 @@ export default function WorkoutTimer({
   return (
     <Card
       sx={{
-        p: 3,
+        p: { xs: 2.5, md: 3.5 },
         height: "100%",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
         gap: 2,
       }}
     >
-      <TimerOutlinedIcon color="secondary" sx={{ fontSize: 42 }} />
-      <Typography variant="h6" fontWeight={800}>
-        Session Timer
-      </Typography>
+      <Box display="flex" justifyContent="space-between" gap={2} flexWrap="wrap" alignItems="flex-start">
+        <Box>
+          <Typography variant="overline" sx={{ color: "secondary.main", letterSpacing: "0.18em", fontWeight: 800 }}>
+            TODAY&apos;S WORKOUT
+          </Typography>
+          <Typography variant="h4" fontWeight={900} sx={{ mt: 0.5 }}>
+            {workoutTitle}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
+            {workoutSubtitle}
+          </Typography>
+        </Box>
+        <Chip icon={<TimerOutlinedIcon />} label="20:00" color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
+      </Box>
 
       <ModeSelector modes={modes} activeMode={activeMode} onSelect={selectMode} />
 
-      {isPreparing ? (
-        <PrepareCountdown secondsLeft={prepareSecondsLeft} />
-      ) : isHybridMode && hybridState ? (
-        <HybridDisplay
-          hybridState={hybridState}
-          totalSecondsLeft={secondsLeft}
-          currentRep={currentRep}
-          isActive={isActive}
-          goFlash={goFlash}
-          hybridIntervalSecs={hybridIntervalSecs}
-          hybridRestProgress={hybridRestProgress}
+      <Box
+        sx={{
+          p: { xs: 2, md: 2.5 },
+          borderRadius: 3,
+          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(255,255,255,0.02)",
+          textAlign: "center",
+        }}
+      >
+        {isPreparing ? (
+          <PrepareCountdown secondsLeft={prepareSecondsLeft} />
+        ) : isHybridMode && hybridState ? (
+          <HybridDisplay
+            hybridState={hybridState}
+            totalSecondsLeft={secondsLeft}
+            currentRep={currentRep}
+            isActive={isActive}
+            goFlash={goFlash}
+            hybridIntervalSecs={hybridIntervalSecs}
+            hybridRestProgress={hybridRestProgress}
+          />
+        ) : (
+          <StandardDisplay
+            secondsLeft={secondsLeft}
+            currentRep={currentRep}
+            goal={activeMode.goal}
+            isIdle={isIdle}
+            isActive={isActive}
+            intervalSecs={intervalSecs}
+            goFlash={goFlash}
+            secondsToNextRep={secondsToNextRep}
+            restProgress={restProgress}
+          />
+        )}
+      </Box>
+
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} useFlexGap flexWrap="wrap">
+        <Chip
+          label={
+            activeMode.goal > 0
+              ? `Rep ${currentRep} of ${activeMode.goal}`
+              : "Set your level to see rep target"
+          }
+          variant="outlined"
         />
-      ) : (
-        <StandardDisplay
-          secondsLeft={secondsLeft}
-          currentRep={currentRep}
-          goal={activeMode.goal}
-          isIdle={isIdle}
-          isActive={isActive}
-          intervalSecs={intervalSecs}
-          goFlash={goFlash}
-          secondsToNextRep={secondsToNextRep}
-          restProgress={restProgress}
+        <Chip
+          label={activeMode.goal > 0 ? `Pace: 1 rep every ${Math.round((20 * 60) / activeMode.goal)} seconds` : "Pacing appears after level selection"}
+          variant="outlined"
         />
-      )}
+      </Stack>
 
       {isIdle && !showWarmupPrompt && (
         <Typography
@@ -215,17 +262,22 @@ export default function WorkoutTimer({
 
       {shouldShowTutorialButton &&
         (tutorialVideoUrl ? (
-          <Button
-            variant="text"
-            component="a"
-            href={tutorialVideoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            startIcon={<VideocamIcon />}
-            sx={{ color: "secondary.main" }}
-          >
-            Watch Tutorial Video
-          </Button>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <Button variant="outlined" onClick={onShowWarmup} startIcon={<FitnessCenterIcon />}>
+              Warm-up
+            </Button>
+            <Button
+              variant="text"
+              component="a"
+              href={tutorialVideoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<VideocamIcon />}
+              sx={{ color: "secondary.main" }}
+            >
+              Watch Tutorial Video
+            </Button>
+          </Stack>
         ) : (
           <Button
             variant="text"

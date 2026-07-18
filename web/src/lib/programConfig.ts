@@ -29,6 +29,9 @@ export interface SharedProgramConfig {
   access: {
     launchAccessEnabled: boolean;
   };
+  progressionRules: {
+    qualifyingSessionsRequired: number;
+  };
   tracks: ProgramTrackConfig[];
   levels: ProgramLevelConfig[];
   defaultModeByWeekday: Record<SharedWorkoutTier, Partial<Record<string, ProgramWorkoutMode>>>;
@@ -60,6 +63,9 @@ function assertProgramConfig(value: unknown): asserts value is SharedProgramConf
   if (!Array.isArray(config.tracks) || config.tracks.length === 0) {
     throw new Error("Program config tracks are missing");
   }
+  if ((config.progressionRules?.qualifyingSessionsRequired ?? 0) < 1) {
+    throw new Error("Program config progression rules are missing");
+  }
   if (!Array.isArray(config.levels) || config.levels.length === 0) {
     throw new Error("Program config levels are missing");
   }
@@ -81,6 +87,8 @@ assertProgramConfig(rawProgramConfig);
 export const PROGRAM_CONFIG: SharedProgramConfig = rawProgramConfig;
 export const HYBRID_PHASE_DURATION_MINUTES = PROGRAM_CONFIG.hybridRules.phaseDurationMinutes;
 export const HYBRID_PHASES = PROGRAM_CONFIG.hybridRules.phases;
+export const QUALIFYING_SESSIONS_REQUIRED =
+  PROGRAM_CONFIG.progressionRules.qualifyingSessionsRequired;
 
 function toLevelDescription(level: ProgramLevelConfig): LevelDescription {
   return {
@@ -102,6 +110,16 @@ export const BEGINNER_LEVELS: LevelDescription[] = PROGRAM_CONFIG.levels
   .map(toLevelDescription);
 
 export const LEVELS: LevelDescription[] = ADVANCED_LEVELS;
+
+export function getLevelsForTrack(tier: SharedWorkoutTier): LevelDescription[] {
+  return tier === "advanced" ? ADVANCED_LEVELS : BEGINNER_LEVELS;
+}
+
+export function getProgressionSummary(tier: SharedWorkoutTier): string {
+  return getLevelsForTrack(tier)
+    .map((level) => level.sixCounts || level.seals)
+    .join(" -> ");
+}
 
 export function getTrackModes(tier: SharedWorkoutTier): ProgramWorkoutMode[] {
   return PROGRAM_CONFIG.tracks.find((track) => track.id === tier)?.availableModes ?? [];
