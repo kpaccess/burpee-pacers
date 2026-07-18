@@ -4,6 +4,11 @@ import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { isAdmin } from "@/lib/allowlist";
 import {
+  getLevelsForTrack,
+  getProgressionSummary,
+  QUALIFYING_SESSIONS_REQUIRED,
+} from "@/lib/programConfig";
+import {
   Box,
   Button,
   Card,
@@ -96,6 +101,29 @@ const FAQS = [
   },
 ];
 
+const PROGRAM_CARDS = [
+  {
+    id: "beginner" as const,
+    title: "Beginner Burpee Path",
+    description:
+      "For building consistency, conditioning, and confidence without the pushup portion of the burpee.",
+    accent: "secondary.main",
+    border: "1px solid rgba(0,229,255,0.35)",
+    background:
+      "linear-gradient(160deg, rgba(0,229,255,0.09) 0%, rgba(255,255,255,0.03) 100%)",
+  },
+  {
+    id: "advanced" as const,
+    title: "Advanced Conditioning Path",
+    description:
+      "For stronger users who want a weekly mix of Navy Seals, 5-count pushups, and Hybrid sessions.",
+    accent: "primary.main",
+    border: "1px solid rgba(255,51,102,0.35)",
+    background:
+      "linear-gradient(160deg, rgba(255,51,102,0.12) 0%, rgba(255,255,255,0.03) 100%)",
+  },
+];
+
 function Section({
   id,
   eyebrow,
@@ -147,6 +175,7 @@ export default function LandingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState("how-it-works");
+  const [isCompactHeader, setIsCompactHeader] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -161,6 +190,16 @@ export default function LandingPage() {
     };
     sendVisit();
   }, [loading, user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsCompactHeader(window.scrollY > 28);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const sectionIds = NAV_ITEMS.map((item) => item.href.replace("#", ""));
@@ -222,11 +261,15 @@ export default function LandingPage() {
             justifyContent="space-between"
             spacing={{ xs: 1.25, md: 2 }}
             sx={{
-              p: { xs: 1, md: 2 },
+              p: {
+                xs: isCompactHeader ? 0.9 : 1,
+                md: isCompactHeader ? 1.2 : 2,
+              },
               borderRadius: 4,
               border: "1px solid rgba(255,255,255,0.08)",
               background: "rgba(10,10,14,0.82)",
               backdropFilter: "blur(14px)",
+              transition: "padding 180ms ease",
             }}
           >
             <Stack
@@ -241,25 +284,27 @@ export default function LandingPage() {
                 <Typography variant="h6" fontWeight={900} sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}>
                   BurpeePacers
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    fontSize: { xs: "0.9rem", md: "0.875rem" },
-                    whiteSpace: { xs: "nowrap", md: "normal" },
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: { xs: "100%", md: "none" },
-                  }}
-                >
-                  Structured 20-minute conditioning at home
-                </Typography>
+                {!isCompactHeader ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: { xs: "0.9rem", md: "0.875rem" },
+                      whiteSpace: { xs: "nowrap", md: "normal" },
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: { xs: "100%", md: "none" },
+                    }}
+                  >
+                    Structured 20-minute conditioning at home
+                  </Typography>
+                ) : null}
               </Box>
             </Stack>
 
             <Stack
               direction="row"
-              spacing={1}
+              spacing={0.75}
               flexWrap="nowrap"
               useFlexGap
               justifyContent={{ xs: "flex-start", md: "flex-end" }}
@@ -309,6 +354,25 @@ export default function LandingPage() {
                   {item.label}
                 </Button>
               ))}
+              <Button
+                variant="text"
+                onClick={() => router.push("/login")}
+                sx={{
+                  color: "rgba(255,255,255,0.92)",
+                  flex: "0 0 auto",
+                  borderRadius: 999,
+                  px: 1.25,
+                }}
+              >
+                Sign in
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => router.push("/login?signup=1")}
+                sx={{ flex: "0 0 auto", px: 1.5, borderRadius: 999 }}
+              >
+                Start workout
+              </Button>
             </Stack>
           </Stack>
         </Box>
@@ -638,59 +702,50 @@ export default function LandingPage() {
               gap: 3,
             }}
           >
-            <Card
-              sx={{
-                p: 3.5,
-                borderRadius: 3,
-                border: "1px solid rgba(0,229,255,0.35)",
-                background:
-                  "linear-gradient(160deg, rgba(0,229,255,0.09) 0%, rgba(255,255,255,0.03) 100%)",
-              }}
-            >
-              <Typography variant="h5" fontWeight={900} mb={1}>
-                Beginner Burpee Path
-              </Typography>
-              <Typography variant="body1" color="text.secondary" mb={2}>
-                For building consistency, conditioning, and confidence.
-              </Typography>
-              <Typography variant="subtitle2" color="secondary.main" fontWeight={800} mb={0.75}>
-                Levels
-              </Typography>
-              <Typography variant="body1" mb={2}>
-                20 → 30 → 40 → 55 → 70 → 90 burpees in 20 minutes.
-              </Typography>
-              <Divider sx={{ borderColor: "rgba(255,255,255,0.08)", mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Recommended: complete a level 3 times before moving up.
-              </Typography>
-            </Card>
+            {PROGRAM_CARDS.map((program) => {
+              const levels = getLevelsForTrack(program.id);
+              const firstLevel = levels[0];
+              const finalLevel = levels[levels.length - 1];
 
-            <Card
-              sx={{
-                p: 3.5,
-                borderRadius: 3,
-                border: "1px solid rgba(255,51,102,0.35)",
-                background:
-                  "linear-gradient(160deg, rgba(255,51,102,0.12) 0%, rgba(255,255,255,0.03) 100%)",
-              }}
-            >
-              <Typography variant="h5" fontWeight={900} mb={1}>
-                Advanced Navy SEAL Path
-              </Typography>
-              <Typography variant="body1" color="text.secondary" mb={2}>
-                For stronger users who want a harder bodyweight conditioning challenge.
-              </Typography>
-              <Typography variant="subtitle2" color="primary.main" fontWeight={800} mb={0.75}>
-                Levels
-              </Typography>
-              <Typography variant="body1" mb={2}>
-                15 → 20 → 30 → 40 → 55 → 70 Navy SEAL burpees in 20 minutes.
-              </Typography>
-              <Divider sx={{ borderColor: "rgba(255,255,255,0.08)", mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Move up only when your form and recovery are solid.
-              </Typography>
-            </Card>
+              return (
+                <Card
+                  key={program.id}
+                  sx={{
+                    p: 3.5,
+                    borderRadius: 3,
+                    border: program.border,
+                    background: program.background,
+                  }}
+                >
+                  <Typography variant="h5" fontWeight={900} mb={1}>
+                    {program.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" mb={2}>
+                    {program.description}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ color: program.accent, fontWeight: 800, mb: 0.75 }}>
+                    Levels
+                  </Typography>
+                  <Typography variant="body1" mb={2}>
+                    {getProgressionSummary(program.id)} in 20 minutes.
+                  </Typography>
+                  <Divider sx={{ borderColor: "rgba(255,255,255,0.08)", mb: 2 }} />
+                  <Stack spacing={0.8}>
+                    <Typography variant="body2" color="text.secondary">
+                      Start at {firstLevel.name} and work toward {finalLevel.name}.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Recommended: complete a level {QUALIFYING_SESSIONS_REQUIRED} times before moving up.
+                    </Typography>
+                    {program.id === "advanced" ? (
+                      <Typography variant="body2" color="text.secondary">
+                        Advanced training rotates Monday Navy Seals, Wednesday 5-count pushups, and Friday Hybrid work.
+                      </Typography>
+                    ) : null}
+                  </Stack>
+                </Card>
+              );
+            })}
           </Box>
 
           <Card
@@ -858,43 +913,63 @@ export default function LandingPage() {
         </Section>
 
         <Card
+          component="footer"
           sx={{
-            mt: 3,
-            p: 2.5,
+            mt: 5,
+            p: 3,
             borderRadius: 3,
             border: "1px solid rgba(255,255,255,0.08)",
             background: "rgba(255,255,255,0.02)",
           }}
         >
-          <Typography variant="body2" color="text.secondary">
-            BurpeePacers is web-first. References to iOS, Android, and other
-            platform updates are intentionally secondary while the core web
-            experience remains the primary way to sign up, train, and track
-            progress.
-          </Typography>
-        </Card>
-
-        <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
-          <Button
-            variant="text"
-            href="#top"
-            sx={{ color: "rgba(255,255,255,0.76)" }}
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            alignItems={{ xs: "flex-start", md: "center" }}
+            justifyContent="space-between"
           >
-            Back to top
-          </Button>
-        </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={800}>
+                BurpeePacers
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Structured 20-minute conditioning for steady progress at home.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Button variant="text" href="#programs" sx={{ color: "rgba(255,255,255,0.76)" }}>
+                Programs
+              </Button>
+              <Button variant="text" href="#faq" sx={{ color: "rgba(255,255,255,0.76)" }}>
+                FAQ
+              </Button>
+              <Button variant="text" href="/privacy" sx={{ color: "rgba(255,255,255,0.76)" }}>
+                Privacy
+              </Button>
+              <Button variant="text" href="/terms" sx={{ color: "rgba(255,255,255,0.76)" }}>
+                Terms
+              </Button>
+              <Button variant="text" href="#faq" sx={{ color: "rgba(255,255,255,0.76)" }}>
+                Support
+              </Button>
+              <Button variant="text" onClick={() => router.push("/login")} sx={{ color: "rgba(255,255,255,0.92)" }}>
+                Sign in
+              </Button>
+              <Button variant="contained" onClick={() => router.push("/login?signup=1")}>
+                Start workout
+              </Button>
+            </Stack>
+          </Stack>
 
-        <Box sx={{ mt: 6, textAlign: "center" }}>
-          <Typography variant="caption" color="text.disabled">
-            © {new Date().getFullYear()} BurpeePacers ·{" "}
-            <a
-              href="/privacy"
-              style={{ color: "inherit", textDecoration: "underline" }}
-            >
-              Privacy Policy
-            </a>
-          </Typography>
-        </Box>
+          <Box sx={{ mt: 2.5, display: "flex", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+            <Button variant="text" href="#top" sx={{ color: "rgba(255,255,255,0.76)", px: 0 }}>
+              Back to top
+            </Button>
+            <Typography variant="caption" color="text.disabled">
+              © {new Date().getFullYear()} BurpeePacers
+            </Typography>
+          </Box>
+        </Card>
       </Box>
     </Box>
   );

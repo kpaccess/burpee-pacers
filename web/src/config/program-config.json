@@ -3,6 +3,9 @@
   "access": {
     "launchAccessEnabled": true
   },
+  "progressionRules": {
+    "qualifyingSessionsRequired": 3
+  },
   "tracks": [
     {
       "id": "beginner",

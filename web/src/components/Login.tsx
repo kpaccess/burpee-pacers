@@ -30,6 +30,7 @@ import { auth, db, missingFirebaseEnvVars } from "../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { isAllowlisted } from "../lib/allowlist";
 import { useRouter } from "next/navigation";
+import BurpeeLogoIcon from "./BurpeeLogoIcon";
 
 // After a user signs up or logs in, check if they paid before creating an account
 // and automatically link the pending advanced subscription to their new Firebase user.
@@ -323,9 +324,12 @@ export default function Login({ onBackToInfo }: LoginProps) {
         justifyContent: "center",
         minHeight: "100vh",
         px: 2,
+        py: 4,
+        background:
+          "radial-gradient(circle at 10% 10%, rgba(255,51,102,0.16), transparent 34%), radial-gradient(circle at 90% 0%, rgba(0,229,255,0.12), transparent 32%), linear-gradient(180deg, #09090b 0%, #12131a 100%)",
       }}
     >
-      <Card sx={{ p: 4, maxWidth: 400, width: "100%" }}>
+      <Card sx={{ p: 4, maxWidth: 440, width: "100%", borderRadius: 4, border: "1px solid rgba(255,255,255,0.08)" }}>
         {onBackToInfo && (
           <Button
             variant="text"
@@ -336,6 +340,22 @@ export default function Login({ onBackToInfo }: LoginProps) {
             Back to info
           </Button>
         )}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+            <BurpeeLogoIcon size={42} />
+            <Box>
+              <Typography variant="subtitle1" fontWeight={900}>
+                BurpeePacers
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Web sign in and account setup
+              </Typography>
+            </Box>
+          </Box>
+          <Button size="small" variant="text" onClick={() => router.push("/")}>
+            Back to site
+          </Button>
+        </Box>
         <Typography
           variant="h4"
           gutterBottom
@@ -351,7 +371,9 @@ export default function Login({ onBackToInfo }: LoginProps) {
           align="center"
           mb={3}
         >
-          Sync your progress between the website and your phone.
+          {isLogin
+            ? "Pick up your workouts, progress, and schedule on the web."
+            : "Create your account to start your first guided workout and track your progress."}
         </Typography>
 
         {error && (
@@ -422,6 +444,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   aria-label="First Name"
+                  autoComplete="given-name"
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       backgroundColor: "rgba(255, 255, 255, 0.04)",
@@ -447,6 +470,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   aria-label="Last Name"
+                  autoComplete="family-name"
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       backgroundColor: "rgba(255, 255, 255, 0.04)",
@@ -478,6 +502,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               value={rawEmail}
               onChange={(e) => setEmail(e.target.value)}
               aria-label="Email"
+              autoComplete="email"
               sx={{
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: "rgba(255, 255, 255, 0.04)",
@@ -509,6 +534,7 @@ export default function Login({ onBackToInfo }: LoginProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               aria-label="Password"
+              autoComplete={isLogin ? "current-password" : "new-password"}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -553,6 +579,12 @@ export default function Login({ onBackToInfo }: LoginProps) {
             )}
           </Button>
         </form>
+
+        {!isLogin ? (
+          <Typography variant="caption" color="text.secondary" display="block" textAlign="center" sx={{ mt: 0.5, mb: 1 }}>
+            Use Google for the fastest setup, or create an email and password if you prefer.
+          </Typography>
+        ) : null}
 
         {isLogin && (
           <Box display="flex" justifyContent="center" mb={1} mt={1}>
