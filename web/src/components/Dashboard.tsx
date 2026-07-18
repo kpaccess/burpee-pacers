@@ -50,10 +50,6 @@ import CalendarViewMonthRoundedIcon from "@mui/icons-material/CalendarViewMonthR
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import AccessibilityNewRoundedIcon from "@mui/icons-material/AccessibilityNewRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
-import EmojiEventsRoundedIcon from "@mui/icons-material/EmojiEventsRounded";
-import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -80,7 +76,6 @@ import {
   isSameWeek,
   parseISO,
 } from "date-fns";
-import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import { useAuth } from "../context/AuthContext";
@@ -272,14 +267,6 @@ const DASHBOARD_SECTIONS = [
 
 type DashboardSectionId = (typeof DASHBOARD_SECTIONS)[number]["id"];
 
-type SummaryStat = {
-  label: string;
-  value: string;
-  sublabel: string;
-  accent: string;
-  icon: React.ReactNode;
-};
-
 function countScheduledDaysInWeek(weekStart: Date, selectedWorkoutDays: number[]) {
   return eachDayOfInterval({
     start: weekStart,
@@ -379,6 +366,7 @@ export default function Dashboard({
   const [healthSectionOpen, setHealthSectionOpen] = useState(false);
   const [healthActiveTab, setHealthActiveTab] = useState<"warmup" | "cooldown">("warmup");
   const [showDetailedProgress, setShowDetailedProgress] = useState(false);
+  const [showTrainingDetails, setShowTrainingDetails] = useState(false);
   const healthSectionRef = useRef<HTMLDivElement>(null);
   const detailedProgressRef = useRef<HTMLDivElement>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -559,15 +547,27 @@ export default function Dashboard({
 
   // ── Health & Recovery scroll handlers ─────────────────────────────────────
   const handleShowWarmup = useCallback(() => {
+    setShowTrainingDetails(true);
     setHealthSectionOpen(true);
     setHealthActiveTab("warmup");
     setTimeout(() => healthSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   }, []);
 
   const handleShowCooldown = useCallback(() => {
+    setShowTrainingDetails(true);
     setHealthSectionOpen(true);
     setHealthActiveTab("cooldown");
     setTimeout(() => healthSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  }, []);
+
+  const openTrainingDetails = useCallback((sectionId: "calendar" | "strength" = "calendar") => {
+    setShowTrainingDetails(true);
+    setTimeout(() => {
+      sectionRefs.current[sectionId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 120);
   }, []);
 
   const openDetailedProgress = useCallback(() => {
@@ -632,8 +632,6 @@ export default function Dashboard({
   const completedLogs = workoutLogs.filter((log) => log.completed);
   const currentWeekStart = startOfWeek(today);
   const previousWeekStart = subWeeks(currentWeekStart, 1);
-  const currentMonthStart = startOfMonth(today);
-  const previousMonthStart = startOfMonth(subMonths(today, 1));
   const currentWeekCompleted = completedLogs.filter((log) =>
     isSameWeek(parseISO(log.date), today),
   ).length;
@@ -644,18 +642,6 @@ export default function Dashboard({
   const weeklyCompletionPercent = scheduledDaysThisWeek > 0
     ? Math.min(100, Math.round((currentWeekCompleted / scheduledDaysThisWeek) * 100))
     : 0;
-  const workoutsThisMonth = completedLogs.filter((log) =>
-    parseISO(log.date) >= currentMonthStart,
-  ).length;
-  const previousMonthWorkouts = completedLogs.filter((log) => {
-    const date = parseISO(log.date);
-    return date >= previousMonthStart && date < currentMonthStart;
-  }).length;
-  const totalTrainingMinutes = completedLogs.length * 20;
-  const personalBest = completedLogs.reduce((best, log) => {
-    if (typeof log.repsCompleted !== "number") return best;
-    return Math.max(best, log.repsCompleted);
-  }, 0);
   const currentStreak = getCurrentStreak(completedLogs, selectedWorkoutDays, today);
   const weeklyRingValue = Math.max(0, Math.min(100, weeklyCompletionPercent));
   const currentLevelIndex = currentLevel
@@ -668,14 +654,13 @@ export default function Dashboard({
   const nextWorkoutLabel = getWorkoutLabelForWeekday(today.getDay() + 1);
   const scheduledToday = selectedWorkoutDays.includes(today.getDay() + 1);
   const hasCompletedToday = !!todayWorkoutLog?.completed;
-  const showNewUserOnboarding = isBeginnerTrack && completedLogs.length === 0;
   const hasEnoughHistoryForComparison = completedLogs.some(
     (log) => parseISO(log.date) < startOfWeek(subWeeks(today, 1)),
   );
   const currentLevelQualifyingSessions = currentLevel
     ? completedLogs.filter((log) => getLoggedLevelId(log.levelCompleted) === currentLevel.id).length
     : 0;
-  const recentWorkouts = completedLogs.slice(0, 5);
+  const recentWorkouts = completedLogs.slice(0, 3);
   const nextScheduledWeekday = (() => {
     for (let offset = hasCompletedToday ? 1 : 0; offset < 8; offset += 1) {
       const candidate = new Date(today);
@@ -689,54 +674,16 @@ export default function Dashboard({
   const nextScheduledLabel = nextScheduledWeekday
     ? `${format(nextScheduledWeekday, "EEEE")} · ${getWorkoutLabelForWeekday(nextScheduledWeekday.getDay() + 1)}`
     : "Choose your next workout day";
-  const summaryStats: SummaryStat[] = [
-    {
-      label: "Current streak",
-      value: `${currentStreak} workouts`,
-      sublabel: currentStreak > 0 ? "Keep the chain alive" : "Start a new streak today",
-      accent: "#FF3366",
-      icon: <LocalFireDepartmentIcon />,
-    },
-    {
-      label: "This month",
-      value: `${workoutsThisMonth} workouts`,
-      sublabel: `${Math.max(0, workoutsThisMonth - previousMonthWorkouts)} more than last month`,
-      accent: "#00E5FF",
-      icon: <CheckCircleRoundedIcon />,
-    },
-    {
-      label: "Training time",
-      value: `${totalTrainingMinutes} min`,
-      sublabel: `${completedLogs.length} completed sessions total`,
-      accent: "#4CAF50",
-      icon: <InsightsRoundedIcon />,
-    },
-    {
-      label: "Current level",
-      value: currentLevel?.name ?? "Not set",
-      sublabel: nextLevel ? `Next up: ${nextLevel.name}` : "Top of the current track",
-      accent: "#FFC107",
-      icon: <FlagRoundedIcon />,
-    },
-    {
-      label: "Weekly completion",
-      value: `${weeklyCompletionPercent}%`,
-      sublabel: `${currentWeekCompleted}/${scheduledDaysThisWeek || 0} scheduled workouts`,
-      accent: "#00E5FF",
-      icon: <QueryStatsRoundedIcon />,
-    },
-    {
-      label: "Personal best",
-      value: personalBest > 0 ? `${personalBest} reps` : "No timed PR yet",
-      sublabel: personalBest > 0 ? "Highest timer-verified session" : "Complete a timer workout to set it",
-      accent: "#FF3366",
-      icon: <EmojiEventsRoundedIcon />,
-    },
-  ];
-  const visibleSummaryStats = isMobile ? summaryStats.slice(0, 4) : summaryStats;
   const scrollToSection = (sectionId: DashboardSectionId) => {
     setActiveSection(sectionId);
     setMobileNavOpen(false);
+    if (sectionId === "calendar" || sectionId === "strength") {
+      setShowTrainingDetails(true);
+      setTimeout(() => {
+        sectionRefs.current[sectionId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+      return;
+    }
     sectionRefs.current[sectionId]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -991,18 +938,13 @@ export default function Dashboard({
                   <Chip label={startDate ? `Day ${Math.max(0, daysPassed)}` : "Program not started yet"} variant="outlined" />
                 </Stack>
 
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={() => scrollToSection(hasCompletedToday ? "calendar" : "workout")}
-                  >
-                    {hasCompletedToday ? "View next session" : "Open workout timer"}
-                  </Button>
-                  <Button variant="outlined" size="large" color="secondary" onClick={() => scrollToSection(hasCompletedToday ? "progress" : "calendar")}>
-                    {hasCompletedToday ? "See recent progress" : "View schedule"}
-                  </Button>
-                </Stack>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => scrollToSection("workout")}
+                >
+                  {hasCompletedToday ? "View next session" : "Open workout timer"}
+                </Button>
               </Stack>
             </Card>
           </Grid>
@@ -1010,78 +952,7 @@ export default function Dashboard({
         </Grid>
 
         <Grid container spacing={3} mb={4}>
-          <Grid sx={{ xs: 12, lg: 5 }}>
-            <Card sx={{ p: { xs: 2.5, md: 3 }, height: "100%" }}>
-              <Typography variant="subtitle2" color="secondary.main" gutterBottom>
-                Program snapshot
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                Your track, level, schedule, and next milestone at a glance.
-              </Typography>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Current program
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {isAdvancedTrack ? "Advanced Track" : "Beginner Track"}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Current level
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {currentLevel?.name ?? "Set your active level"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Level {Math.max(currentLevelIndex + 1, 0)} of {levelsForTrack.length}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Progress at this level
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700}>
-                    {Math.min(currentLevelQualifyingSessions, QUALIFYING_SESSIONS_REQUIRED)} of {QUALIFYING_SESSIONS_REQUIRED} sessions completed
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Next milestone
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700}>
-                    {nextLevel?.name ?? "Current top level"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {nextLevel ? `${nextLevel.sixCounts || nextLevel.seals} reps in 20 minutes` : "You have reached the current top of this track."}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Scheduled workout days
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700}>
-                    {selectedWorkoutDays.map((weekday) => getWorkoutLabelForWeekday(weekday)).join(" · ")}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Weighted training
-                  </Typography>
-                  <Chip
-                    label={weightedTrainingEnabled ? "Enabled" : "Disabled"}
-                    size="small"
-                    color={weightedTrainingEnabled ? "warning" : "default"}
-                    variant={weightedTrainingEnabled ? "filled" : "outlined"}
-                    sx={{ mt: 0.75, fontWeight: 700 }}
-                  />
-                </Box>
-              </Stack>
-            </Card>
-          </Grid>
-
-          <Grid sx={{ xs: 12, lg: 7 }}>
+          <Grid sx={{ xs: 12, lg: 12 }}>
             <Card sx={{ p: { xs: 2.5, md: 3 }, height: "100%" }}>
               <Typography
                 variant="h6"
@@ -1146,85 +1017,17 @@ export default function Dashboard({
                   Strength card appears on Mon, Wed &amp; Fri after your burpees.
                 </Typography>
               )}
+              <Box display="flex" gap={1} flexWrap="wrap" mt={2.5}>
+                <Button size="small" variant="outlined" color="secondary" onClick={() => openTrainingDetails("calendar")}>
+                  View calendar details
+                </Button>
+                <Button size="small" color="inherit" onClick={handleShowWarmup}>
+                  View warm-up &amp; recovery
+                </Button>
+              </Box>
             </Card>
           </Grid>
         </Grid>
-
-        <Card sx={{ p: { xs: 2.5, md: 3 }, mb: 4 }}>
-          <Box>
-            <Typography variant="subtitle2" color="secondary.main" gutterBottom>
-              Progress Overview
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Current streak, this month, training time, weekly completion, and personal best.
-            </Typography>
-          </Box>
-          <Box sx={{ mt: 2.5 }}>
-            {showNewUserOnboarding ? (
-              <Stack spacing={1.25}>
-                <Typography variant="body1" fontWeight={700}>
-                  Your program is ready. Complete your first 20-minute workout to start tracking your streak, personal best, and weekly progress.
-                </Typography>
-                {[
-                  `Schedule selected: ${selectedWorkoutDays.length} workout days`,
-                  `${isAdvancedTrack ? "Advanced" : "Beginner"} track selected`,
-                  "Complete first workout",
-                ].map((item, index) => (
-                  <Box
-                    key={item}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      bgcolor: "rgba(255,255,255,0.02)",
-                    }}
-                  >
-                    <Typography variant="body1" fontWeight={700} display="flex" alignItems="center" gap={1}>
-                      {index < 2 ? <CheckCircleRoundedIcon color="secondary" fontSize="small" /> : <FlagRoundedIcon color="primary" fontSize="small" />}
-                      {item}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            ) : (
-              <Grid container spacing={2}>
-                {visibleSummaryStats.map((stat) => (
-                  <Grid sx={{ xs: 12, sm: 6, xl: 2 }} key={stat.label}>
-                    <Card sx={{ p: 2.25, height: "100%" }}>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1.5}>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            {stat.label}
-                          </Typography>
-                          <Typography variant="h5" fontWeight={800} sx={{ mt: 0.75, mb: 0.75 }}>
-                            {stat.value}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {stat.sublabel}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: 42,
-                            height: 42,
-                            borderRadius: 2,
-                            display: "grid",
-                            placeItems: "center",
-                            color: stat.accent,
-                            bgcolor: `${stat.accent}1A`,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {stat.icon}
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Box>
-        </Card>
 
         <Card sx={{ p: 3, mb: 4 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mb={2}>
@@ -1458,12 +1261,19 @@ export default function Dashboard({
                   <Button size="small" variant="outlined" onClick={() => setOpenTrackSwitch(true)}>
                     Switch Program
                   </Button>
+                  {isAdvancedTrack && (
+                    <Button size="small" variant="text" color="secondary" onClick={openDetailedProgress}>
+                      View all level details
+                    </Button>
+                  )}
                 </Box>
               </Stack>
             </Card>
           </Grid>
         </Grid>
 
+        <Collapse in={showTrainingDetails} timeout="auto" unmountOnExit>
+        <Box>
         {/* ── Health, Safety & Recovery ─────────────────────────────────────────
             Shown for both tracks. Warm-up and cool-down routines with safety note. */}
         <Card
@@ -1988,78 +1798,12 @@ export default function Dashboard({
             })}
           </Box>
         </Card>
-
-        {!isMobile && (
-          <Grid container spacing={3} mb={4}>
-            <Grid sx={{ xs: 12, md: 5 }}>
-              <Card
-                sx={{ p: 3, height: "100%" }}
-                id="progress"
-                ref={(node) => {
-                  sectionRefs.current.progress = node;
-                }}
-              >
-                <Typography variant="h6" fontWeight={800} gutterBottom>
-                  Current level progression
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  See where you are in the program and what comes next.
-                </Typography>
-                <Stack spacing={2}>
-                  <Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
-                      <Typography variant="body2" fontWeight={700}>
-                        {currentLevel?.name ?? "No level selected"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {currentLevelIndex >= 0 ? `${currentLevelIndex + 1}/${levelsForTrack.length}` : "0/0"}
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={levelProgressPercent}
-                      sx={{
-                        height: 10,
-                        borderRadius: 999,
-                        bgcolor: "rgba(255,255,255,0.08)",
-                        "& .MuiLinearProgress-bar": { bgcolor: "secondary.main" },
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Next milestone
-                    </Typography>
-                    <Typography variant="body1" fontWeight={700} sx={{ mt: 0.5 }}>
-                      {nextLevel?.name ?? "Elite / final tier reached"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                      {nextLevel?.description ?? "You've reached the current top of this training track."}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.16)" }}>
-                    <Typography variant="body2" fontWeight={700}>
-                      This week vs last week
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      {hasEnoughHistoryForComparison
-                        ? currentWeekCompleted === previousWeekCompleted
-                          ? `You matched last week with ${currentWeekCompleted} completed workouts.`
-                          : currentWeekCompleted > previousWeekCompleted
-                            ? `You are ${currentWeekCompleted - previousWeekCompleted} workout ahead of last week.`
-                            : `You are ${previousWeekCompleted - currentWeekCompleted} workout behind last week.`
-                        : "Complete a couple of weeks first and this comparison will show up here."}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
+        </Box>
+        </Collapse>
 
         {/* ── Weighted Training Card ──────────────────────────────────────────
             Opt-in, shown on Mon/Wed/Fri only when the toggle is enabled. */}
-        {todayWeightedDay && (
+        {(!isAdvancedTrack || showTrainingDetails) && todayWeightedDay && (
           <Box
             id="strength"
             ref={(node: HTMLDivElement | null) => {
@@ -2070,28 +1814,30 @@ export default function Dashboard({
           </Box>
         )}
 
-        <Card
-          ref={detailedProgressRef}
-          sx={{ p: 3, mb: 3 }}
-        >
-          <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-            <Box>
-              <Typography variant="h6" fontWeight={800}>
-                More progress details
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Photos, levels, and export stay here when you want the deeper view.
-              </Typography>
+        {showDetailedProgress && (
+          <Card
+            ref={detailedProgressRef}
+            sx={{ p: 3, mb: 3 }}
+          >
+            <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+              <Box>
+                <Typography variant="h6" fontWeight={800}>
+                  More progress details
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Photos, levels, and export stay here when you want the deeper view.
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setShowDetailedProgress((value) => !value)}
+              >
+                {showDetailedProgress ? "Hide" : "Show"}
+              </Button>
             </Box>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setShowDetailedProgress((value) => !value)}
-            >
-              {showDetailedProgress ? "Hide" : "Show"}
-            </Button>
-          </Box>
-        </Card>
+          </Card>
+        )}
 
         <Collapse in={showDetailedProgress} timeout="auto" unmountOnExit>
         {/* Progress Photos */}
