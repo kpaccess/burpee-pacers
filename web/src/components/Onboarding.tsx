@@ -20,6 +20,7 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import StarIcon from "@mui/icons-material/Star";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { ADVANCED_LEVELS, BEGINNER_LEVELS, WorkoutTier } from "../types";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,15 +30,16 @@ interface OnboardingProps {
     startPictureUrl: string | null;
     currentLevelId: string;
     workoutTier: WorkoutTier;
-    trialEndsAt: string;
   }) => void;
 }
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
-  const LAUNCH_ACCESS_DAYS = 365;
   const { user, logout } = useAuth();
   const [weight, setWeight] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [pictureFile, setPictureFile] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [level, setLevel] = useState("B1");
   const [workoutTier, setWorkoutTier] = useState<WorkoutTier | null>(null);
   const isBeginnerTrack = workoutTier === "beginner";
@@ -51,13 +53,26 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPictureUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("File is too large. Maximum size is 5 MB.");
+      e.target.value = "";
+      return;
     }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPhotoError("Invalid file type. Please upload a JPEG, PNG, or WebP image.");
+      e.target.value = "";
+      return;
+    }
+    setPhotoError(null);
+    setPictureFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPictureUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleTierSelect = (tier: WorkoutTier) => {
@@ -65,20 +80,42 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     setLevel(tier === "beginner" ? "B1" : "F");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedWeight = weight.trim();
     const parsedWeight = parseFloat(trimmedWeight);
-    if (!trimmedWeight || isNaN(parsedWeight) || parsedWeight <= 0 || !workoutTier) return;
-    const trialEnds = new Date();
-    trialEnds.setDate(trialEnds.getDate() + LAUNCH_ACCESS_DAYS);
+    if (!trimmedWeight || isNaN(parsedWeight) || parsedWeight <= 0 || !workoutTier || !user) return;
+
+    setPhotoError(null);
+    setIsSubmitting(true);
+
+    let startPictureUrl: string | null = null;
+    if (pictureFile) {
+      try {
+        const storage = getStorage();
+        const extensionByType: Record<string, string> = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+        };
+        const ext = extensionByType[pictureFile.type];
+        const path = `users/${user.uid}/photos/day1_${Date.now()}.${ext}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, pictureFile);
+        startPictureUrl = await getDownloadURL(storageRef);
+      } catch (err) {
+        console.error("Failed to upload photo:", err);
+        setPhotoError("Failed to upload photo. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     onComplete({
       startWeight: parsedWeight,
-      startPictureUrl: pictureUrl,
+      startPictureUrl,
       currentLevelId: level,
       workoutTier,
-      trialEndsAt: trialEnds.toISOString(),
     });
   };
 
@@ -343,6 +380,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               </label>
             </Box>
 
+            {photoError && <Alert severity="error">{photoError}</Alert>}
+
             <Alert severity="warning" sx={{ mt: 1 }}>
               <strong>Please read before you begin:</strong> I am not a coach
               or medical professional. Please consult your doctor before
@@ -358,14 +397,16 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               variant="contained"
               color={workoutTier === "advanced" ? "primary" : "success"}
               size="large"
-              disabled={!workoutTier}
+              disabled={!workoutTier || isSubmitting}
               sx={{ mt: 2, py: 1.5, fontSize: "1.1rem" }}
             >
-              {!workoutTier
-                ? "Select a program above"
-                : workoutTier === "beginner"
-                  ? "Start Beginner Program"
-                  : "Start Advanced Program"}
+              {isSubmitting
+                ? "Setting up your program…"
+                : !workoutTier
+                  ? "Select a program above"
+                  : workoutTier === "beginner"
+                    ? "Start Beginner Program"
+                    : "Start Advanced Program"}
             </Button>
           </Stack>
         </form>
