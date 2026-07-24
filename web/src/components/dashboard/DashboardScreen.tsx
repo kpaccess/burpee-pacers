@@ -184,6 +184,7 @@ export default function DashboardScreen({
 
   const startDateGrid = startOfWeek(currentMonth);
   const endDateGrid = endOfMonth(currentMonth);
+  endDateGrid.setDate(endDateGrid.getDate() + (6 - endDateGrid.getDay()));
   const trackingDays = eachDayOfInterval({
     start: startDateGrid,
     end: endDateGrid,
