@@ -572,7 +572,7 @@ export default function DashboardScreen({
                   currentStreak={currentStreak}
                   currentWeekCompleted={currentWeekCompleted}
                   scheduledDaysThisWeek={scheduledDaysThisWeek}
-                  currentLevelName={currentLevel?.name ?? "Not set"}
+                  currentLevelName={currentLevel?.name}
                   programDayLabel={
                     startDate
                       ? `Day ${Math.max(0, daysPassed)}`
