@@ -22,7 +22,7 @@ type HeroCardProps = {
   currentStreak: number;
   currentWeekCompleted: number;
   scheduledDaysThisWeek: number;
-  currentLevelName: string;
+  currentLevelName?: string | null;
   programDayLabel: string;
   onOpenWorkout: () => void;
 };
