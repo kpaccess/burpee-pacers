@@ -557,7 +557,7 @@ export default function DashboardScreen({
               spacing={3}
               mb={4}
               id="dashboard"
-              ref={(node) => {
+              ref={(node: HTMLDivElement | null) => {
                 sectionRefs.current.dashboard = node;
               }}
             >
@@ -572,7 +572,7 @@ export default function DashboardScreen({
                   currentStreak={currentStreak}
                   currentWeekCompleted={currentWeekCompleted}
                   scheduledDaysThisWeek={scheduledDaysThisWeek}
-                  currentLevelName={currentLevel?.name}
+                  currentLevelName={currentLevel?.name ?? "Not set"}
                   programDayLabel={
                     startDate
                       ? `Day ${Math.max(0, daysPassed)}`
@@ -694,7 +694,7 @@ export default function DashboardScreen({
               spacing={3}
               mb={4}
               id="workout"
-              ref={(node) => {
+              ref={(node: HTMLDivElement | null) => {
                 sectionRefs.current.workout = node;
               }}
             >
@@ -722,7 +722,7 @@ export default function DashboardScreen({
               <Grid
                 sx={{ xs: 12, lg: 5 }}
                 id="progress"
-                ref={(node) => {
+                ref={(node: HTMLDivElement | null) => {
                   sectionRefs.current.progress = node;
                 }}
               >
@@ -775,7 +775,7 @@ export default function DashboardScreen({
 
                 <Box
                   id="calendar"
-                  ref={(node) => {
+                  ref={(node: HTMLDivElement | null) => {
                     sectionRefs.current.calendar = node;
                   }}
                 >
