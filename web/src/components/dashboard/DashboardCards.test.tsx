@@ -1,17 +1,22 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   HeroCard,
   ProgressionCard,
   RecentWorkoutsCard,
   ScheduleCard,
 } from "./DashboardCards";
+import theme from "@/theme";
+
+const renderWithTheme = (ui: React.ReactElement) =>
+  render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 
 describe("DashboardCards", () => {
   it("renders HeroCard and handles action", () => {
     const onOpenWorkout = vi.fn();
-    render(
+    renderWithTheme(
       <HeroCard
         hasCompletedToday={false}
         nextScheduledLabel="Monday - Navy Seals"
@@ -36,7 +41,7 @@ describe("DashboardCards", () => {
 
   it("renders ScheduleCard and toggles weighted training", () => {
     const onToggleWeightedTraining = vi.fn();
-    render(
+    renderWithTheme(
       <ScheduleCard
         selectedWorkoutDays={[2, 4, 6]}
         workoutDayOptions={[
@@ -60,7 +65,7 @@ describe("DashboardCards", () => {
   });
 
   it("renders RecentWorkoutsCard workout rows", () => {
-    render(
+    renderWithTheme(
       <RecentWorkoutsCard
         recentWorkouts={[
           {
@@ -82,7 +87,7 @@ describe("DashboardCards", () => {
 
   it("renders ProgressionCard and action buttons", () => {
     const onOpenLevelChange = vi.fn();
-    render(
+    renderWithTheme(
       <ProgressionCard
         currentLevel={{
           id: "1",
