@@ -567,7 +567,7 @@ export default function DashboardScreen({
                 sectionRefs.current.dashboard = node;
               }}
             >
-              <Grid sx={{ xs: 12, lg: 8 }}>
+              <Grid item xs={12} lg={8}>
                 <HeroCard
                   hasCompletedToday={hasCompletedToday}
                   nextScheduledLabel={nextScheduledLabel}
