@@ -1,8 +1,9 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import DashboardScreen from "./DashboardScreen";
+import theme from "@/theme";
 
 vi.mock("@/context/AuthContext", () => ({
   useAuth: () => ({
@@ -21,8 +22,6 @@ vi.mock("@/components/WorkoutTimer", () => ({
 
 describe("DashboardScreen", () => {
   it("renders dashboard headline and timer section", () => {
-    const theme = createTheme();
-
     render(
       <ThemeProvider theme={theme}>
         <DashboardScreen
