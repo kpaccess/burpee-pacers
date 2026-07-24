@@ -296,7 +296,7 @@ export function FridayStrengthCard({
 
           <Grid container spacing={2}>
             {PULLING_WORK_CONFIG.map((option) => (
-              <Grid sx={{ xs: 12, md: 6 }} key={option.id}>
+              <Grid item xs={12} md={6} key={option.id}>
                 <Card
                   sx={(theme) => ({
                     p: 2.5,
