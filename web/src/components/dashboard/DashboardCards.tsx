@@ -334,7 +334,6 @@ export function RecentWorkoutsCard({
       sx={(theme) => ({
         p: theme.layout.dashboard.sectionCardPadding,
         mb: 4,
-        border: "1px red solid",
       })}
     >
       <Box
