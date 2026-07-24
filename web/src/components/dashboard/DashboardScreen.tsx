@@ -276,6 +276,11 @@ export default function DashboardScreen({
     setPhotoError(null);
     e.target.value = "";
 
+    if (!user?.uid) {
+      setPhotoError("You must be signed in to upload a photo.");
+      return;
+    }
+
     try {
       const storage = getStorage();
       const extensionByType: Record<string, string> = {
@@ -284,7 +289,7 @@ export default function DashboardScreen({
         "image/webp": "webp",
       };
       const ext = extensionByType[file.type];
-      const path = `users/${user!.uid}/photos/day1_${Date.now()}.${ext}`;
+      const path = `users/${user.uid}/photos/day1_${Date.now()}.${ext}`;
       const storageRef = ref(storage, path);
       await uploadBytes(storageRef, file);
       const downloadUrl = await getDownloadURL(storageRef);
