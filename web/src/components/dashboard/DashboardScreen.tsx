@@ -567,7 +567,7 @@ export default function DashboardScreen({
                 sectionRefs.current.dashboard = node;
               }}
             >
-              <Grid item xs={12} lg={8}>
+              <Grid size={{ xs: 12, lg: 8 }}>
                 <HeroCard
                   hasCompletedToday={hasCompletedToday}
                   nextScheduledLabel={nextScheduledLabel}
@@ -590,7 +590,7 @@ export default function DashboardScreen({
             </Grid>
 
             <Grid container spacing={3} mb={4}>
-              <Grid sx={{ xs: 12, lg: 12 }}>
+              <Grid size={{ xs: 12, lg: 12 }}>
                 <ScheduleCard
                   selectedWorkoutDays={selectedWorkoutDays}
                   workoutDayOptions={WORKOUT_DAY_OPTIONS.map((item) => ({
@@ -704,7 +704,7 @@ export default function DashboardScreen({
                 sectionRefs.current.workout = node;
               }}
             >
-              <Grid sx={{ xs: 12, lg: 7 }}>
+              <Grid size={{ xs: 12, lg: 7 }}>
                 <WorkoutTimer
                   tier={workoutTier}
                   sealsGoal={currentLevel?.seals ?? 0}
@@ -726,7 +726,7 @@ export default function DashboardScreen({
                 />
               </Grid>
               <Grid
-                sx={{ xs: 12, lg: 5 }}
+                size={{ xs: 12, lg: 5 }}
                 id="progress"
                 ref={(node: HTMLDivElement | null) => {
                   sectionRefs.current.progress = node;
@@ -857,7 +857,7 @@ export default function DashboardScreen({
                 Progress Photos
               </Typography>
               <Grid container spacing={2} mb={4}>
-                <Grid sx={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Card sx={{ p: 2, height: "100%" }}>
                     <Typography
                       variant="subtitle1"
@@ -932,7 +932,7 @@ export default function DashboardScreen({
                     </Box>
                   </Card>
                 </Grid>
-                <Grid sx={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Card sx={{ p: 2, height: "100%" }}>
                     <Typography
                       variant="subtitle1"
@@ -994,7 +994,7 @@ export default function DashboardScreen({
               </Typography>
               <Grid container spacing={2}>
                 {levelsForTrack.map((lvl) => (
-                  <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={lvl.id}>
                     <Card
                       sx={(theme) => ({
                         p: 3,
