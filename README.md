@@ -16,6 +16,20 @@ burpee-pacers/
 └── docs/                 # Project docs (QA guide, deploy notes, reviews, analyses)
 ```
 
+## Key Source Layout
+
+```text
+web/src/
+├── app/                  # Next.js routes and API handlers
+├── components/           # UI components
+│   ├── Dashboard.tsx     # Thin entry wrapper for dashboard
+│   ├── WorkoutTimer/     # Timer UI and mode-specific displays
+│   └── dashboard/        # Dashboard modules (shell, cards, training details, config, utils)
+├── hooks/                # React hooks (auth/user/subscription/timer)
+├── lib/                  # Shared logic (program config, date helpers, allowlist)
+└── types/                # Shared TypeScript domain types
+```
+
 ## Features
 
 - Beginner and Advanced tracks with level-based rep goals.
@@ -83,6 +97,15 @@ Core web workout configuration lives in `web/src/lib/workoutTimer.ts`, with time
 - Hybrid sessions split the 20-minute workout into two 10-minute phases.
 - The dashboard derives the default mode for the current weekday and passes it to `WorkoutTimer`.
 - `useWorkoutTimer` handles mode changes, countdown state, phase crossover, rep resets, whistle sounds, and completion behavior.
+
+### Dashboard Architecture
+
+- `web/src/components/Dashboard.tsx` is now a thin wrapper.
+- `web/src/components/dashboard/DashboardScreen.tsx` owns dashboard state, data derivation, and section composition.
+- `web/src/components/dashboard/DashboardShell.tsx` handles desktop/mobile navigation chrome.
+- `web/src/components/dashboard/DashboardCards.tsx` contains summary/schedule/progress cards.
+- `web/src/components/dashboard/TrainingDetails.tsx` contains health recovery, Friday strength, and calendar detail cards.
+- `web/src/components/dashboard/config.ts` and `web/src/components/dashboard/utils.ts` hold static configuration and pure helper functions.
 
 ## Getting Started
 

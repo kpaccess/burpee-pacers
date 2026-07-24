@@ -55,6 +55,7 @@ cd android && ./gradlew assembleRelease
 ## Tech Stack
 
 ### Web
+
 - **Framework**: Next.js 16, React 19
 - **UI**: MUI v7 + Tailwind CSS v4 + Framer Motion
 - **Backend**: Firebase (Firestore, Storage, Auth, Hosting) — firebase v12, firebase-admin v13
@@ -64,6 +65,7 @@ cd android && ./gradlew assembleRelease
 - **Language**: TypeScript 5
 
 ### iOS (Native)
+
 - **Language**: Swift 5.10+, SwiftUI
 - **Architecture**: MVVM with `@Observable` macro
 - **Backend**: Firebase iOS SDK 12.13.0 (Auth + Firestore), GoogleSignIn 9.1.0
@@ -71,6 +73,7 @@ cd android && ./gradlew assembleRelease
 - **Minimum iOS**: 17.0, Xcode 15+
 
 ### Android (Native)
+
 - **Language**: Kotlin, Jetpack Compose + Material3
 - **Architecture**: MVVM with `StateFlow`
 - **Storage**: Jetpack DataStore (local, no Firebase) + Gson for workout history JSON
@@ -80,10 +83,12 @@ cd android && ./gradlew assembleRelease
 ## Tracks & Levels
 
 Two tracks with different workout modes:
+
 - **Beginner** — 5-Count Pushups only (`WorkoutMode = "C"` / `.fiveCount`)
 - **Advanced** — Navy Seals (`"N"`), 5-Count Pushups (`"C"`), Hybrid (`"H"`)
 
 Advanced Track day-of-week defaults:
+
 - Monday → Navy Seals (`"N"`)
 - Wednesday → 5-Count Pushups (`"C"`)
 - Friday → Hybrid (`"H"`) — 10 min Navy Seals → 10 min 5-Count Pushups
@@ -93,6 +98,7 @@ Advanced Track day-of-week defaults:
 **Beginner levels** (B1–B6): 20 → 40 → 55 → 70 → 90 → 110 burpees (no pushups) in 20 min.
 
 **Advanced levels**: sealsGoal / sixCountsGoal per level:
+
 - 1A: No Landmark Workout (0 / 0)
 - 1B: 20 / 50
 - 1C: 40 / 100
@@ -134,7 +140,13 @@ Hybrid rep targets per phase = `Math.ceil(fullGoal / 2)` (seals half + five-coun
 
 ### Components (`web/src/components/`)
 
-- `Dashboard.tsx` — main user dashboard; derives today's day for default timer mode; CSV export for Advanced Pro users; Friday pulling-work section
+- `Dashboard.tsx` — thin wrapper that exports the modular dashboard screen
+- `dashboard/DashboardScreen.tsx` — dashboard orchestrator (state, derived metrics, section composition)
+- `dashboard/DashboardShell.tsx` — top navigation, drawer, and mobile bottom navigation
+- `dashboard/DashboardCards.tsx` — summary, schedule, recent workouts, and progression cards
+- `dashboard/TrainingDetails.tsx` — health/recovery, Friday strength, calendar, weighted training card
+- `dashboard/config.ts` — dashboard static configuration and content maps
+- `dashboard/utils.ts` — dashboard-focused pure utility functions
 - `WorkoutTimer/` — live timer UI split into sub-components:
   - `index.tsx` — root; receives `defaultMode` prop from Dashboard
   - `StandardDisplay.tsx` — non-hybrid timer display
@@ -213,6 +225,7 @@ On `phase == "active"` (first transition): Watch creates `HKWorkoutSession(funct
 ### Watch Phase States
 
 `watchPhase` in `SessionTimerViewModel` maps timer state to one of:
+
 - `"idle"` — not started or reset
 - `"prepare"` — 5-second countdown
 - `"active"` — 20-min timer running (`isRunning = true`)
