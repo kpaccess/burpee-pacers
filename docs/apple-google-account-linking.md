@@ -1,40 +1,30 @@
-# Existing Users: Connect Apple Sign-In to Your Gmail Account
+# Sign in with Apple and existing Google accounts
 
-If you already use BurpeePacers with Gmail or Google, sign in with Google first. Do not start by using Sign in with Apple from the login screen.
+## Sharing your real email
+If you choose **Share My Email** in Sign in with Apple and that email already has a BurpeePacers account through Google:
+- the app asks you to sign in with Google once;
+- it then connects Apple to that account.
 
-## Why
+After that, both buttons open the same account.
 
-Apple can hide your real email and send the app a private relay email instead. That private relay email may look like it forwards to your Gmail, but Firebase treats it as a different login identity unless it is connected to your existing account.
+## Hide My Email
+If you choose **Hide My Email**, Apple gives the app a private relay address (`…@privaterelay.appleid.com`). The app can't match that to an existing account.
 
-## What To Do
+The first time you sign in this way, the app shows **"Already have an account?"**:
 
-1. Open BurpeePacers.
-2. Tap **Sign in with Google**.
-3. Confirm your existing workout data appears.
-4. Tap the account icon in the top-right.
-5. In Account settings, tap **Continue with Apple**.
-6. Wait for **Apple Sign-In Connected**.
-7. Sign out.
-8. Sign in with Apple.
+- **Yes, connect my Google account:** sign in with Google once. The app removes the empty Apple-only account it just created and connects Apple to your Google account. Your workouts stay as they are, and from then on Apple and Google both open the same account.
+- **No, I'm new here:** the Apple account is kept and you continue to track selection.
 
-After this, Google and Apple will open the same BurpeePacers account and the same workout data.
+## Connecting later
+You can always connect Apple to an existing account:
+1. Sign in with Google.
+2. Open **Account settings**.
+3. Tap **Continue with Apple**.
 
-## What You Should See
+The account should then show `Connected: Apple, Google`. It may also include `Email`, which is fine.
 
-In Account settings, the account should show:
-
-```text
-Connected: Apple, Google
-```
-
-Some accounts may also show:
-
-```text
-Connected: Apple, Email, Google
-```
-
-That is okay. It means Apple is connected to the existing account.
-
-## If Apple Opens A New/Empty Account
-
-Sign out and sign in with Google again. Then connect Apple from Account settings. If Apple says it is already connected to another account, the duplicate Apple/private-relay Firebase account must be removed before connecting again.
+## If Apple says it's already connected to another account
+An earlier Apple sign-in created a separate Firebase account. To fix it:
+1. Delete that duplicate Apple account in the Firebase Console (Authentication → Users).
+2. Sign in with Google.
+3. Connect Apple from Account settings.

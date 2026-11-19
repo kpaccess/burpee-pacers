@@ -14,7 +14,11 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if appViewModel.firebase.isLoading {
+            if appViewModel.firebase.needsAccountChoice {
+                // New Apple sign-in with Hide My Email: ask once whether to connect an existing account.
+                AccountChoiceView(firebase: appViewModel.firebase)
+
+            } else if appViewModel.firebase.isLoading {
                 ZStack {
                     Color.black.ignoresSafeArea()
                     VStack(spacing: 12) {
@@ -56,6 +60,17 @@ struct ContentView: View {
                 DashboardView(viewModel: appViewModel)
                     .preferredColorScheme(.dark)
             }
+        }
+        .alert(
+            "Signed in with Google",
+            isPresented: Binding(
+                get: { appViewModel.firebase.accountNotice != nil },
+                set: { if !$0 { appViewModel.firebase.accountNotice = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(appViewModel.firebase.accountNotice ?? "")
         }
     }
 }

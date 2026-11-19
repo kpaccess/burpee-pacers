@@ -45,7 +45,7 @@ struct SignInView: View {
                         Text(isSignUp ? "Create an account to sync your workouts" : "Sign in to sync your workouts")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Text(isSignUp ? "Choose an email and strong password" : "Existing Gmail users: sign in with Google first, then connect Apple in Account settings")
+                        Text(isSignUp ? "Choose an email and strong password" : "Use Apple, Google, or email. Your workouts sync across devices.")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
