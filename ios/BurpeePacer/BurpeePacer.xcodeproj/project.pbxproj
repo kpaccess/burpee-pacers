@@ -52,7 +52,7 @@
 		9740D6262FCF4B3B00918A04 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		97604D532FD09E5D007E2274 /* BurpeePacerWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BurpeePacerWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A11B2033A01700200A10001 /* BurpeePacerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BurpeePacerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		9A11B2003A01700100A10001 /* program-config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "program-config.json"; path = "../../web/src/config/program-config.json"; sourceTree = "<group>"; };
+		9A11B2003A01700100A10001 /* program-config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "program-config.json"; path = "program-config.json"; sourceTree = "<group>"; };
 		97AED9752FBF51CF001031E1 /* BurpeePacer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BurpeePacer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 

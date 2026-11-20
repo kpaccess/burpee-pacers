@@ -37,6 +37,8 @@ struct FirestoreUserData {
     var workoutDays: [Int]?
     var ageBracket: String?
     var equipment: String?
+    /// 6-month check-in photo (Firebase Storage download URL), uploaded from the web app.
+    var endPictureUrl: String? = nil
 }
 
 // MARK: - FirebaseService
@@ -49,6 +51,20 @@ class FirebaseService {
     var userData: FirestoreUserData? = nil
     var isLoading: Bool          = true
     var authError: String?       = nil
+
+    /// True right after a brand-new Apple sign-in that used Hide My Email (or shared no email).
+    /// We can't match that account to an existing one by email, so the app asks once whether
+    /// the user already has a Google account to connect, or is new. See `AccountChoiceView`.
+    var needsAccountChoice: Bool = false
+    /// One-time message shown after the account choice (e.g. Apple couldn't be connected).
+    var accountNotice: String?   = nil
+
+    private var pendingAppleCredential: AuthCredential? = nil
+    private var pendingAppleFullName: PersonNameComponents? = nil
+    /// While true, the Firestore listener does not create a profile for a missing user document,
+    /// so an account that is about to be merged into Google never leaves an empty document behind.
+    private var deferProfileCreation = false
+    private var deferredProfileUID: String? = nil
 
     private var authHandle: AuthStateDidChangeListenerHandle?
     private var snapshotListener: ListenerRegistration?
@@ -134,29 +150,123 @@ class FirebaseService {
     func handleAppleSignIn(idToken: String, rawNonce: String, fullName: PersonNameComponents?, email: String?) async {
         authError = nil
         let appleEmail = email ?? Self.emailFromAppleIDToken(idToken)
-
-        guard let appleEmail, !appleEmail.isEmpty else {
-            authError = "Apple did not share an email address. Delete BurpeePacers from Sign in with Apple, then try again and choose Share My Email."
-            return
-        }
-
-        guard !Self.isApplePrivateRelayEmail(appleEmail) else {
-            authError = "Apple is sharing a private relay email. Sign in with Google first, then open Account settings and connect Apple Sign-In."
-            return
+        // A real (shared) email lets us find an existing account by email.
+        // Hide My Email (private relay) or no email at all does not, so we ask the user instead.
+        let realEmail = appleEmail.flatMap { email in
+            email.isEmpty || Self.isApplePrivateRelayEmail(email) ? nil : email
         }
 
         let credential = OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: rawNonce, fullName: fullName)
-        
+
         do {
-            if try await linkAppleToExistingAccountIfNeeded(credential, email: appleEmail, fullName: fullName) {
+            if let realEmail,
+               try await linkAppleToExistingAccountIfNeeded(credential, email: realEmail, fullName: fullName) {
                 return
             }
 
+            deferProfileCreation = (realEmail == nil)
             let result = try await Auth.auth().signIn(with: credential)
+            let isNewUser = result.additionalUserInfo?.isNewUser ?? false
+
+            if realEmail == nil && isNewUser {
+                pendingAppleCredential = credential
+                pendingAppleFullName = fullName
+                needsAccountChoice = true
+                return
+            }
+
             await stampAuthProfile(for: result.user, fullName: fullName)
+            finishDeferredProfileCreation()
         } catch let error as NSError {
+            resetPendingAppleState()
             await handleProviderSignInError(error, attemptedProviderName: "Apple", fullName: fullName)
         }
+    }
+
+    /// Account choice: the user is new. Keep the Apple account and create their profile.
+    @MainActor
+    func continueAsNewAppleUser() async {
+        let fullName = pendingAppleFullName
+        needsAccountChoice = false
+        pendingAppleCredential = nil
+        pendingAppleFullName = nil
+        finishDeferredProfileCreation()
+        if let user = Auth.auth().currentUser {
+            await stampAuthProfile(for: user, fullName: fullName)
+        }
+    }
+
+    /// Account choice: the user already has a Google account. Remove the empty Apple-only
+    /// account that was just created, sign in with Google, and connect Apple to that account,
+    /// so both buttons open the same data from now on.
+    @MainActor
+    func connectAppleToExistingGoogleAccount() async {
+        authError = nil
+        guard let appleCredential = pendingAppleCredential,
+              let appleUser = Auth.auth().currentUser else {
+            needsAccountChoice = false
+            return
+        }
+        guard configureGoogleSignIn() else { return }
+        guard let root = rootViewController() else {
+            authError = "Cannot find root view controller"
+            return
+        }
+
+        // Ask Google first: if the user cancels, nothing has changed and they can choose again.
+        let googleCred: AuthCredential
+        do {
+            googleCred = try await googleCredential(withPresenting: root)
+        } catch {
+            if (error as? GIDSignInError)?.code != .canceled {
+                authError = error.localizedDescription
+            }
+            return
+        }
+
+        do {
+            // The Apple-only account is brand new and has no profile document yet.
+            try await appleUser.delete()
+            // Stop deferring before the Google sign-in, so a Google account
+            // without a profile document still gets one created normally.
+            deferProfileCreation = false
+            deferredProfileUID = nil
+
+            let result = try await Auth.auth().signIn(with: googleCred)
+            let fullName = pendingAppleFullName
+            resetPendingAppleState()
+
+            do {
+                try await linkCredentialIfNeeded(appleCredential, to: result.user, providerID: "apple.com")
+                try await result.user.reload()
+            } catch {
+                accountNotice = "You're signed in with Google and your workouts are here. Apple Sign-In couldn't be connected automatically. Open Account settings and tap Continue with Apple to connect it."
+            }
+
+            let refreshedUser = Auth.auth().currentUser ?? result.user
+            currentUser = refreshedUser
+            await stampAuthProfile(for: refreshedUser, fullName: fullName)
+        } catch let error as NSError {
+            resetPendingAppleState()
+            authError = "Couldn't connect your Google account: \(error.localizedDescription) Please sign in with Google."
+            try? Auth.auth().signOut()
+        }
+    }
+
+    private func finishDeferredProfileCreation() {
+        deferProfileCreation = false
+        if let uid = deferredProfileUID {
+            deferredProfileUID = nil
+            initializeNewUserProfile(uid: uid)
+        }
+    }
+
+    private func resetPendingAppleState() {
+        needsAccountChoice = false
+        pendingAppleCredential = nil
+        pendingAppleFullName = nil
+        deferProfileCreation = false
+        deferredProfileUID = nil
     }
 
     @MainActor
@@ -335,8 +445,19 @@ class FirebaseService {
     }
 
     func signOut() {
+        // Stop listening to this user's document *before* signing out. Otherwise Firestore
+        // rejects the still-open listener once the user is gone and the sign-in screen shows
+        // "Missing or insufficient permissions".
+        detachListener()
         try? Auth.auth().signOut()
+        resetPendingAppleState()
         userData = nil
+        authError = nil
+    }
+
+    private func detachListener() {
+        snapshotListener?.remove()
+        snapshotListener = nil
         currentListenerUID = nil
     }
 
@@ -374,10 +495,10 @@ class FirebaseService {
     // MARK: - Firestore Listener
 
     func attachListener(uid: String?) {
-        if uid == currentListenerUID && snapshotListener != nil {
+        if let uid, uid == currentListenerUID, snapshotListener != nil {
             return
         }
-        
+
         snapshotListener?.remove()
         snapshotListener = nil
         currentListenerUID = uid
@@ -393,6 +514,9 @@ class FirebaseService {
             .addSnapshotListener { [weak self] snap, err in
                 guard let self else { return }
                 if let err {
+                    // Ignore errors from a listener for a user who is no longer signed in
+                    // (sign-out, account switch, or a just-deleted Apple account).
+                    guard Auth.auth().currentUser?.uid == uid, self.currentListenerUID == uid else { return }
                     self.authError = err.localizedDescription
                     self.isLoading = false
                     return
@@ -407,6 +531,12 @@ class FirebaseService {
     }
 
     private func initializeNewUserProfile(uid: String) {
+        if deferProfileCreation {
+            // Waiting on the Hide My Email account choice; create the profile only if the user is new.
+            deferredProfileUID = uid
+            isLoading = false
+            return
+        }
         // workoutTier intentionally omitted — user picks during onboarding
         var defaultData: [String: Any] = [
             "startDate": Self.dateKey(Date()),
@@ -541,7 +671,8 @@ class FirebaseService {
             workoutLogs:     logs,
             workoutDays:     data["workoutDays"]    as? [Int],
             ageBracket:      data["ageBracket"]     as? String,
-            equipment:       data["equipment"]      as? String
+            equipment:       data["equipment"]      as? String,
+            endPictureUrl:   data["endPictureUrl"]  as? String
         )
     }
 
