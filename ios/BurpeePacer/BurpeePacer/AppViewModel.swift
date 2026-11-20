@@ -163,7 +163,7 @@ class AppViewModel {
     /// Consecutive scheduled workout days completed, counting back from today.
     /// Rest days are skipped; today doesn't break the streak until it has passed.
     /// Mirrors the web's `getCurrentStreak` (src/lib/workoutStreak.ts).
-    var currentStreak: Int {
+    var workoutStreak: Int {
         let completedDates = Set(
             (firebase.userData?.workoutLogs ?? [])
                 .filter(\.completed)

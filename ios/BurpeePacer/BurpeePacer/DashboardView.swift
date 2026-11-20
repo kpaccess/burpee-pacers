@@ -422,7 +422,7 @@ struct DashboardView: View {
                 .tracking(2)
                 .foregroundStyle(.red)
 
-            Text("\(viewModel.currentStreak)-day streak, safe and sound")
+            Text("\(viewModel.workoutStreak)-day streak, safe and sound")
                 .font(.title3)
                 .fontWeight(.heavy)
                 .multilineTextAlignment(.center)
