@@ -135,16 +135,60 @@ class AppViewModel {
         workoutDays.contains(Calendar.current.component(.weekday, from: date))
     }
 
-    /// "tomorrow" or a weekday name ("Wednesday") for the next scheduled workout day after today.
-    var nextWorkoutDayLabel: String? {
+    /// Workout name for a weekday (iOS weekday numbers, Sunday = 1). Mirrors the web's
+    /// `getWorkoutLabelForWeekday` in Dashboard.tsx.
+    func workoutLabel(forWeekday weekday: Int) -> String {
+        guard currentTrack == .advanced else { return "Beginner Burpees" }
+        switch weekday {
+        case 2: return "Navy Seals"
+        case 4: return "5-Count Pushups"
+        case 6: return "Hybrid"
+        default: return "Workout"
+        }
+    }
+
+    /// Next scheduled session after today, e.g. "Wednesday · 5-Count Pushups". Same format as the web.
+    var nextScheduledLabel: String? {
         let calendar = Calendar.current
         let today = Date()
         for offset in 1...7 {
             guard let date = calendar.date(byAdding: .day, value: offset, to: today),
                   isWorkoutDay(date) else { continue }
-            return offset == 1 ? "tomorrow" : date.formatted(.dateTime.weekday(.wide))
+            let weekdayName = date.formatted(.dateTime.weekday(.wide))
+            return "\(weekdayName) · \(workoutLabel(forWeekday: calendar.component(.weekday, from: date)))"
         }
         return nil
+    }
+
+    /// Consecutive scheduled workout days completed, counting back from today.
+    /// Rest days are skipped; today doesn't break the streak until it has passed.
+    /// Mirrors the web's `getCurrentStreak` (src/lib/workoutStreak.ts).
+    var currentStreak: Int {
+        let completedDates = Set(
+            (firebase.userData?.workoutLogs ?? [])
+                .filter(\.completed)
+                .map { String($0.date.prefix(10)) }
+        )
+        let calendar = Calendar.current
+        let today = Date()
+        let todayKey = FirebaseService.dateKey(today)
+        guard let limit = calendar.date(byAdding: .month, value: -12, to: today) else { return 0 }
+
+        var cursor = today
+        var streak = 0
+        while cursor >= limit {
+            if isWorkoutDay(cursor) {
+                let key = FirebaseService.dateKey(cursor)
+                if completedDates.contains(key) {
+                    streak += 1
+                } else if key != todayKey {
+                    break
+                }
+            }
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
     }
 
     /// Completed workout sessions derived from Firestore workoutLogs.

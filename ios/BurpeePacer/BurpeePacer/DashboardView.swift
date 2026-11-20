@@ -331,31 +331,25 @@ struct DashboardView: View {
                 }
             }
 
-            let isWorkoutDayToday = viewModel.isWorkoutDay()
-
-            Button(action: {
-                timerViewModel = SessionTimerViewModel(level: viewModel.currentLevel, workoutMode: selectedMode)
-            }) {
-                HStack {
-                    Image(systemName: isWorkoutDayToday ? "play.circle.fill" : "moon.zzz.fill")
-                        .font(.title2)
-                    Text(isWorkoutDayToday ? "Start \(selectedModeDisplayName)" : "Rest Day")
-                        .font(.headline)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(isWorkoutDayToday ? AnyShapeStyle(Color.red.gradient) : AnyShapeStyle(Color(UIColor.systemGray4)))
-                .foregroundStyle(isWorkoutDayToday ? Color.white : Color.secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .disabled(!isWorkoutDayToday)
-
-            if !isWorkoutDayToday {
-                Text(restDayMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            if viewModel.isWorkoutDay() {
+                Button(action: {
+                    timerViewModel = SessionTimerViewModel(level: viewModel.currentLevel, workoutMode: selectedMode)
+                }) {
+                    HStack {
+                        Image(systemName: "play.circle.fill")
+                            .font(.title2)
+                        Text("Start \(selectedModeDisplayName)")
+                            .font(.headline)
+                    }
                     .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red.gradient)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            } else {
+                // Rest day: same card the web dashboard shows instead of the workout button.
+                restDayCard
             }
         }
         .padding()
@@ -405,11 +399,64 @@ struct DashboardView: View {
     
     // MARK: - Rest Day Reminder
     
-    private var restDayMessage: String {
-        if let next = viewModel.nextWorkoutDayLabel {
-            return "Today is a rest day. Your next workout is \(next). You can change your workout days in Account settings."
+    /// Mirrors the web's rest-day card (DashboardMobileOverview.tsx, shown when today isn't a workout day).
+    private var restDayCard: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        colors: [Color(red: 1.0, green: 0.30, blue: 0.47), Color(red: 1.0, green: 0.20, blue: 0.40)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ))
+                    .frame(width: 56, height: 56)
+                    .shadow(color: Color(red: 1.0, green: 0.20, blue: 0.40).opacity(0.35), radius: 12, y: 6)
+                Image(systemName: "flame.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white)
+            }
+
+            Text("YOU'RE ON TRACK")
+                .font(.caption)
+                .fontWeight(.heavy)
+                .tracking(2)
+                .foregroundStyle(.red)
+
+            Text("\(viewModel.currentStreak)-day streak, safe and sound")
+                .font(.title3)
+                .fontWeight(.heavy)
+                .multilineTextAlignment(.center)
+
+            Text("Rest is part of the plan. Recharge today and come back stronger.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Text(viewModel.nextScheduledLabel.map { "Next up · \($0)" } ?? "Next up · Choose your next workout day")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(Color(UIColor.tertiarySystemBackground), in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.08)))
+                .padding(.top, 4)
         }
-        return "Today is a rest day. Choose your workout days in Account settings."
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
+        .background(
+            LinearGradient(
+                colors: [Color(red: 1.0, green: 0.30, blue: 0.47).opacity(0.16), Color(red: 1.0, green: 0.20, blue: 0.40).opacity(0.05)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(red: 1.0, green: 0.20, blue: 0.40).opacity(0.22))
+        )
     }
 
     private var restDayReminder: some View {
