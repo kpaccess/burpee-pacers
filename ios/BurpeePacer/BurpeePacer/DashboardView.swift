@@ -111,6 +111,14 @@ struct DashboardView: View {
                         viewModel.addSession(session)
                         timerViewModel = nil
                     }
+                    // Save as soon as the timer reaches 0:00, like the web does, so the workout
+                    // is logged even if the sheet is closed without tapping Save Workout.
+                    // Tapping Save afterwards saves the same day again with the final rep count.
+                    .onChange(of: timerVM.isFinished) { _, finished in
+                        if finished {
+                            viewModel.addSession(timerVM.createSession())
+                        }
+                    }
                     .navigationTitle(viewModel.currentLevel.displayName)
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
