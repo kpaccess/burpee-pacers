@@ -457,6 +457,13 @@ class FirebaseService {
         authError = nil
     }
 
+    /// Restarts the live sync if it stopped (Firestore ends a listener after an error).
+    func reattachListenerIfNeeded() {
+        guard snapshotListener == nil, let uid = Auth.auth().currentUser?.uid else { return }
+        currentListenerUID = nil
+        attachListener(uid: uid)
+    }
+
     private func detachListener() {
         snapshotListener?.remove()
         snapshotListener = nil
@@ -519,6 +526,11 @@ class FirebaseService {
                     // Ignore errors from a listener for a user who is no longer signed in
                     // (sign-out, account switch, or a just-deleted Apple account).
                     guard Auth.auth().currentUser?.uid == uid, self.currentListenerUID == uid else { return }
+                    // A Firestore listener stops for good after an error. Drop it so the next
+                    // reattachListenerIfNeeded() (e.g. when the app returns to the foreground)
+                    // starts a fresh one instead of the app silently showing stale data.
+                    self.snapshotListener?.remove()
+                    self.snapshotListener = nil
                     self.authError = err.localizedDescription
                     self.isLoading = false
                     return

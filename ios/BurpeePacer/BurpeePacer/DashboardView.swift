@@ -339,7 +339,10 @@ struct DashboardView: View {
                 }
             }
 
-            if viewModel.isWorkoutDay() {
+            if viewModel.hasCompletedToday {
+                // Same state the web shows once today's workout is logged (from either app).
+                completedTodayCard
+            } else if viewModel.isWorkoutDay() {
                 Button(action: {
                     timerViewModel = SessionTimerViewModel(level: viewModel.currentLevel, workoutMode: selectedMode)
                 }) {
@@ -407,6 +410,38 @@ struct DashboardView: View {
     
     // MARK: - Rest Day Reminder
     
+    /// Mirrors the web's "Today's workout is complete" state (Dashboard.tsx heroHeading/heroDescription).
+    private var completedTodayCard: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.green.gradient)
+                    .frame(width: 56, height: 56)
+                Image(systemName: "checkmark")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+
+            Text("TODAY'S WORKOUT IS COMPLETE")
+                .font(.caption)
+                .fontWeight(.heavy)
+                .tracking(2)
+                .foregroundStyle(.green)
+                .multilineTextAlignment(.center)
+
+            Text(viewModel.nextScheduledLabel.map { "Nice work. Your next scheduled session is \($0)." }
+                 ?? "Nice work. Choose your next workout day in Account settings.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
+        .background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.green.opacity(0.25)))
+    }
+
     /// Mirrors the web's rest-day card (DashboardMobileOverview.tsx, shown when today isn't a workout day).
     private var restDayCard: some View {
         VStack(spacing: 10) {

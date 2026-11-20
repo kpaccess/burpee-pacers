@@ -292,6 +292,11 @@ class AppViewModel {
         return workoutSessions.filter { calendar.isDate($0.date, inSameDayAs: date) }
     }
 
+    /// True once today has a completed workout log, whether it was saved from iOS or the web.
+    var hasCompletedToday: Bool {
+        !sessionsForDate(Date()).isEmpty
+    }
+
     var isTodayHybridDone: Bool {
         sessionsForDate(Date()).contains { $0.workoutMode == .hybrid && $0.completed }
     }
