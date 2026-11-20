@@ -7,142 +7,137 @@ import com.burpeepacer.app.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class AppViewModel(private val repository: DataRepository) : ViewModel() {
 
     val userProfile = repository.userProfileFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), 
-        UserProfile(LocalDate.now(), 75.0, true, ProgramTrack.BEGINNER, "B1")
+        viewModelScope, SharingStarted.WhileSubscribed(5000),
+        UserProfile(
+            LocalDate.now(), 75.0, true, ProgramTrack.BEGINNER,
+            ProgramCatalog.startingLevel(ProgramTrack.BEGINNER).id
+        )
     )
 
-    val workoutHistory = repository.workoutHistoryFlow.stateIn(
+    /** One log per day, in the web/iOS Firestore `workoutLogs` shape. */
+    val workoutLogs = repository.workoutLogsFlow.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
     )
+
+    /** Completed workouts only (as on iOS). */
+    val workoutSessions: StateFlow<List<WorkoutSession>> = workoutLogs
+        .map { logs -> logs.mapNotNull { it.toSession() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val currentLevel: StateFlow<Level> = userProfile.map { profile ->
         val levels = LevelDatabase.getLevels(profile.currentTrack)
         levels.find { it.id == profile.currentLevelID } ?: levels[0]
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LevelDatabase.beginnerLevels[0])
 
-    val milestoneDate: Flow<LocalDate> = userProfile.map { it.startDate.plusMonths(6) }
-    
-    val daysToMilestone: Flow<Long> = milestoneDate.map { 
-        java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), it) 
+    /** The level after the current one, or null at the top of the track. */
+    val nextLevel: Flow<Level?> = currentLevel.map { level ->
+        val levels = LevelDatabase.getLevels(level.track)
+        levels.getOrNull(levels.indexOfFirst { it.id == level.id } + 1)
     }
 
-    val isMilestoneReached: Flow<Boolean> = daysToMilestone.map { it <= 0 }
+    /** Completed sessions at the current level, for the "X of N sessions completed" progress. */
+    val currentLevelQualifyingSessions: Flow<Int> = combine(currentLevel, workoutSessions) { level, sessions ->
+        Schedule.qualifyingSessions(sessions, level.id)
+    }
+
+    val qualifyingSessionsRequired: Int get() = ProgramCatalog.qualifyingSessionsRequired
+
+    val isLaunchAccessEnabled: Boolean get() = ProgramCatalog.launchAccessEnabled
+
+    /** Access follows the shared program config and account state (iOS `hasProAccess`). */
+    val hasProAccess: Flow<Boolean> = userProfile.map { isLaunchAccessEnabled || it.isPro }
+
+    val milestoneDate: Flow<LocalDate> = userProfile.map { it.startDate.plusMonths(6) }
+
+    val daysToMilestone: Flow<Long> = milestoneDate.map {
+        java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), it)
+    }
+
+    val isMilestoneReached: Flow<Boolean> = daysToMilestone.map { it < 0 }
 
     val programStatusText: Flow<String> = userProfile.map { profile ->
         val days = java.time.temporal.ChronoUnit.DAYS.between(profile.startDate, LocalDate.now())
         "Day ${maxOf(1, days + 1)} • BurpeePacers Program"
     }
 
-    val todayFinisher: Flow<Finisher?> = userProfile.map { profile ->
+    val todayFinisher: Flow<Finisher> = userProfile.map { profile ->
         FinisherDatabase.getFinisher(LocalDate.now().dayOfWeek, profile.ageBracket, profile.equipment)
     }
 
-    val todayWeightedDay: Flow<com.burpeepacer.app.model.WeightedTrainingDay?> = userProfile.map { profile ->
-        if (profile.weightedTrainingEnabled) com.burpeepacer.app.model.WeightedTrainingPlan.today() else null
+    val todayWeightedDay: Flow<WeightedTrainingDay?> = userProfile.map { profile ->
+        if (profile.weightedTrainingEnabled) WeightedTrainingPlan.today() else null
     }
 
-    fun updateWeight(weight: Double) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(currentWeight = weight))
+    // ── Schedule ────────────────────────────────────────────────────────────────
+
+    fun isWorkoutDay(date: LocalDate = LocalDate.now()): Boolean =
+        date.workoutWeekday() in userProfile.value.workoutDays
+
+    val workoutStreak: Flow<Int> = combine(workoutLogs, userProfile) { logs, profile ->
+        Schedule.workoutStreak(logs, profile.workoutDays, LocalDate.now())
+    }
+
+    val nextScheduledLabel: Flow<String?> = userProfile.map {
+        Schedule.nextScheduledLabel(it.currentTrack, it.workoutDays, LocalDate.now())
+    }
+
+    /** Mon→N, Wed→C, Fri→H for Advanced, 5-count for Beginner (from the shared program config). */
+    fun defaultMode(date: LocalDate = LocalDate.now()): WorkoutMode =
+        ProgramCatalog.defaultMode(userProfile.value.currentTrack, date.workoutWeekday())
+
+    // ── Updates ─────────────────────────────────────────────────────────────────
+
+    fun updateWeight(weight: Double) = updateProfile { it.copy(currentWeight = weight) }
+
+    fun toggleWeightUnit() = updateProfile { it.copy(useKilograms = !it.useKilograms) }
+
+    /** Switching tracks resets the level to the track's starting level; history is kept (as on iOS). */
+    fun updateTrack(track: ProgramTrack) = updateProfile {
+        it.copy(currentTrack = track, currentLevelID = ProgramCatalog.startingLevel(track).id)
+    }
+
+    fun updateLevel(levelID: String) = updateProfile { it.copy(currentLevelID = levelID) }
+
+    fun updateAgeBracket(ageBracket: AgeBracket) = updateProfile { it.copy(ageBracket = ageBracket) }
+
+    fun updateEquipment(equipment: Equipment) = updateProfile { it.copy(equipment = equipment) }
+
+    fun toggleWeightedTraining() = updateProfile { it.copy(weightedTrainingEnabled = !it.weightedTrainingEnabled) }
+
+    /** Toggles one weekday; at least one workout day must stay selected (as on web). */
+    fun toggleWorkoutDay(weekday: Int) = updateProfile { profile ->
+        val days = profile.workoutDays
+        when {
+            weekday in days && days.size == 1 -> profile
+            weekday in days -> profile.copy(workoutDays = days - weekday)
+            else -> profile.copy(workoutDays = days + weekday)
         }
     }
 
-    fun toggleWeightUnit() {
+    fun updateDay1Photo(uri: String) = updateProfile { it.copy(day1PhotoUri = uri) }
+
+    fun updateSixMonthPhoto(uri: String) = updateProfile { it.copy(sixMonthPhotoUri = uri) }
+
+    fun setLoggedIn(loggedIn: Boolean) = updateProfile { it.copy(isLoggedIn = loggedIn) }
+
+    private fun updateProfile(transform: (UserProfile) -> UserProfile) {
         viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(useKilograms = !current.useKilograms))
+            repository.updateUserProfile(transform(userProfile.value))
         }
     }
 
-    fun updateTrack(track: ProgramTrack) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            val levelId = if (track == ProgramTrack.BEGINNER) "B1" else "F"
-            repository.updateUserProfile(current.copy(currentTrack = track, currentLevelID = levelId))
-        }
-    }
-
-    fun updateLevel(levelID: String) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(currentLevelID = levelID))
-        }
-    }
-
-    fun updateAgeBracket(ageBracket: AgeBracket) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(ageBracket = ageBracket))
-        }
-    }
-
-    fun updateEquipment(equipment: Equipment) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(equipment = equipment))
-        }
-    }
-
-    fun toggleWeightedTraining() {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(weightedTrainingEnabled = !current.weightedTrainingEnabled))
-        }
-    }
-
-    fun updateDay1Photo(uri: String) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(day1PhotoUri = uri))
-        }
-    }
-
-    fun updateSixMonthPhoto(uri: String) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(sixMonthPhotoUri = uri))
-        }
-    }
-
-    fun setLoggedIn(loggedIn: Boolean) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(isLoggedIn = loggedIn))
-        }
-    }
-
-    fun setPro(isPro: Boolean) {
-        viewModelScope.launch {
-            val current = userProfile.value
-            repository.updateUserProfile(current.copy(isPro = isPro))
-        }
-    }
-
+    /**
+     * Saves the finished (or abandoned) session as the day's log. Levels never advance automatically:
+     * like web and iOS, the user picks their level once they have completed it enough times.
+     */
     fun addSession(session: WorkoutSession) {
         viewModelScope.launch {
-            repository.saveWorkoutSession(session)
-            // Check for level advancement
-            val level = currentLevel.value
-            if (session.completed && session.repsCompleted >= level.getGoal(session.workoutMode)) {
-                advanceLevel()
-            }
-        }
-    }
-
-    private suspend fun advanceLevel() {
-        val profile = userProfile.value
-        val levels = LevelDatabase.getLevels(profile.currentTrack)
-        val currentIndex = levels.indexOfFirst { it.id == profile.currentLevelID }
-        if (currentIndex != -1 && currentIndex < levels.size - 1) {
-            val nextLevel = levels[currentIndex + 1]
-            repository.updateUserProfile(profile.copy(currentLevelID = nextLevel.id))
+            repository.saveWorkoutLog(WorkoutLog.fromSession(session))
         }
     }
 
@@ -152,61 +147,23 @@ class AppViewModel(private val repository: DataRepository) : ViewModel() {
         }
     }
 
-    fun getDayState(date: LocalDate): DayState {
-        val sessions = workoutHistory.value.filter { it.date.toLocalDate() == date }
-        
-        // Workout days: Mon, Wed, Fri (1, 3, 5)
-        val dayOfWeek = date.dayOfWeek.value
-        val isWorkoutDay = dayOfWeek == 1 || dayOfWeek == 3 || dayOfWeek == 5
+    // ── Calendar ────────────────────────────────────────────────────────────────
 
-        if (!isWorkoutDay) return DayState.Rest
-        if (date.isAfter(LocalDate.now())) return DayState.Scheduled
-        
-        if (sessions.isNotEmpty()) {
-            val bestSession = sessions.maxByOrNull { it.repsCompleted }!!
-            return DayState.Completed(bestSession.repsCompleted, bestSession.levelID, bestSession.workoutMode)
-        }
+    fun getDayState(date: LocalDate): DayState =
+        Schedule.dayState(date, workoutSessions.value, userProfile.value.workoutDays, LocalDate.now())
 
-        if (date.isBefore(LocalDate.now())) return DayState.Missed
-        
-        return DayState.Scheduled
-    }
+    fun generateCalendarDays(month: LocalDate): List<CalendarDay> =
+        Schedule.calendarGrid(month).map { CalendarDay(date = it, state = getDayState(it)) }
 
-    fun generateCalendarDays(month: LocalDate): List<CalendarDay> {
-        val firstDayOfMonth = month.withDayOfMonth(1)
-        val lastDayOfMonth = month.withDayOfMonth(month.lengthOfMonth())
-        
-        // Find the start of the grid (Sunday before or on the 1st)
-        // In java.time, Monday is 1, Sunday is 7.
-        // We want Sunday (7) to be index 0 of the grid.
-        var startOfGrid = firstDayOfMonth
-        while (startOfGrid.dayOfWeek.value != 7) {
-            startOfGrid = startOfGrid.minusDays(1)
-        }
-        
-        // End of grid (Saturday after or on the last day)
-        var endOfGrid = lastDayOfMonth
-        while (endOfGrid.dayOfWeek.value != 6) {
-            endOfGrid = endOfGrid.plusDays(1)
-        }
-        
-        val days = mutableListOf<CalendarDay>()
-        var current = startOfGrid
-        while (!current.isAfter(endOfGrid)) {
-            days.add(CalendarDay(date = current, state = getDayState(current)))
-            current = current.plusDays(1)
-        }
-        return days
-    }
+    // ── Export ──────────────────────────────────────────────────────────────────
 
     fun exportCSV(): String {
-        val sb = StringBuilder()
-        sb.append("Date,Level,Mode,Reps Completed,Completed\n")
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        workoutHistory.value.sortedBy { it.date }.forEach { s ->
-            sb.append("${s.date.format(formatter)},")
+        val sb = StringBuilder("Date,Level,Mode,Reps Completed,Completed\n")
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE
+        workoutSessions.value.sortedBy { it.date }.forEach { s ->
+            sb.append("${s.date.toLocalDate().format(formatter)},")
             sb.append("${s.levelID},")
-            sb.append("${s.workoutMode.name},")
+            sb.append("${s.workoutMode.shortName},")
             sb.append("${s.repsCompleted},")
             sb.append(if (s.completed) "Yes" else "No")
             sb.append("\n")

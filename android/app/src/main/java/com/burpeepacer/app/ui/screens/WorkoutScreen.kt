@@ -32,7 +32,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.burpeepacer.app.model.WorkoutMode
 import com.burpeepacer.app.model.ProgramTrack
-import java.time.LocalDate
+import androidx.compose.ui.platform.LocalView
 
 @Composable
 fun WorkoutScreen(
@@ -45,18 +45,11 @@ fun WorkoutScreen(
     val workoutViewModel: WorkoutViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val dayOfWeek = LocalDate.now().dayOfWeek.value
-                val defaultMode = if (userProfile.currentTrack == ProgramTrack.ADVANCED) {
-                    when (dayOfWeek) {
-                        1 -> WorkoutMode.NAVY_SEALS
-                        3 -> WorkoutMode.FIVE_COUNT
-                        5 -> WorkoutMode.HYBRID
-                        else -> WorkoutMode.NAVY_SEALS
-                    }
-                } else {
-                    WorkoutMode.FIVE_COUNT
-                }
-                
+                // Default mode comes from the shared program config (Mon→N, Wed→C, Fri→H for Advanced).
+                val defaultMode = appViewModel.defaultMode()
+                    .takeIf { it in currentLevel.availableModes }
+                    ?: currentLevel.availableModes.first()
+
                 return WorkoutViewModel(currentLevel, defaultMode) as T
             }
         }
@@ -69,7 +62,15 @@ fun WorkoutScreen(
     val countdown by workoutViewModel.countdownRemaining.collectAsState()
     val currentMode by workoutViewModel.workoutMode.collectAsState()
     val isNearRepBoundary by workoutViewModel.isNearRepBoundary.collectAsState()
+    val position by workoutViewModel.position.collectAsState()
     val isIdle = workoutViewModel.isIdle
+
+    // Keep the screen awake for the whole workout (the web app holds a wake lock too).
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
 
     var showWarmupPrompt by remember { mutableStateOf(false) }
     var warmupChecked by remember { mutableStateOf(false) }
@@ -103,16 +104,16 @@ fun WorkoutScreen(
                         selectedMode = currentMode,
                         availableModes = currentLevel.availableModes,
                         enabled = !isRunning && countdown == null && !workoutViewModel.hasEverStarted,
-                        onModeSelected = { /* workoutViewModel.setMode(it) - need to add this to VM if wanted, but currently fixed in factory */ }
+                        onModeSelected = { workoutViewModel.setMode(it) }
                     )
                 }
 
                 // Hybrid Phase Header
                 if (workoutViewModel.isHybrid) {
                     HybridPhaseHeader(
-                        phaseIndex = workoutViewModel.hybridPhaseIndex,
+                        phaseIndex = if (position.isResting) 1 else position.phaseIndex,
                         phaseLabels = currentLevel.hybridPhaseLabels,
-                        phaseGoals = listOf(currentLevel.sealsGoal / 2 + (currentLevel.sealsGoal % 2), currentLevel.sixCountsGoal / 2 + (currentLevel.sixCountsGoal % 2)),
+                        phaseGoals = listOf(currentLevel.hybridPhaseGoal(0), currentLevel.hybridPhaseGoal(1)),
                         totalRemaining = workoutViewModel.formatTime(timeRemaining)
                     )
                 }
@@ -139,13 +140,18 @@ fun WorkoutScreen(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = workoutViewModel.formatTime(workoutViewModel.currentPhaseTimeRemaining),
+                            text = if (position.isResting) "${position.restSecondsLeft}"
+                                   else workoutViewModel.formatTime(position.phaseSecondsLeft.toLong()),
                             fontSize = 52.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (timeRemaining < 60) Color(0xFFDC2626) else Color.White
                         )
                         Text(
-                            text = if (workoutViewModel.isHybrid) "PHASE ${workoutViewModel.hybridPhaseIndex + 1} · ${workoutViewModel.hybridPhaseLabel.uppercase()}" else "TIME REMAINING",
+                            text = when {
+                                position.isResting -> "REST · NEXT: ${workoutViewModel.hybridPhaseLabel.uppercase()}"
+                                workoutViewModel.isHybrid -> "PHASE ${position.phaseIndex + 1} · ${workoutViewModel.hybridPhaseLabel.uppercase()}"
+                                else -> "TIME REMAINING"
+                            },
                             fontSize = 10.sp,
                             color = Color(0xFFA1A1AA),
                             fontWeight = FontWeight.Medium,
@@ -165,6 +171,7 @@ fun WorkoutScreen(
                 // Rep Counter
                 RepCounterSection(
                     currentReps = currentReps,
+                    displayReps = if (isRunning || countdown != null) workoutViewModel.currentDisplayRep else currentReps,
                     goal = workoutViewModel.currentPhaseGoal,
                     isCompleted = workoutViewModel.isCompleted,
                     onIncrement = { workoutViewModel.incrementRep() },
@@ -323,6 +330,7 @@ fun PacerChip(text: String?, isNearBoundary: Boolean) {
 @Composable
 fun RepCounterSection(
     currentReps: Int,
+    displayReps: Int = currentReps,
     goal: Int,
     isCompleted: Boolean,
     onIncrement: () -> Unit,
@@ -364,7 +372,7 @@ Canvas(modifier = Modifier.size(160.dp)) {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = currentReps.toString(),
+                        text = displayReps.toString(),
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCompleted) Color(0xFF22C55E) else Color.White

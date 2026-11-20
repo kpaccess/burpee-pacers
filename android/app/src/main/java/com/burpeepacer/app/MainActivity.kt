@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.burpeepacer.app.data.DataRepository
+import com.burpeepacer.app.model.ProgramCatalog
 import com.burpeepacer.app.ui.screens.DashboardScreen
 import com.burpeepacer.app.ui.screens.WorkoutScreen
 import com.burpeepacer.app.ui.screens.LandingScreen
@@ -39,6 +40,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("BurpeePacer", "MainActivity onCreate")
+        // Levels, goals and schedule defaults come from the shared (web/iOS) program config.
+        ProgramCatalog.init(applicationContext)
         setContent {
             BurpeePacerTheme {
                 Surface(

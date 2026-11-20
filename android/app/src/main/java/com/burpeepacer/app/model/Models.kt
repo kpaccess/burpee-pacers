@@ -6,9 +6,15 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.math.ceil
 
-enum class ProgramTrack(val displayName: String) {
-    BEGINNER("Beginner"),
-    ADVANCED("Advanced")
+enum class ProgramTrack(val displayName: String, val storageValue: String) {
+    BEGINNER("Beginner", "beginner"),
+    ADVANCED("Advanced", "advanced");
+
+    companion object {
+        /** Parses the Firestore/web `workoutTier` value; anything unknown is Beginner (as on iOS). */
+        fun fromStorageValue(value: String?): ProgramTrack =
+            if (value == ADVANCED.storageValue) ADVANCED else BEGINNER
+    }
 }
 
 enum class AgeBracket(val displayName: String) {
@@ -26,6 +32,10 @@ enum class WorkoutMode(val shortName: String) {
     NAVY_SEALS("N"),
     FIVE_COUNT("C"),
     HYBRID("H");
+
+    companion object {
+        fun fromShortName(value: String?): WorkoutMode? = values().firstOrNull { it.shortName == value }
+    }
 
     fun getDisplayName(track: ProgramTrack): String {
         return when (this) {
@@ -45,8 +55,7 @@ data class Level(
     val sixCountsGoal: Int
 ) {
     val availableModes: List<WorkoutMode>
-        get() = if (track == ProgramTrack.BEGINNER) listOf(WorkoutMode.FIVE_COUNT) 
-                else listOf(WorkoutMode.NAVY_SEALS, WorkoutMode.FIVE_COUNT, WorkoutMode.HYBRID)
+        get() = ProgramCatalog.availableModes(track)
 
     fun getGoal(mode: WorkoutMode): Int {
         return when (mode) {
@@ -56,36 +65,22 @@ data class Level(
         }
     }
 
+    /** Half the full goal, rounded up. Mirrors web `getHybridPhaseGoal` and iOS `hybridPhaseGoal`. */
     fun hybridPhaseGoal(phase: Int): Int {
         val g = if (phase == 0) sealsGoal else sixCountsGoal
         return ceil(g.toDouble() / 2).toInt()
     }
 
-    val hybridPhaseLabels: List<String> = listOf("Navy Seals", "5-Count Pushups")
+    val hybridPhaseLabels: List<String>
+        get() = ProgramCatalog.hybridPhaseLabels
 }
 
+/** Levels come from the shared program config (see [ProgramCatalog]); never hard-code goals here. */
 object LevelDatabase {
-    val beginnerLevels = listOf(
-        Level("B1", ProgramTrack.BEGINNER, "Beginner 1", "20 burpees (no pushups) in 20 min.", 0, 20),
-        Level("B2", ProgramTrack.BEGINNER, "Beginner 2", "40 burpees (no pushups) in 20 min.", 0, 40),
-        Level("B3", ProgramTrack.BEGINNER, "Beginner 3", "55 burpees (no pushups) in 20 min.", 0, 55),
-        Level("B4", ProgramTrack.BEGINNER, "Beginner 4", "70 burpees (no pushups) in 20 min.", 0, 70),
-        Level("B5", ProgramTrack.BEGINNER, "Beginner 5", "90 burpees (no pushups) in 20 min.", 0, 90),
-        Level("B6", ProgramTrack.BEGINNER, "Beginner 6", "110 burpees (no pushups) in 20 min.", 0, 110)
-    )
+    val beginnerLevels: List<Level> get() = ProgramCatalog.levels(ProgramTrack.BEGINNER)
+    val advancedLevels: List<Level> get() = ProgramCatalog.levels(ProgramTrack.ADVANCED)
 
-    val advancedLevels = listOf(
-        Level("F", ProgramTrack.ADVANCED, "Foundation", "15 Navy Seals in 20 min, 40 5-count pushups in 20 min.", 15, 40),
-        Level("1", ProgramTrack.ADVANCED, "Level 1", "30 Navy Seals in 20 min, 75 5-count pushups in 20 min.", 30, 75),
-        Level("2", ProgramTrack.ADVANCED, "Level 2", "50 Navy Seals in 20 min, 125 5-count pushups in 20 min.", 50, 125),
-        Level("3", ProgramTrack.ADVANCED, "Level 3", "70 Navy Seals in 20 min, 175 5-count pushups in 20 min.", 70, 175),
-        Level("4", ProgramTrack.ADVANCED, "Level 4", "90 Navy Seals in 20 min, 225 5-count pushups in 20 min.", 90, 225),
-        Level("E", ProgramTrack.ADVANCED, "Elite", "120 Navy Seals in 20 min, 300 5-count pushups in 20 min.", 120, 300)
-    )
-
-    fun getLevels(track: ProgramTrack): List<Level> {
-        return if (track == ProgramTrack.BEGINNER) beginnerLevels else advancedLevels
-    }
+    fun getLevels(track: ProgramTrack): List<Level> = ProgramCatalog.levels(track)
 }
 
 data class WorkoutSession(
@@ -104,13 +99,15 @@ data class UserProfile(
     var useKilograms: Boolean,
     var currentTrack: ProgramTrack,
     var currentLevelID: String,
-    var ageBracket: AgeBracket = AgeBracket.THIRTIES,
+    var ageBracket: AgeBracket = AgeBracket.FIFTIES_PLUS,
     var equipment: Equipment = Equipment.DUMBBELLS_ONLY,
     var isPro: Boolean = false,
     var isLoggedIn: Boolean = false,
     var day1PhotoUri: String? = null,
     var sixMonthPhotoUri: String? = null,
-    var weightedTrainingEnabled: Boolean = false
+    var weightedTrainingEnabled: Boolean = false,
+    /** Chosen weekly workout days, iOS/web weekday numbers: Sunday = 1 … Saturday = 7. */
+    var workoutDays: Set<Int> = DEFAULT_WORKOUT_DAYS
 ) {
     val weightDisplay: Double
         get() = if (useKilograms) currentWeight else currentWeight * 2.20462
@@ -120,7 +117,15 @@ data class UserProfile(
 
     val daysSinceStart: Long
         get() = ChronoUnit.DAYS.between(startDate, LocalDate.now())
+
+    companion object {
+        /** Monday, Wednesday, Friday. */
+        val DEFAULT_WORKOUT_DAYS: Set<Int> = setOf(2, 4, 6)
+    }
 }
+
+/** Weekday number used by web/iOS: Sunday = 1 … Saturday = 7. */
+fun LocalDate.workoutWeekday(): Int = dayOfWeek.value % 7 + 1
 
 sealed class DayState {
     object Rest : DayState()
@@ -133,13 +138,7 @@ data class CalendarDay(
     val id: UUID = UUID.randomUUID(),
     val date: LocalDate,
     val state: DayState
-) {
-    val isWorkoutDay: Boolean
-        get() {
-            val dayOfWeek = date.dayOfWeek.value // 1 (Mon) to 7 (Sun)
-            return dayOfWeek == 1 || dayOfWeek == 3 || dayOfWeek == 5
-        }
-}
+)
 
 enum class WeightUnit(val label: String) {
     KILOGRAMS("kg"),

@@ -6,11 +6,11 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.burpeepacer.app.model.*
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
-import java.util.*
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -28,33 +28,46 @@ class DataRepository(private val context: Context) {
         private val IS_PRO = booleanPreferencesKey("is_pro")
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val WEIGHTED_TRAINING_ENABLED = booleanPreferencesKey("weighted_training_enabled")
-        private val WORKOUT_HISTORY = stringPreferencesKey("workout_history")
+        private val WORKOUT_DAYS = stringSetPreferencesKey("workout_days")
         private val DAY1_PHOTO_URI = stringPreferencesKey("day1_photo_uri")
         private val SIX_MONTH_PHOTO_URI = stringPreferencesKey("six_month_photo_uri")
+
+        /** Firestore-shaped logs (one per day). Replaces the legacy [WORKOUT_HISTORY] session list. */
+        private val WORKOUT_LOGS = stringPreferencesKey("workout_logs")
+
+        /** Legacy key: JSON of reflectively-serialised `WorkoutSession`s. Read once for migration, then ignored. */
+        private val WORKOUT_HISTORY = stringPreferencesKey("workout_history")
+
+        private inline fun <reified T : Enum<T>> enumOrDefault(name: String?, default: T): T =
+            enumValues<T>().firstOrNull { it.name == name } ?: default
     }
 
     val userProfileFlow: Flow<UserProfile> = context.dataStore.data.map { preferences ->
+        val track = enumOrDefault(preferences[CURRENT_TRACK], ProgramTrack.BEGINNER)
+        val levelIds = ProgramCatalog.levels(track).map { it.id }
+        val storedLevel = preferences[CURRENT_LEVEL_ID]
         UserProfile(
-            startDate = LocalDate.parse(preferences[START_DATE] ?: LocalDate.now().toString()),
+            startDate = runCatching { LocalDate.parse(preferences[START_DATE]) }.getOrDefault(LocalDate.now()),
             currentWeight = preferences[CURRENT_WEIGHT] ?: 75.0,
             useKilograms = preferences[USE_KILOGRAMS] ?: true,
-            currentTrack = ProgramTrack.valueOf(preferences[CURRENT_TRACK] ?: ProgramTrack.BEGINNER.name),
-            currentLevelID = preferences[CURRENT_LEVEL_ID] ?: "B1",
-            ageBracket = AgeBracket.valueOf(preferences[AGE_BRACKET] ?: AgeBracket.THIRTIES.name),
-            equipment = Equipment.valueOf(preferences[EQUIPMENT] ?: Equipment.DUMBBELLS_ONLY.name),
+            currentTrack = track,
+            // An unknown level id (e.g. from an older build) falls back to the track's first level, as on iOS.
+            currentLevelID = storedLevel?.takeIf { it in levelIds } ?: ProgramCatalog.startingLevel(track).id,
+            ageBracket = enumOrDefault(preferences[AGE_BRACKET], AgeBracket.FIFTIES_PLUS),
+            equipment = enumOrDefault(preferences[EQUIPMENT], Equipment.DUMBBELLS_ONLY),
             isPro = preferences[IS_PRO] ?: false,
             isLoggedIn = preferences[IS_LOGGED_IN] ?: false,
-            day1PhotoUri = preferences[DAY1_PHOTO_URI],
-            sixMonthPhotoUri = preferences[SIX_MONTH_PHOTO_URI],
-            weightedTrainingEnabled = preferences[WEIGHTED_TRAINING_ENABLED] ?: false
+            day1PhotoUri = preferences[DAY1_PHOTO_URI]?.takeIf { it.isNotBlank() },
+            sixMonthPhotoUri = preferences[SIX_MONTH_PHOTO_URI]?.takeIf { it.isNotBlank() },
+            weightedTrainingEnabled = preferences[WEIGHTED_TRAINING_ENABLED] ?: false,
+            workoutDays = preferences[WORKOUT_DAYS]
+                ?.mapNotNull { it.toIntOrNull() }?.filter { it in 1..7 }?.toSet()
+                ?.takeIf { it.isNotEmpty() }
+                ?: UserProfile.DEFAULT_WORKOUT_DAYS
         )
     }
 
-    val workoutHistoryFlow: Flow<List<WorkoutSession>> = context.dataStore.data.map { preferences ->
-        val json = preferences[WORKOUT_HISTORY] ?: "[]"
-        val type = object : TypeToken<List<WorkoutSession>>() {}.type
-        gson.fromJson(json, type)
-    }
+    val workoutLogsFlow: Flow<List<WorkoutLog>> = context.dataStore.data.map { readLogs(it) }
 
     suspend fun updateUserProfile(profile: UserProfile) {
         context.dataStore.edit { preferences ->
@@ -70,31 +83,65 @@ class DataRepository(private val context: Context) {
             preferences[DAY1_PHOTO_URI] = profile.day1PhotoUri ?: ""
             preferences[SIX_MONTH_PHOTO_URI] = profile.sixMonthPhotoUri ?: ""
             preferences[WEIGHTED_TRAINING_ENABLED] = profile.weightedTrainingEnabled
+            preferences[WORKOUT_DAYS] = profile.workoutDays.map { it.toString() }.toSet()
         }
     }
 
-    suspend fun saveWorkoutSession(session: WorkoutSession) {
+    /** Saves one log per day (a later log for the same day replaces the earlier one). */
+    suspend fun saveWorkoutLog(log: WorkoutLog) {
         context.dataStore.edit { preferences ->
-            val currentHistoryJson = preferences[WORKOUT_HISTORY] ?: "[]"
-            val type = object : TypeToken<MutableList<WorkoutSession>>() {}.type
-            val history: MutableList<WorkoutSession> = gson.fromJson(currentHistoryJson, type)
-            history.add(session)
-            preferences[WORKOUT_HISTORY] = gson.toJson(history)
+            preferences[WORKOUT_LOGS] = gson.toJson(readLogs(preferences).upsert(log))
         }
     }
 
     suspend fun clearHistory() {
         context.dataStore.edit { preferences ->
-            preferences[WORKOUT_HISTORY] = "[]"
+            preferences[WORKOUT_LOGS] = "[]"
+            preferences.remove(WORKOUT_HISTORY)
             preferences[START_DATE] = LocalDate.now().toString()
-            preferences[CURRENT_LEVEL_ID] = "B1"
             preferences[CURRENT_TRACK] = ProgramTrack.BEGINNER.name
-            preferences[AGE_BRACKET] = AgeBracket.THIRTIES.name
+            preferences[CURRENT_LEVEL_ID] = ProgramCatalog.startingLevel(ProgramTrack.BEGINNER).id
+            preferences[AGE_BRACKET] = AgeBracket.FIFTIES_PLUS.name
             preferences[EQUIPMENT] = Equipment.DUMBBELLS_ONLY.name
             preferences[IS_PRO] = false
             preferences[IS_LOGGED_IN] = false
             preferences[DAY1_PHOTO_URI] = ""
             preferences[SIX_MONTH_PHOTO_URI] = ""
+            preferences[WORKOUT_DAYS] = UserProfile.DEFAULT_WORKOUT_DAYS.map { it.toString() }.toSet()
         }
+    }
+
+    private fun readLogs(preferences: Preferences): List<WorkoutLog> {
+        val json = preferences[WORKOUT_LOGS]
+        if (json != null) {
+            val type = object : TypeToken<List<WorkoutLog>>() {}.type
+            return runCatching { gson.fromJson<List<WorkoutLog>>(json, type) }.getOrNull().orEmpty()
+        }
+        return migrateLegacyHistory(preferences[WORKOUT_HISTORY])
+    }
+
+    /**
+     * Best-effort conversion of the old reflectively-serialised session list
+     * (`date` was a nested `LocalDateTime` object) into per-day logs. Failure yields no logs.
+     */
+    private fun migrateLegacyHistory(json: String?): List<WorkoutLog> {
+        if (json.isNullOrBlank()) return emptyList()
+        return runCatching {
+            JsonParser.parseString(json).asJsonArray.mapNotNull { element ->
+                val obj = element.asJsonObject
+                if (!obj.get("completed").asBoolean) return@mapNotNull null
+                val date = obj.getAsJsonObject("date").getAsJsonObject("date")
+                val day = LocalDate.of(date.get("year").asInt, date.get("month").asInt, date.get("day").asInt)
+                val mode = enumOrDefault(obj.get("workoutMode")?.asString, WorkoutMode.FIVE_COUNT)
+                val levelId = obj.get("levelID").asString
+                WorkoutLog(
+                    date = day.toString(),
+                    completed = true,
+                    levelCompleted = WorkoutLog.levelCompleted(levelId, mode),
+                    workoutType = if (levelId.startsWith("B")) "no_pushups" else "with_pushups",
+                    repsCompleted = obj.get("repsCompleted").asInt.takeIf { it > 0 }
+                )
+            }.fold(emptyList<WorkoutLog>()) { acc, log -> acc.upsert(log) }
+        }.getOrDefault(emptyList())
     }
 }

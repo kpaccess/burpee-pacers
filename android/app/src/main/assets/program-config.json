@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "access": {
+    "launchAccessEnabled": true
+  },
+  "progressionRules": {
+    "qualifyingSessionsRequired": 3
+  },
+  "tracks": [
+    {
+      "id": "beginner",
+      "displayName": "Beginner",
+      "availableModes": ["C"]
+    },
+    {
+      "id": "advanced",
+      "displayName": "Advanced",
+      "availableModes": ["N", "C", "H"]
+    }
+  ],
+  "levels": [
+    {
+      "id": "F",
+      "track": "advanced",
+      "displayName": "Foundation",
+      "description": "15 Navy Seals in 20 min, 40 5-count pushups in 20 min.",
+      "sealsGoal": 15,
+      "fiveCountGoal": 40,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "1",
+      "track": "advanced",
+      "displayName": "Level 1",
+      "description": "20 Navy Seals in 20 min, 50 5-count pushups in 20 min.",
+      "sealsGoal": 20,
+      "fiveCountGoal": 50,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "2",
+      "track": "advanced",
+      "displayName": "Level 2",
+      "description": "30 Navy Seals in 20 min, 65 5-count pushups in 20 min.",
+      "sealsGoal": 30,
+      "fiveCountGoal": 65,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "3",
+      "track": "advanced",
+      "displayName": "Level 3",
+      "description": "40 Navy Seals in 20 min, 80 5-count pushups in 20 min.",
+      "sealsGoal": 40,
+      "fiveCountGoal": 80,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "4",
+      "track": "advanced",
+      "displayName": "Level 4",
+      "description": "55 Navy Seals in 20 min, 100 5-count pushups in 20 min.",
+      "sealsGoal": 55,
+      "fiveCountGoal": 100,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "5",
+      "track": "advanced",
+      "displayName": "Level 5",
+      "description": "60 Navy Seals in 20 min, 105 5-count pushups in 20 min.",
+      "sealsGoal": 60,
+      "fiveCountGoal": 105,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "6",
+      "track": "advanced",
+      "displayName": "Level 6",
+      "description": "65 Navy Seals in 20 min, 110 5-count pushups in 20 min.",
+      "sealsGoal": 65,
+      "fiveCountGoal": 110,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "7",
+      "track": "advanced",
+      "displayName": "Level 7",
+      "description": "70 Navy Seals in 20 min, 115 5-count pushups in 20 min.",
+      "sealsGoal": 70,
+      "fiveCountGoal": 115,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "8",
+      "track": "advanced",
+      "displayName": "Level 8",
+      "description": "75 Navy Seals in 20 min, 120 5-count pushups in 20 min.",
+      "sealsGoal": 75,
+      "fiveCountGoal": 120,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "E",
+      "track": "advanced",
+      "displayName": "Elite",
+      "description": "80 Navy Seals in 20 min, 120 5-count pushups in 20 min.",
+      "sealsGoal": 80,
+      "fiveCountGoal": 120,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "E2",
+      "track": "advanced",
+      "displayName": "Elite II",
+      "description": "90 Navy Seals in 20 min, 150 5-count pushups in 20 min.",
+      "sealsGoal": 90,
+      "fiveCountGoal": 150,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "E3",
+      "track": "advanced",
+      "displayName": "Elite III",
+      "description": "115 Navy Seals in 20 min, 190 5-count pushups in 20 min.",
+      "sealsGoal": 115,
+      "fiveCountGoal": 190,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "U",
+      "track": "advanced",
+      "displayName": "Unbroken",
+      "description": "150 Navy Seals in 20 min, 240 5-count pushups in 20 min — the final goal: 20 minutes of continuous work.",
+      "sealsGoal": 150,
+      "fiveCountGoal": 240,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B1",
+      "track": "beginner",
+      "displayName": "Beginner 1",
+      "description": "20 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 20,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B2",
+      "track": "beginner",
+      "displayName": "Beginner 2",
+      "description": "30 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 30,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B3",
+      "track": "beginner",
+      "displayName": "Beginner 3",
+      "description": "40 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 40,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B4",
+      "track": "beginner",
+      "displayName": "Beginner 4",
+      "description": "55 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 55,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B5",
+      "track": "beginner",
+      "displayName": "Beginner 5",
+      "description": "70 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 70,
+      "timeLimitMinutes": 20
+    },
+    {
+      "id": "B6",
+      "track": "beginner",
+      "displayName": "Beginner 6",
+      "description": "90 burpees (no pushups) in 20 min.",
+      "sealsGoal": 0,
+      "fiveCountGoal": 90,
+      "timeLimitMinutes": 20
+    }
+  ],
+  "defaultModeByWeekday": {
+    "beginner": {
+      "2": "C",
+      "4": "C",
+      "6": "C"
+    },
+    "advanced": {
+      "2": "N",
+      "4": "C",
+      "6": "H"
+    }
+  },
+  "hybridRules": {
+    "phaseDurationMinutes": 10,
+    "goalSplit": "ceil_half",
+    "phases": [
+      {
+        "mode": "N",
+        "label": "Navy Seals"
+      },
+      {
+        "mode": "C",
+        "label": "5-Count Pushups"
+      }
+    ]
+  }
+}

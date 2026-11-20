@@ -2,41 +2,49 @@ package com.burpeepacer.app.model
 
 import java.time.DayOfWeek
 
+/** Post-workout strength finisher. Content mirrors iOS `FinisherDatabase.swift`. */
 data class Finisher(
     val name: String,
     val sets: String,
-    val description: String
+    val focus: String
 )
 
 object FinisherDatabase {
-    fun getFinisher(day: DayOfWeek, age: AgeBracket, equipment: Equipment): Finisher? {
-        return when (day) {
-            DayOfWeek.MONDAY -> getMondayFinisher(age)
-            DayOfWeek.WEDNESDAY -> getWednesdayFinisher(age)
-            DayOfWeek.FRIDAY -> getFridayFinisher(age, equipment)
-            else -> null
-        }
+    /** Always returns a finisher; non-Mon/Wed/Fri days get "Active Recovery" (as on iOS). */
+    fun getFinisher(day: DayOfWeek, age: AgeBracket, equipment: Equipment): Finisher = when (age) {
+        AgeBracket.FIFTIES_PLUS -> fiftiesPlus(day, equipment)
+        AgeBracket.FORTIES -> forties(day)
+        AgeBracket.THIRTIES -> thirties(day, equipment)
     }
 
-    private fun getMondayFinisher(age: AgeBracket) = when (age) {
-        AgeBracket.THIRTIES -> Finisher("DB Thrusters", "4x12", "Squat and press the dumbbells overhead")
-        AgeBracket.FORTIES -> Finisher("DB Floor Press", "3x10", "Press dumbbells while lying on the floor")
-        AgeBracket.FIFTIES_PLUS -> Finisher("DB Overhead Press", "3x10-12", "Strict overhead press with dumbbells")
+    private fun fiftiesPlus(day: DayOfWeek, equipment: Equipment) = when (day) {
+        DayOfWeek.MONDAY -> Finisher("DB Overhead Press", "3 sets of 10-12 reps", "Shoulder Health & Mobility")
+        DayOfWeek.WEDNESDAY -> Finisher("DB Goblet Squats", "3 sets of 12-15 reps", "Bone Density & Hip Integrity")
+        DayOfWeek.FRIDAY ->
+            if (equipment == Equipment.FULL_GYM)
+                Finisher("Assisted Pullups", "3 sets to near failure", "Posture & Spinal Decompression")
+            else
+                Finisher("One-Arm DB Rows", "3 sets of 10 reps per side", "Upper Back & Grip Strength")
+        else -> restDay()
     }
 
-    private fun getWednesdayFinisher(age: AgeBracket) = when (age) {
-        AgeBracket.THIRTIES -> Finisher("DB Bulgarian Split Squats", "3x10/side", "One foot elevated, squat with dumbbells")
-        AgeBracket.FORTIES -> Finisher("DB Alternating Lunges", "3x10/side", "Step forward and alternate legs")
-        AgeBracket.FIFTIES_PLUS -> Finisher("DB Goblet Squats", "3x12-15", "Hold one dumbbell at chest height and squat")
+    private fun forties(day: DayOfWeek) = when (day) {
+        DayOfWeek.MONDAY -> Finisher("DB Floor Press", "3 sets of 10 reps", "Chest & Tricep Power")
+        DayOfWeek.WEDNESDAY -> Finisher("DB Alternating Lunges", "3 sets of 10 reps per leg", "Balance & Knee Stability")
+        DayOfWeek.FRIDAY -> Finisher("DB Renegade Rows", "3 sets of 8 reps per side", "Core Stability & Lat Strength")
+        else -> restDay()
     }
 
-    private fun getFridayFinisher(age: AgeBracket, equipment: Equipment) = when (age) {
-        AgeBracket.THIRTIES -> if (equipment == Equipment.FULL_GYM) 
-            Finisher("Weighted Pullups", "3x8", "Pullups with added weight") 
-            else Finisher("DB Gorilla Rows", "3x10", "Hinged over, row dumbbells while alternating")
-        AgeBracket.FORTIES -> Finisher("DB Renegade Rows", "3x8/side", "Row dumbbells from a plank position")
-        AgeBracket.FIFTIES_PLUS -> if (equipment == Equipment.FULL_GYM) 
-            Finisher("Assisted Pullups", "3x10", "Pullups with machine or band assistance") 
-            else Finisher("One-Arm DB Rows", "3x12/side", "Row one dumbbell while supporting with other hand")
+    private fun thirties(day: DayOfWeek, equipment: Equipment) = when (day) {
+        DayOfWeek.MONDAY -> Finisher("DB Thrusters", "4 sets of 12 reps", "Explosive Full-Body Power")
+        DayOfWeek.WEDNESDAY -> Finisher("DB Bulgarian Split Squats", "3 sets of 10 reps per leg", "Max Leg Hypertrophy")
+        DayOfWeek.FRIDAY ->
+            if (equipment == Equipment.FULL_GYM)
+                Finisher("Weighted Pullups", "3 sets of 5-8 reps", "Absolute Back Strength")
+            else
+                Finisher("DB Gorilla Rows", "4 sets of 12 reps", "Back Volume & Thickness")
+        else -> restDay()
     }
+
+    private fun restDay() = Finisher("Active Recovery", "20 min walk or stretching", "Joint Health & Blood Flow")
 }
