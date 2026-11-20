@@ -50,9 +50,8 @@ fun DashboardScreen(
             DashboardHeader(
                 statusText = statusText,
                 hasProAccess = hasProAccess,
-                onReset = { viewModel.clearData() },
                 onLogout = {
-                    viewModel.setLoggedIn(false)
+                    viewModel.signOut()
                     onLogout()
                 }
             )
@@ -168,10 +167,8 @@ fun DashboardScreen(
 fun DashboardHeader(
     statusText: String,
     hasProAccess: Boolean,
-    onReset: () -> Unit,
     onLogout: () -> Unit
 ) {
-    var showResetDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
     Row(
@@ -221,13 +218,6 @@ fun DashboardHeader(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Reset Program") },
-                        onClick = { 
-                            showMenu = false
-                            showResetDialog = true 
-                        }
-                    )
-                    DropdownMenuItem(
                         text = { Text("Sign Out") },
                         onClick = { 
                             showMenu = false
@@ -237,27 +227,6 @@ fun DashboardHeader(
                 }
             }
         }
-    }
-
-    if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text("Reset Program?") },
-            text = { Text("This will clear all your progress and history. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = { 
-                    onReset()
-                    showResetDialog = false 
-                }) {
-                    Text("Reset", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 

@@ -6,7 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -17,8 +21,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.burpeepacer.app.data.CloudSync
 import com.burpeepacer.app.data.DataRepository
 import com.burpeepacer.app.model.ProgramCatalog
+import com.burpeepacer.app.model.ProgramTrack
 import com.burpeepacer.app.ui.screens.DashboardScreen
 import com.burpeepacer.app.ui.screens.WorkoutScreen
 import com.burpeepacer.app.ui.screens.LandingScreen
@@ -27,12 +33,13 @@ import com.burpeepacer.app.viewmodel.AppViewModel
 
 class MainActivity : ComponentActivity() {
     private val repository by lazy { DataRepository(applicationContext) }
+    private val cloud by lazy { CloudSync(applicationContext) }
     
     private val appViewModel: AppViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 Log.d("BurpeePacer", "Creating AppViewModel")
-                return AppViewModel(repository) as T
+                return AppViewModel(repository, cloud) as T
             }
         }
     }
@@ -59,6 +66,39 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation(appViewModel: AppViewModel) {
     val navController = rememberNavController()
     val userProfile by appViewModel.userProfile.collectAsState()
+
+    val needsTrackChoice by appViewModel.needsTrackChoice.collectAsState()
+    val syncError by appViewModel.syncError.collectAsState()
+
+    // Signing out (here or from another device's session expiring) always returns to the sign-in screen.
+    LaunchedEffect(userProfile.isLoggedIn) {
+        if (!userProfile.isLoggedIn && navController.currentDestination?.route != "landing") {
+            navController.navigate("landing") { popUpTo(0) }
+        }
+    }
+
+    if (userProfile.isLoggedIn && needsTrackChoice) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Choose your track") },
+            text = { Text("Beginner builds up with 5-Count Pushups. Advanced adds Navy Seals and Hybrid sessions. You can change this later.") },
+            confirmButton = {
+                TextButton(onClick = { appViewModel.updateTrack(ProgramTrack.ADVANCED) }) { Text("Advanced") }
+            },
+            dismissButton = {
+                TextButton(onClick = { appViewModel.updateTrack(ProgramTrack.BEGINNER) }) { Text("Beginner") }
+            }
+        )
+    }
+
+    syncError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { appViewModel.dismissSyncError() },
+            title = { Text("Not saved") },
+            text = { Text(message) },
+            confirmButton = { TextButton(onClick = { appViewModel.dismissSyncError() }) { Text("OK") } }
+        )
+    }
 
     NavHost(
         navController = navController, 

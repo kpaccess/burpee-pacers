@@ -87,10 +87,38 @@ class DataRepository(private val context: Context) {
         }
     }
 
-    /** Saves one log per day (a later log for the same day replaces the earlier one). */
-    suspend fun saveWorkoutLog(log: WorkoutLog) {
+    /** Saves one log per day (a later log for the same day replaces the earlier one) and returns all logs. */
+    suspend fun saveWorkoutLog(log: WorkoutLog): List<WorkoutLog> {
+        var saved: List<WorkoutLog> = emptyList()
         context.dataStore.edit { preferences ->
-            preferences[WORKOUT_LOGS] = gson.toJson(readLogs(preferences).upsert(log))
+            saved = readLogs(preferences).upsert(log)
+            preferences[WORKOUT_LOGS] = gson.toJson(saved)
+        }
+        return saved
+    }
+
+    suspend fun setLoggedIn(loggedIn: Boolean) {
+        context.dataStore.edit { it[IS_LOGGED_IN] = loggedIn }
+    }
+
+    /**
+     * Mirrors the signed-in user's Firestore profile into local storage. Weight and photos stay
+     * local (the web's `startWeight` is a different value from Android's current weight).
+     */
+    suspend fun applyRemote(remote: RemoteProfile) {
+        context.dataStore.edit { p ->
+            remote.startDate?.let { p[START_DATE] = it.toString() }
+            val track = remote.track
+            if (track != null) {
+                p[CURRENT_TRACK] = track.name
+                p[CURRENT_LEVEL_ID] = remote.levelId ?: ProgramCatalog.startingLevel(track).id
+            }
+            p[WORKOUT_DAYS] = remote.workoutDays.map { it.toString() }.toSet()
+            remote.ageBracket?.let { p[AGE_BRACKET] = it.name }
+            remote.equipment?.let { p[EQUIPMENT] = it.name }
+            p[IS_PRO] = remote.hasProAccess
+            p[WORKOUT_LOGS] = gson.toJson(remote.logs)
+            p[IS_LOGGED_IN] = true
         }
     }
 

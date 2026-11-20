@@ -87,6 +87,8 @@ dependencies {
     // Firebase and Google Auth
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     
     testImplementation("junit:junit:4.13.2")
