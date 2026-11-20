@@ -445,9 +445,19 @@ class FirebaseService {
     }
 
     func signOut() {
+        // Stop listening to this user's document *before* signing out. Otherwise Firestore
+        // rejects the still-open listener once the user is gone and the sign-in screen shows
+        // "Missing or insufficient permissions".
+        detachListener()
         try? Auth.auth().signOut()
         resetPendingAppleState()
         userData = nil
+        authError = nil
+    }
+
+    private func detachListener() {
+        snapshotListener?.remove()
+        snapshotListener = nil
         currentListenerUID = nil
     }
 
@@ -485,10 +495,10 @@ class FirebaseService {
     // MARK: - Firestore Listener
 
     func attachListener(uid: String?) {
-        if uid == currentListenerUID && snapshotListener != nil {
+        if let uid, uid == currentListenerUID, snapshotListener != nil {
             return
         }
-        
+
         snapshotListener?.remove()
         snapshotListener = nil
         currentListenerUID = uid
@@ -504,6 +514,9 @@ class FirebaseService {
             .addSnapshotListener { [weak self] snap, err in
                 guard let self else { return }
                 if let err {
+                    // Ignore errors from a listener for a user who is no longer signed in
+                    // (sign-out, account switch, or a just-deleted Apple account).
+                    guard Auth.auth().currentUser?.uid == uid, self.currentListenerUID == uid else { return }
                     self.authError = err.localizedDescription
                     self.isLoading = false
                     return
