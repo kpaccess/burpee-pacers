@@ -331,20 +331,31 @@ struct DashboardView: View {
                 }
             }
 
+            let isWorkoutDayToday = viewModel.isWorkoutDay()
+
             Button(action: {
                 timerViewModel = SessionTimerViewModel(level: viewModel.currentLevel, workoutMode: selectedMode)
             }) {
                 HStack {
-                    Image(systemName: "play.circle.fill")
+                    Image(systemName: isWorkoutDayToday ? "play.circle.fill" : "moon.zzz.fill")
                         .font(.title2)
-                    Text("Start \(selectedModeDisplayName)")
+                    Text(isWorkoutDayToday ? "Start \(selectedModeDisplayName)" : "Rest Day")
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.red.gradient)
-                .foregroundStyle(.white)
+                .background(isWorkoutDayToday ? AnyShapeStyle(Color.red.gradient) : AnyShapeStyle(Color(UIColor.systemGray4)))
+                .foregroundStyle(isWorkoutDayToday ? Color.white : Color.secondary)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(!isWorkoutDayToday)
+
+            if !isWorkoutDayToday {
+                Text(restDayMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
             }
         }
         .padding()
@@ -394,6 +405,13 @@ struct DashboardView: View {
     
     // MARK: - Rest Day Reminder
     
+    private var restDayMessage: String {
+        if let next = viewModel.nextWorkoutDayLabel {
+            return "Today is a rest day. Your next workout is \(next). You can change your workout days in Account settings."
+        }
+        return "Today is a rest day. Choose your workout days in Account settings."
+    }
+
     private var restDayReminder: some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")

@@ -130,6 +130,23 @@ class AppViewModel {
         firebase.userData?.workoutDays ?? [2, 4, 6]
     }
 
+    /// True when today is one of the user's chosen workout days.
+    func isWorkoutDay(_ date: Date = Date()) -> Bool {
+        workoutDays.contains(Calendar.current.component(.weekday, from: date))
+    }
+
+    /// "tomorrow" or a weekday name ("Wednesday") for the next scheduled workout day after today.
+    var nextWorkoutDayLabel: String? {
+        let calendar = Calendar.current
+        let today = Date()
+        for offset in 1...7 {
+            guard let date = calendar.date(byAdding: .day, value: offset, to: today),
+                  isWorkoutDay(date) else { continue }
+            return offset == 1 ? "tomorrow" : date.formatted(.dateTime.weekday(.wide))
+        }
+        return nil
+    }
+
     /// Completed workout sessions derived from Firestore workoutLogs.
     var workoutSessions: [WorkoutSession] {
         FirebaseService.sessions(from: firebase.userData?.workoutLogs ?? [])
