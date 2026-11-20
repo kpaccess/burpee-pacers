@@ -18,7 +18,7 @@ struct SignInView: View {
     @State private var isAppleLoading  = false
     @State private var isSignUp: Bool
     
-    @State private var currentNonce: String?
+    @State private var nonceStore = AppleNonceStore()
 
     init(firebase: FirebaseService, startWithSignUp: Bool = false) {
         self.firebase = firebase
@@ -53,10 +53,8 @@ struct SignInView: View {
 
                     // Apple Sign-In
                     SignInWithAppleButton(.signIn) { request in
-                        let nonce = FirebaseService.randomNonceString()
-                        currentNonce = nonce
                         request.requestedScopes = [.fullName, .email]
-                        request.nonce = FirebaseService.sha256(nonce)
+                        request.nonce = nonceStore.makeHashedNonce()
                     } onCompletion: { result in
                         Task { @MainActor in
                             isAppleLoading = true
@@ -64,14 +62,18 @@ struct SignInView: View {
                             case .success(let authorization):
                                 if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
                                    let appleIDToken = appleIDCredential.identityToken,
-                                   let idTokenString = String(data: appleIDToken, encoding: .utf8),
-                                   let nonce = currentNonce {
-                                    await firebase.handleAppleSignIn(
-                                        idToken: idTokenString,
-                                        rawNonce: nonce,
-                                        fullName: appleIDCredential.fullName,
-                                        email: appleIDCredential.email
-                                    )
+                                   let idTokenString = String(data: appleIDToken, encoding: .utf8) {
+                                    if let nonce = nonceStore.rawNonce(forIdentityToken: idTokenString) {
+                                        await firebase.handleAppleSignIn(
+                                            idToken: idTokenString,
+                                            rawNonce: nonce,
+                                            fullName: appleIDCredential.fullName,
+                                            email: appleIDCredential.email
+                                        )
+                                    } else {
+                                        firebase.authError = "Apple Sign-In could not be verified. Please try again."
+                                    }
+                                    nonceStore.reset()
                                 }
                             case .failure(let error):
                                 // Don't show error if user cancelled

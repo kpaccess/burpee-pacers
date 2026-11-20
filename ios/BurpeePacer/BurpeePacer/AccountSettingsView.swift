@@ -43,7 +43,7 @@ struct AccountSettingsView: View {
     @State private var isRestoring = false
     @State private var isPurchasing = false
     @State private var purchaseError: String? = nil
-    @State private var currentNonce: String?
+    @State private var nonceStore = AppleNonceStore()
     @State private var isConnectingApple = false
     @State private var appleConnectError: String? = nil
     @State private var appleConnectSuccess = false
@@ -164,10 +164,8 @@ struct AccountSettingsView: View {
                     } else if onConnectApple != nil {
                         VStack(alignment: .leading, spacing: 8) {
                             SignInWithAppleButton(.continue) { request in
-                                let nonce = FirebaseService.randomNonceString()
-                                currentNonce = nonce
                                 request.requestedScopes = [.fullName, .email]
-                                request.nonce = FirebaseService.sha256(nonce)
+                                request.nonce = nonceStore.makeHashedNonce()
                             } onCompletion: { result in
                                 Task { @MainActor in
                                     isConnectingApple = true
@@ -179,7 +177,7 @@ struct AccountSettingsView: View {
                                         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
                                            let appleIDToken = appleIDCredential.identityToken,
                                            let idTokenString = String(data: appleIDToken, encoding: .utf8),
-                                           let nonce = currentNonce {
+                                           let nonce = nonceStore.rawNonce(forIdentityToken: idTokenString) {
                                             let errorMessage = await onConnectApple?(
                                                 idTokenString,
                                                 nonce,
