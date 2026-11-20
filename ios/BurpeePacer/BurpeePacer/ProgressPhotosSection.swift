@@ -16,9 +16,17 @@ struct ProgressPhotosSection: View {
     
     let daysSinceStart: Int
     var remoteDay1Url: String? = nil
-    
+    var remoteSixMonthUrl: String? = nil
+
+    /// Unlocked after 180 days, or as soon as a check-in photo exists on the account
+    /// (e.g. uploaded from the web app).
     var isSixMonthUnlocked: Bool {
-        daysSinceStart >= 180
+        daysSinceStart >= 180 || remoteSixMonthURL != nil
+    }
+
+    private var remoteSixMonthURL: URL? {
+        guard let remoteSixMonthUrl, !remoteSixMonthUrl.isEmpty else { return nil }
+        return URL(string: remoteSixMonthUrl)
     }
     
     var body: some View {
@@ -98,6 +106,20 @@ struct ProgressPhotosSection: View {
                                         .scaledToFill()
                                         .frame(height: 200)
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                                } else if let url = remoteSixMonthURL {
+                                    AsyncImage(url: url) { phase in
+                                        switch phase {
+                                        case .success(let image):
+                                            image.resizable().scaledToFill()
+                                                .frame(height: 200)
+                                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        case .failure:
+                                            placeholderContent
+                                        default:
+                                            ProgressView()
+                                        }
+                                    }
+                                    .frame(height: 200)
                                 } else {
                                     VStack(spacing: 8) {
                                         Image(systemName: "photo.badge.plus")

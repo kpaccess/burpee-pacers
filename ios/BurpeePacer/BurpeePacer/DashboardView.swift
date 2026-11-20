@@ -90,7 +90,8 @@ struct DashboardView: View {
                     // Progress Photos
                     ProgressPhotosSection(
                         daysSinceStart: Calendar.current.dateComponents([.day], from: viewModel.startDate, to: Date()).day ?? 0,
-                        remoteDay1Url: viewModel.startPictureUrl
+                        remoteDay1Url: viewModel.startPictureUrl,
+                        remoteSixMonthUrl: viewModel.endPictureUrl
                     )
                     
                     // Export Data

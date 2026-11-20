@@ -84,6 +84,11 @@ class AppViewModel {
         firebase.userData?.startPictureUrl
     }
 
+    /// 6-month check-in photo saved by the web app.
+    var endPictureUrl: String? {
+        firebase.userData?.endPictureUrl
+    }
+
     var ageBracket: AgeBracket {
         get {
             if let raw = firebase.userData?.ageBracket {

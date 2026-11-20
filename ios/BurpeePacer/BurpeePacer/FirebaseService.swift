@@ -37,6 +37,8 @@ struct FirestoreUserData {
     var workoutDays: [Int]?
     var ageBracket: String?
     var equipment: String?
+    /// 6-month check-in photo (Firebase Storage download URL), uploaded from the web app.
+    var endPictureUrl: String? = nil
 }
 
 // MARK: - FirebaseService
@@ -656,7 +658,8 @@ class FirebaseService {
             workoutLogs:     logs,
             workoutDays:     data["workoutDays"]    as? [Int],
             ageBracket:      data["ageBracket"]     as? String,
-            equipment:       data["equipment"]      as? String
+            equipment:       data["equipment"]      as? String,
+            endPictureUrl:   data["endPictureUrl"]  as? String
         )
     }
 
