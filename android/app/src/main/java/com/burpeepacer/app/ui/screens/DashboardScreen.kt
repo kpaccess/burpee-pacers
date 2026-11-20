@@ -35,6 +35,7 @@ fun DashboardScreen(
     val qualifyingSessions by viewModel.currentLevelQualifyingSessions.collectAsState(0)
     val streak by viewModel.workoutStreak.collectAsState(0)
     val nextScheduledLabel by viewModel.nextScheduledLabel.collectAsState(null)
+    val hasCompletedToday by viewModel.hasCompletedToday.collectAsState(false)
     val finisher by viewModel.todayFinisher.collectAsState(
         FinisherDatabase.getFinisher(java.time.LocalDate.now().dayOfWeek, userProfile.ageBracket, userProfile.equipment)
     )
@@ -99,6 +100,7 @@ fun DashboardScreen(
                     qualifyingSessions = qualifyingSessions,
                     qualifyingRequired = viewModel.qualifyingSessionsRequired,
                     isWorkoutDay = viewModel.isWorkoutDay(),
+                    hasCompletedToday = hasCompletedToday,
                     workoutStreak = streak,
                     nextScheduledLabel = nextScheduledLabel,
                     finisher = finisher,

@@ -279,7 +279,10 @@ class WorkoutViewModel(
         if (_currentReps.value > 0) _currentReps.value--
     }
 
-    /** Hybrid sessions log the final phase's count and goal, as iOS does. */
+    /**
+     * Hybrid sessions log the final phase's count and goal, as iOS does. Reaching 0:00 counts as a
+     * completed workout whatever the rep count, matching web and iOS.
+     */
     fun createSession(): WorkoutSession {
         return WorkoutSession(
             date = LocalDateTime.now(),
@@ -287,7 +290,7 @@ class WorkoutViewModel(
             workoutMode = mode,
             repsCompleted = _currentReps.value,
             targetReps = currentPhaseGoal,
-            completed = _currentReps.value >= currentPhaseGoal
+            completed = true
         )
     }
 

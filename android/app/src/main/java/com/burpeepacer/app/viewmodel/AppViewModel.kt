@@ -82,6 +82,12 @@ class AppViewModel(private val repository: DataRepository) : ViewModel() {
         Schedule.workoutStreak(logs, profile.workoutDays, LocalDate.now())
     }
 
+    /** True once today has a completed log, whether it was saved on this device or synced from the web. */
+    val hasCompletedToday: Flow<Boolean> = workoutSessions.map { sessions ->
+        val today = LocalDate.now()
+        sessions.any { it.date.toLocalDate() == today }
+    }
+
     val nextScheduledLabel: Flow<String?> = userProfile.map {
         Schedule.nextScheduledLabel(it.currentTrack, it.workoutDays, LocalDate.now())
     }

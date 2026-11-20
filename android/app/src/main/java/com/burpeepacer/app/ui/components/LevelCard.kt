@@ -1,5 +1,6 @@
 package com.burpeepacer.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.burpeepacer.app.model.Finisher
@@ -28,6 +30,7 @@ fun LevelCard(
     qualifyingSessions: Int,
     qualifyingRequired: Int,
     isWorkoutDay: Boolean,
+    hasCompletedToday: Boolean,
     workoutStreak: Int,
     nextScheduledLabel: String?,
     finisher: Finisher,
@@ -82,7 +85,9 @@ fun LevelCard(
                     color = MaterialTheme.colorScheme.secondary
                 )
 
-                if (isWorkoutDay) {
+                if (hasCompletedToday) {
+                    CompletedTodayCard(nextScheduledLabel)
+                } else if (isWorkoutDay) {
                     Button(
                         onClick = onStartWorkout,
                         modifier = Modifier.fillMaxWidth(),
@@ -156,6 +161,35 @@ private fun LevelPickerDialog(
 }
 
 /** Shown instead of the Start button when today isn't a workout day (mirrors the web/iOS rest-day card). */
+/** Mirrors the web/iOS "Today's workout is complete" state. */
+@Composable
+fun CompletedTodayCard(nextScheduledLabel: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF22C55E).copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF22C55E), modifier = Modifier.size(48.dp))
+        Text(
+            "TODAY'S WORKOUT IS COMPLETE",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF22C55E),
+            textAlign = TextAlign.Center
+        )
+        Text(
+            nextScheduledLabel?.let { "Nice work. Your next scheduled session is $it." }
+                ?: "Nice work. Choose your next workout day in the workout days settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @Composable
 fun RestDayCard(streak: Int, nextScheduledLabel: String?) {
     Card(

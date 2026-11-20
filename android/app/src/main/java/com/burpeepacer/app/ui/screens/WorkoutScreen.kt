@@ -72,6 +72,12 @@ fun WorkoutScreen(
         onDispose { view.keepScreenOn = false }
     }
 
+    // Log the workout the moment the timer reaches 0:00, like web and iOS, so it is saved even if
+    // the screen is closed without tapping Save. Saving again later updates the same day.
+    LaunchedEffect(isFinished) {
+        if (isFinished) appViewModel.addSession(workoutViewModel.createSession())
+    }
+
     var showWarmupPrompt by remember { mutableStateOf(false) }
     var warmupChecked by remember { mutableStateOf(false) }
 
@@ -82,7 +88,9 @@ fun WorkoutScreen(
                 WorkoutHeader(
                     levelName = "${currentLevel.displayName} (${currentMode.getDisplayName(userProfile.currentTrack)})",
                     onClose = {
-                        if (workoutViewModel.hasEverStarted) {
+                        // Only a finished workout is logged; the save already happened at 0:00,
+                        // this refreshes it with the final rep count.
+                        if (isFinished) {
                             appViewModel.addSession(workoutViewModel.createSession())
                         }
                         onClose()

@@ -131,6 +131,15 @@ class WorkoutViewModelTest {
         assertEquals("T1", session.levelID)
     }
 
+    @Test fun finishingShortOfGoalStillCountsAsCompleted() {
+        val vm = vm(WorkoutMode.FIVE_COUNT)
+        vm.onTick(1200.0)
+        repeat(30) { vm.decrementRep() }
+        val session = vm.createSession()
+        assertTrue(session.repsCompleted < session.targetReps)
+        assertTrue(session.completed)
+    }
+
     @Test fun manualAdjustmentNeverGoesBelowZero() {
         val vm = vm(WorkoutMode.FIVE_COUNT)
         vm.decrementRep()
