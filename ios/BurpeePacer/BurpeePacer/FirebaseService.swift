@@ -58,6 +58,8 @@ class FirebaseService {
     var needsAccountChoice: Bool = false
     /// One-time message shown after the account choice (e.g. Apple couldn't be connected).
     var accountNotice: String?   = nil
+    /// Set when a workout could not be saved, so the user knows instead of it silently disappearing.
+    var workoutSaveError: String? = nil
 
     private var pendingAppleCredential: AuthCredential? = nil
     private var pendingAppleFullName: PersonNameComponents? = nil
@@ -593,7 +595,10 @@ class FirebaseService {
         repsCompleted: Int,
         completed: Bool
     ) async {
-        guard let uid = currentUser?.uid, let data = userData else { return }
+        guard let uid = currentUser?.uid, let data = userData else {
+            workoutSaveError = "Your workout couldn't be saved because your account data hasn't loaded. Check your connection, then mark today as done on the calendar."
+            return
+        }
 
         let dateKey   = Self.dateKey(date)
         let isBeginnerLevel = levelID.hasPrefix("B")
@@ -633,8 +638,13 @@ class FirebaseService {
             "timerVerified":     timerVerified
         ]
 
-        try? await db.collection("users").document(uid)
-            .updateData(["workoutLogs": logsPayload, "workoutStats": statsPayload])
+        do {
+            try await db.collection("users").document(uid)
+                .updateData(["workoutLogs": logsPayload, "workoutStats": statsPayload])
+        } catch {
+            print("Failed to save workout log:", error)
+            workoutSaveError = "Your workout couldn't be saved: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Helpers: Firestore → Swift models

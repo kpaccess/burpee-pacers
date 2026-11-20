@@ -72,6 +72,17 @@ struct ContentView: View {
         } message: {
             Text(appViewModel.firebase.accountNotice ?? "")
         }
+        .alert(
+            "Workout not saved",
+            isPresented: Binding(
+                get: { appViewModel.firebase.workoutSaveError != nil },
+                set: { if !$0 { appViewModel.firebase.workoutSaveError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(appViewModel.firebase.workoutSaveError ?? "")
+        }
     }
 }
 
