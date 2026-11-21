@@ -31,6 +31,8 @@ class DataRepository(private val context: Context) {
         private val WORKOUT_DAYS = stringSetPreferencesKey("workout_days")
         private val DAY1_PHOTO_URI = stringPreferencesKey("day1_photo_uri")
         private val SIX_MONTH_PHOTO_URI = stringPreferencesKey("six_month_photo_uri")
+        private val REMOTE_DAY1_PHOTO_URL = stringPreferencesKey("remote_day1_photo_url")
+        private val REMOTE_SIX_MONTH_PHOTO_URL = stringPreferencesKey("remote_six_month_photo_url")
 
         /** Firestore-shaped logs (one per day). Replaces the legacy [WORKOUT_HISTORY] session list. */
         private val WORKOUT_LOGS = stringPreferencesKey("workout_logs")
@@ -60,6 +62,8 @@ class DataRepository(private val context: Context) {
             day1PhotoUri = preferences[DAY1_PHOTO_URI]?.takeIf { it.isNotBlank() },
             sixMonthPhotoUri = preferences[SIX_MONTH_PHOTO_URI]?.takeIf { it.isNotBlank() },
             weightedTrainingEnabled = preferences[WEIGHTED_TRAINING_ENABLED] ?: false,
+            remoteDay1PhotoUrl = preferences[REMOTE_DAY1_PHOTO_URL]?.takeIf { it.isNotBlank() },
+            remoteSixMonthPhotoUrl = preferences[REMOTE_SIX_MONTH_PHOTO_URL]?.takeIf { it.isNotBlank() },
             workoutDays = preferences[WORKOUT_DAYS]
                 ?.mapNotNull { it.toIntOrNull() }?.filter { it in 1..7 }?.toSet()
                 ?.takeIf { it.isNotEmpty() }
@@ -117,6 +121,8 @@ class DataRepository(private val context: Context) {
             remote.ageBracket?.let { p[AGE_BRACKET] = it.name }
             remote.equipment?.let { p[EQUIPMENT] = it.name }
             p[IS_PRO] = remote.hasProAccess
+            p[REMOTE_DAY1_PHOTO_URL] = remote.day1PhotoUrl ?: ""
+            p[REMOTE_SIX_MONTH_PHOTO_URL] = remote.sixMonthPhotoUrl ?: ""
             p[WORKOUT_LOGS] = gson.toJson(remote.logs)
             p[IS_LOGGED_IN] = true
         }
@@ -135,6 +141,8 @@ class DataRepository(private val context: Context) {
             preferences[IS_LOGGED_IN] = false
             preferences[DAY1_PHOTO_URI] = ""
             preferences[SIX_MONTH_PHOTO_URI] = ""
+            preferences[REMOTE_DAY1_PHOTO_URL] = ""
+            preferences[REMOTE_SIX_MONTH_PHOTO_URL] = ""
             preferences[WORKOUT_DAYS] = UserProfile.DEFAULT_WORKOUT_DAYS.map { it.toString() }.toSet()
         }
     }

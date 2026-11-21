@@ -19,6 +19,8 @@ class RemoteMappingTest {
             "ageBracket" to "40s",
             "equipment" to "Full Gym Access",
             "isAdmin" to true,
+            "startPictureURl" to "https://example.com/day1.jpg",
+            "endPictureUrl" to "https://example.com/six.jpg",
             "workoutLogs" to listOf(
                 mapOf("date" to "2026-11-16", "completed" to true, "levelCompleted" to "3(N)", "repsCompleted" to 40L),
                 mapOf("date" to "bad")
@@ -32,6 +34,8 @@ class RemoteMappingTest {
         assertEquals(AgeBracket.FORTIES, p.ageBracket)
         assertEquals(Equipment.FULL_GYM, p.equipment)
         assertTrue(p.hasProAccess)
+        assertEquals("https://example.com/day1.jpg", p.day1PhotoUrl)
+        assertEquals("https://example.com/six.jpg", p.sixMonthPhotoUrl)
         assertEquals(1, p.logs.size)
         assertEquals(40, p.logs[0].repsCompleted)
     }

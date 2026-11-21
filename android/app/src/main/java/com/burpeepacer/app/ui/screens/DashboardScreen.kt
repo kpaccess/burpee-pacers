@@ -123,8 +123,10 @@ fun DashboardScreen(
             item {
                 ProgressPhotosSection(
                     daysSinceStart = userProfile.daysSinceStart,
-                    day1PhotoUri = userProfile.day1PhotoUri?.let { android.net.Uri.parse(it) },
-                    sixMonthPhotoUri = userProfile.sixMonthPhotoUri?.let { android.net.Uri.parse(it) },
+                    // A photo picked on this phone wins; otherwise show the one uploaded from the web.
+                    day1PhotoUri = (userProfile.day1PhotoUri ?: userProfile.remoteDay1PhotoUrl)?.let { android.net.Uri.parse(it) },
+                    sixMonthPhotoUri = (userProfile.sixMonthPhotoUri ?: userProfile.remoteSixMonthPhotoUrl)?.let { android.net.Uri.parse(it) },
+                    hasSixMonthPhoto = userProfile.remoteSixMonthPhotoUrl != null,
                     onDay1PhotoSelected = { viewModel.updateDay1Photo(it.toString()) },
                     onSixMonthPhotoSelected = { viewModel.updateSixMonthPhoto(it.toString()) }
                 )

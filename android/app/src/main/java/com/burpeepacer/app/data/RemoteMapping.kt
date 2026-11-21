@@ -13,7 +13,10 @@ data class RemoteProfile(
     val ageBracket: AgeBracket?,
     val equipment: Equipment?,
     val hasProAccess: Boolean,
-    val logs: List<WorkoutLog>
+    val logs: List<WorkoutLog>,
+    /** Firebase Storage download URLs uploaded from the web app. */
+    val day1PhotoUrl: String?,
+    val sixMonthPhotoUrl: String?
 )
 
 /** Translates between Firestore documents and Android models; pure so it can be unit-tested. */
@@ -37,7 +40,10 @@ object RemoteMapping {
             ageBracket = AgeBracket.values().firstOrNull { it.displayName == doc["ageBracket"] },
             equipment = Equipment.values().firstOrNull { it.displayName == doc["equipment"] },
             hasProAccess = doc["isPro"] == true || doc["isAdmin"] == true,
-            logs = parseLogs(doc["workoutLogs"])
+            logs = parseLogs(doc["workoutLogs"]),
+            // The web has a typo variant "startPictureURl"; accept both, as iOS does.
+            day1PhotoUrl = ((doc["startPictureUrl"] as? String) ?: (doc["startPictureURl"] as? String))?.takeIf { it.isNotBlank() },
+            sixMonthPhotoUrl = (doc["endPictureUrl"] as? String)?.takeIf { it.isNotBlank() }
         )
     }
 

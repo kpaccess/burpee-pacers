@@ -29,10 +29,12 @@ fun ProgressPhotosSection(
     daysSinceStart: Long,
     day1PhotoUri: Uri?,
     sixMonthPhotoUri: Uri?,
+    hasSixMonthPhoto: Boolean = false,
     onDay1PhotoSelected: (Uri) -> Unit,
     onSixMonthPhotoSelected: (Uri) -> Unit
 ) {
-    val isSixMonthUnlocked = daysSinceStart >= 180
+    // Unlocked after 180 days, or as soon as a check-in photo exists on the account (as on iOS).
+    val isSixMonthUnlocked = daysSinceStart >= 180 || hasSixMonthPhoto
     val context = LocalContext.current
 
     val day1Launcher = rememberLauncherForActivityResult(

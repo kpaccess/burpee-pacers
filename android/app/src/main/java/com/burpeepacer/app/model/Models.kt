@@ -106,6 +106,9 @@ data class UserProfile(
     var day1PhotoUri: String? = null,
     var sixMonthPhotoUri: String? = null,
     var weightedTrainingEnabled: Boolean = false,
+    /** Photos uploaded from the web (Firebase Storage URLs); a photo picked on this phone takes priority. */
+    var remoteDay1PhotoUrl: String? = null,
+    var remoteSixMonthPhotoUrl: String? = null,
     /** Chosen weekly workout days, iOS/web weekday numbers: Sunday = 1 … Saturday = 7. */
     var workoutDays: Set<Int> = DEFAULT_WORKOUT_DAYS
 ) {
