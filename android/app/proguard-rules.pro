@@ -8,3 +8,7 @@
 -keep class com.burpeepacer.app.model.WorkoutLog { *; }
 -keepattributes Signature
 -keepattributes *Annotation*
+
+# Gson TypeToken needs its generic signature kept under R8 full mode.
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken

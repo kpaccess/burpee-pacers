@@ -7,7 +7,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.burpeepacer.app.model.*
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -150,8 +149,8 @@ class DataRepository(private val context: Context) {
     private fun readLogs(preferences: Preferences): List<WorkoutLog> {
         val json = preferences[WORKOUT_LOGS]
         if (json != null) {
-            val type = object : TypeToken<List<WorkoutLog>>() {}.type
-            return runCatching { gson.fromJson<List<WorkoutLog>>(json, type) }.getOrNull().orEmpty()
+            // An array class needs no generic signature, so this survives R8 shrinking (TypeToken does not).
+            return runCatching { gson.fromJson(json, Array<WorkoutLog>::class.java)?.toList() }.getOrNull().orEmpty()
         }
         return migrateLegacyHistory(preferences[WORKOUT_HISTORY])
     }
