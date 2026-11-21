@@ -3,7 +3,7 @@ import { Box, Container, Divider, Typography } from "@mui/material";
 
 export const metadata: Metadata = {
   title: "Terms of Use | BurpeePacers",
-  description: "Terms of use for the BurpeePacers web and iOS app.",
+  description: "Terms of use for the BurpeePacers web, iOS and Android apps.",
 };
 
 const LAST_UPDATED = "June 3, 2026";
@@ -21,7 +21,7 @@ export default function TermsPage() {
         </Typography>
 
         <Section title="Acceptance of Terms">
-          By downloading, installing, or using the BurpeePacers iOS app or
+          By downloading, installing, or using the BurpeePacers iOS or Android app, or
           website at burpeepacers.com (&quot;the App&quot;), you agree to these
           Terms of Use. If you do not agree, do not use the App.
         </Section>
