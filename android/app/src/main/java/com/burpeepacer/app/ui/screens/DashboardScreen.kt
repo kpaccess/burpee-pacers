@@ -123,12 +123,18 @@ fun DashboardScreen(
             item {
                 ProgressPhotosSection(
                     daysSinceStart = userProfile.daysSinceStart,
-                    // A photo picked on this phone wins; otherwise show the one uploaded from the web.
-                    day1PhotoUri = (userProfile.day1PhotoUri ?: userProfile.remoteDay1PhotoUrl)?.let { android.net.Uri.parse(it) },
-                    sixMonthPhotoUri = (userProfile.sixMonthPhotoUri ?: userProfile.remoteSixMonthPhotoUrl)?.let { android.net.Uri.parse(it) },
+                    // The account's photo (uploaded from web/iOS) wins; a photo picked on this phone is the fallback.
+                    day1PhotoUri = (userProfile.remoteDay1PhotoUrl ?: userProfile.day1PhotoUri)?.let { android.net.Uri.parse(it) },
+                    sixMonthPhotoUri = (userProfile.remoteSixMonthPhotoUrl ?: userProfile.sixMonthPhotoUri)?.let { android.net.Uri.parse(it) },
                     hasSixMonthPhoto = userProfile.remoteSixMonthPhotoUrl != null,
-                    onDay1PhotoSelected = { viewModel.updateDay1Photo(it.toString()) },
-                    onSixMonthPhotoSelected = { viewModel.updateSixMonthPhoto(it.toString()) }
+                    onDay1PhotoSelected = {
+                        val saved = com.burpeepacer.app.util.PhotoStorage.copyToAppStorage(context, it, "day1") ?: it
+                        viewModel.updateDay1Photo(saved.toString())
+                    },
+                    onSixMonthPhotoSelected = {
+                        val saved = com.burpeepacer.app.util.PhotoStorage.copyToAppStorage(context, it, "six-month") ?: it
+                        viewModel.updateSixMonthPhoto(saved.toString())
+                    }
                 )
             }
 
