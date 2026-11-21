@@ -3,10 +3,10 @@ import { Box, Container, Divider, Typography } from "@mui/material";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | BurpeePacers",
-  description: "Privacy policy for BurpeePacers web and iOS app.",
+  description: "Privacy policy for the BurpeePacers web, iOS and Android apps.",
 };
 
-const LAST_UPDATED = "June 3, 2026";
+const LAST_UPDATED = "November 21, 2026";
 const CONTACT_EMAIL = "kpaccess@gmail.com";
 
 export default function PrivacyPage() {
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <Section title="Overview">
           BurpeePacers (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;)
           operates the BurpeePacers website at burpeepacers.com and the
-          BurpeePacers iOS app. BurpeePacers is a personal fitness app built by
+          BurpeePacers iOS and Android apps. BurpeePacers is a personal fitness app built by
           an individual who uses it alongside the community — not a corporation.
           This policy explains what information we collect, how we use it, and
           your rights regarding that information. We do not sell your personal
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
         <Section title="How We Use Your Information">
           <BulletList
             items={[
-              "To sync your workout history across the web app and iOS app.",
+              "To sync your workout history across the web, iOS and Android apps.",
               "To calculate your current level, program day, and progress statistics.",
               "To verify and unlock your one-time Pro purchase.",
               "To send a one-time welcome email when you create a new account.",
@@ -85,6 +85,7 @@ export default function PrivacyPage() {
           <BulletList
             items={[
               "iOS app: Tap the person icon (top right of the Dashboard) → scroll to the bottom → tap Delete Account.",
+              "Android app: Contact us at the email below and we will delete your account and all associated data within 48 hours. You can also sign out at any time from the account menu.",
               "Web app: Contact us at the email below and we will delete your account within 48 hours.",
             ]}
           />
