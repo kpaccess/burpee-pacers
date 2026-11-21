@@ -1,5 +1,6 @@
 package com.burpeepacer.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -295,14 +296,26 @@ fun WorkoutDaysCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary
             )
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 labels.forEachIndexed { index, label ->
                     val weekday = index + 1
-                    FilterChip(
-                        selected = weekday in selectedDays,
-                        onClick = { onToggle(weekday) },
-                        label = { Text(label) }
-                    )
+                    val selected = weekday in selectedDays
+                    // Equal-width buttons: seven FilterChips are wider than a phone row and clip the last label.
+                    Surface(
+                        modifier = Modifier.weight(1f).height(40.dp).clickable { onToggle(weekday) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+                        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                label,
+                                fontWeight = FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                                else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
             Text(

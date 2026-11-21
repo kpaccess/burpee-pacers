@@ -4,9 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -52,13 +56,21 @@ class MainActivity : ComponentActivity() {
         ProgramCatalog.init(applicationContext)
         // Keep the screen on (no dimming or auto-lock) for as long as the app is open.
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // Targeting Android 15+ draws the app behind the system bars; the app is always dark, so keep
+        // transparent bars with light icons and pad the content below/above them.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
         setContent {
             BurpeePacerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(appViewModel)
+                    Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                        AppNavigation(appViewModel)
+                    }
                 }
             }
         }
