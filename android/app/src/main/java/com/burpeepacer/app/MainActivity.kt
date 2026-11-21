@@ -2,6 +2,7 @@ package com.burpeepacer.app
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -49,6 +50,8 @@ class MainActivity : ComponentActivity() {
         Log.d("BurpeePacer", "MainActivity onCreate")
         // Levels, goals and schedule defaults come from the shared (web/iOS) program config.
         ProgramCatalog.init(applicationContext)
+        // Keep the screen on (no dimming or auto-lock) for as long as the app is open.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
             BurpeePacerTheme {
                 Surface(
