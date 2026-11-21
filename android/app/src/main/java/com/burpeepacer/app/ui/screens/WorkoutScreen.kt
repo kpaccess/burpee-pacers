@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -81,6 +83,13 @@ fun WorkoutScreen(
     var showWarmupPrompt by remember { mutableStateOf(false) }
     var warmupChecked by remember { mutableStateOf(false) }
 
+    // The controls sit below the timer and rep counter, so on shorter phones the column scrolls.
+    // When the warm-up prompt or the finish banner appears, bring it into view.
+    val scrollState = rememberScrollState()
+    LaunchedEffect(showWarmupPrompt, isFinished) {
+        if (showWarmupPrompt || isFinished) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = Color(0xFF09090B),
@@ -102,7 +111,8 @@ fun WorkoutScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -182,7 +192,16 @@ fun WorkoutScreen(
                     displayReps = if (isRunning || countdown != null) workoutViewModel.currentDisplayRep else currentReps,
                     goal = workoutViewModel.currentPhaseGoal,
                     isCompleted = workoutViewModel.isCompleted,
-                    onIncrement = { workoutViewModel.incrementRep() },
+                    onIncrement = {
+                        // Before the workout starts the big red play button starts it (after the
+                        // warm-up check); once running it logs a rep.
+                        if (isIdle) {
+                            if (!warmupChecked) showWarmupPrompt = true
+                            else workoutViewModel.startTimer()
+                        } else {
+                            workoutViewModel.incrementRep()
+                        }
+                    },
                     onDecrement = { workoutViewModel.decrementRep() }
                 )
 
@@ -223,8 +242,6 @@ fun WorkoutScreen(
 
                 // Tutorial Link
                 TutorialLink()
-
-                Spacer(modifier = Modifier.weight(1f))
             }
         }
 
