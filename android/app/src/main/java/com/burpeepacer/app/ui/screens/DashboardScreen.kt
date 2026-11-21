@@ -14,8 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.burpeepacer.app.model.ProgramTrack
-import com.burpeepacer.app.model.WeightedTrainingDay
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.burpeepacer.app.model.FinisherDatabase
+import com.burpeepacer.app.model.LevelDatabase
 import com.burpeepacer.app.ui.components.*
 import com.burpeepacer.app.viewmodel.AppViewModel
 
@@ -28,7 +30,16 @@ fun DashboardScreen(
     val userProfile by viewModel.userProfile.collectAsState()
     val currentLevel by viewModel.currentLevel.collectAsState()
     val statusText by viewModel.programStatusText.collectAsState("")
-    val finisher by viewModel.todayFinisher.collectAsState(null)
+    val hasProAccess by viewModel.hasProAccess.collectAsState(false)
+    val nextLevel by viewModel.nextLevel.collectAsState(null)
+    val qualifyingSessions by viewModel.currentLevelQualifyingSessions.collectAsState(0)
+    val streak by viewModel.workoutStreak.collectAsState(0)
+    val nextScheduledLabel by viewModel.nextScheduledLabel.collectAsState(null)
+    val hasCompletedToday by viewModel.hasCompletedToday.collectAsState(false)
+    val finisher by viewModel.todayFinisher.collectAsState(
+        FinisherDatabase.getFinisher(java.time.LocalDate.now().dayOfWeek, userProfile.ageBracket, userProfile.equipment)
+    )
+    val context = LocalContext.current
     val weightedDay by viewModel.todayWeightedDay.collectAsState(null)
     val daysToMilestone by viewModel.daysToMilestone.collectAsState(0L)
     val isMilestoneReached by viewModel.isMilestoneReached.collectAsState(false)
@@ -38,11 +49,9 @@ fun DashboardScreen(
         topBar = {
             DashboardHeader(
                 statusText = statusText,
-                isPro = userProfile.isPro,
-                onReset = { viewModel.clearData() },
-                onUpgrade = { viewModel.setPro(true) },
+                hasProAccess = hasProAccess,
                 onLogout = {
-                    viewModel.setLoggedIn(false)
+                    viewModel.signOut()
                     onLogout()
                 }
             )
@@ -55,6 +64,12 @@ fun DashboardScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            if (viewModel.isLaunchAccessEnabled) {
+                item { LaunchAccessCard() }
+            } else if (!hasProAccess) {
+                item { RestrictedAccessCard() }
+            }
+
             item {
                 StatsCard(
                     profile = userProfile,
@@ -70,9 +85,25 @@ fun DashboardScreen(
             }
 
             item {
+                WorkoutDaysCard(
+                    selectedDays = userProfile.workoutDays,
+                    onToggle = { viewModel.toggleWorkoutDay(it) }
+                )
+            }
+
+            item {
                 LevelCard(
                     level = currentLevel,
+                    nextLevel = nextLevel,
+                    levels = LevelDatabase.getLevels(userProfile.currentTrack),
+                    qualifyingSessions = qualifyingSessions,
+                    qualifyingRequired = viewModel.qualifyingSessionsRequired,
+                    isWorkoutDay = viewModel.isWorkoutDay(),
+                    hasCompletedToday = hasCompletedToday,
+                    workoutStreak = streak,
+                    nextScheduledLabel = nextScheduledLabel,
                     finisher = finisher,
+                    onChangeLevel = { viewModel.updateLevel(it) },
                     onStartWorkout = onStartWorkout
                 )
             }
@@ -92,18 +123,30 @@ fun DashboardScreen(
             item {
                 ProgressPhotosSection(
                     daysSinceStart = userProfile.daysSinceStart,
-                    day1PhotoUri = userProfile.day1PhotoUri?.let { android.net.Uri.parse(it) },
-                    sixMonthPhotoUri = userProfile.sixMonthPhotoUri?.let { android.net.Uri.parse(it) },
-                    onDay1PhotoSelected = { viewModel.updateDay1Photo(it.toString()) },
-                    onSixMonthPhotoSelected = { viewModel.updateSixMonthPhoto(it.toString()) }
+                    // The account's photo (uploaded from web/iOS) wins; a photo picked on this phone is the fallback.
+                    day1PhotoUri = (userProfile.remoteDay1PhotoUrl ?: userProfile.day1PhotoUri)?.let { android.net.Uri.parse(it) },
+                    sixMonthPhotoUri = (userProfile.remoteSixMonthPhotoUrl ?: userProfile.sixMonthPhotoUri)?.let { android.net.Uri.parse(it) },
+                    hasSixMonthPhoto = userProfile.remoteSixMonthPhotoUrl != null,
+                    onDay1PhotoSelected = {
+                        val saved = com.burpeepacer.app.util.PhotoStorage.copyToAppStorage(context, it, "day1") ?: it
+                        viewModel.updateDay1Photo(saved.toString())
+                    },
+                    onSixMonthPhotoSelected = {
+                        val saved = com.burpeepacer.app.util.PhotoStorage.copyToAppStorage(context, it, "six-month") ?: it
+                        viewModel.updateSixMonthPhoto(saved.toString())
+                    }
                 )
             }
 
             item {
                 Button(
-                    onClick = { 
-                        val csv = viewModel.exportCSV()
-                        // In a real app, you'd trigger a Share Intent here
+                    onClick = {
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "BurpeePacers workout history.csv")
+                            putExtra(Intent.EXTRA_TEXT, viewModel.exportCSV())
+                        }
+                        context.startActivity(Intent.createChooser(send, "Export Workout Data"))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -116,6 +159,10 @@ fun DashboardScreen(
             item {
                 RecoveryGuidelines()
             }
+
+            item {
+                RestRuleCard()
+            }
             
             item {
                 Spacer(modifier = Modifier.height(48.dp))
@@ -127,12 +174,9 @@ fun DashboardScreen(
 @Composable
 fun DashboardHeader(
     statusText: String,
-    isPro: Boolean,
-    onReset: () -> Unit,
-    onUpgrade: () -> Unit,
+    hasProAccess: Boolean,
     onLogout: () -> Unit
 ) {
-    var showResetDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
     Row(
@@ -149,7 +193,7 @@ fun DashboardHeader(
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                if (isPro) {
+                if (hasProAccess) {
                     Surface(
                         color = Color(0xFFFACC15), // Gold
                         shape = RoundedCornerShape(4.dp),
@@ -173,12 +217,6 @@ fun DashboardHeader(
         }
         
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (!isPro) {
-                TextButton(onClick = onUpgrade) {
-                    Text("UPGRADE", color = Color(0xFFFACC15), fontWeight = FontWeight.Bold)
-                }
-            }
-            
             Box {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.secondary)
@@ -187,13 +225,6 @@ fun DashboardHeader(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Reset Program") },
-                        onClick = { 
-                            showMenu = false
-                            showResetDialog = true 
-                        }
-                    )
                     DropdownMenuItem(
                         text = { Text("Sign Out") },
                         onClick = { 
@@ -205,25 +236,43 @@ fun DashboardHeader(
             }
         }
     }
+}
 
-    if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text("Reset Program?") },
-            text = { Text("This will clear all your progress and history. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = { 
-                    onReset()
-                    showResetDialog = false 
-                }) {
-                    Text("Reset", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
+/** Shown while the shared config has launch access on (same message as iOS). */
+@Composable
+fun LaunchAccessCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF3B82F6).copy(alpha = 0.08f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("LAUNCH ACCESS ACTIVE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp, color = Color(0xFF3B82F6))
+            Text("Full access follows the web launch settings", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "During launch, Android access is open to match the web app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+}
+
+@Composable
+fun RestrictedAccessCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.08f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("ACCOUNT ACCESS REQUIRED", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp, color = Color(0xFFEF4444))
+            Text("Your BurpeePacers account does not currently have full access.", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "Access is managed by your BurpeePacers account status so Android stays aligned with the web app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
     }
 }

@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,7 +34,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.burpeepacer.app.model.WorkoutMode
 import com.burpeepacer.app.model.ProgramTrack
-import java.time.LocalDate
+import androidx.compose.ui.platform.LocalView
 
 @Composable
 fun WorkoutScreen(
@@ -45,18 +47,11 @@ fun WorkoutScreen(
     val workoutViewModel: WorkoutViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val dayOfWeek = LocalDate.now().dayOfWeek.value
-                val defaultMode = if (userProfile.currentTrack == ProgramTrack.ADVANCED) {
-                    when (dayOfWeek) {
-                        1 -> WorkoutMode.NAVY_SEALS
-                        3 -> WorkoutMode.FIVE_COUNT
-                        5 -> WorkoutMode.HYBRID
-                        else -> WorkoutMode.NAVY_SEALS
-                    }
-                } else {
-                    WorkoutMode.FIVE_COUNT
-                }
-                
+                // Default mode comes from the shared program config (Mon→N, Wed→C, Fri→H for Advanced).
+                val defaultMode = appViewModel.defaultMode()
+                    .takeIf { it in currentLevel.availableModes }
+                    ?: currentLevel.availableModes.first()
+
                 return WorkoutViewModel(currentLevel, defaultMode) as T
             }
         }
@@ -69,10 +64,35 @@ fun WorkoutScreen(
     val countdown by workoutViewModel.countdownRemaining.collectAsState()
     val currentMode by workoutViewModel.workoutMode.collectAsState()
     val isNearRepBoundary by workoutViewModel.isNearRepBoundary.collectAsState()
+    val position by workoutViewModel.position.collectAsState()
     val isIdle = workoutViewModel.isIdle
+
+    // Keep the screen awake for the whole workout (the web app holds a wake lock too).
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+
+    // Log the workout the moment the timer reaches 0:00, like web and iOS, so it is saved even if
+    // the screen is closed without tapping Save. Saving again later updates the same day.
+    LaunchedEffect(isFinished) {
+        if (isFinished) appViewModel.addSession(workoutViewModel.createSession())
+    }
 
     var showWarmupPrompt by remember { mutableStateOf(false) }
     var warmupChecked by remember { mutableStateOf(false) }
+
+    // The controls sit below the timer and rep counter, so on shorter phones the column scrolls.
+    // When the warm-up prompt or the finish banner appears, bring it into view.
+    val scrollState = rememberScrollState()
+    LaunchedEffect(showWarmupPrompt, isFinished) {
+        if (showWarmupPrompt || isFinished) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+    // Once the countdown or the timer starts, show the timer ring again.
+    LaunchedEffect(countdown != null, isRunning) {
+        if (countdown != null || isRunning) scrollState.animateScrollTo(0)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -81,7 +101,9 @@ fun WorkoutScreen(
                 WorkoutHeader(
                     levelName = "${currentLevel.displayName} (${currentMode.getDisplayName(userProfile.currentTrack)})",
                     onClose = {
-                        if (workoutViewModel.hasEverStarted) {
+                        // Only a finished workout is logged; the save already happened at 0:00,
+                        // this refreshes it with the final rep count.
+                        if (isFinished) {
                             appViewModel.addSession(workoutViewModel.createSession())
                         }
                         onClose()
@@ -93,7 +115,8 @@ fun WorkoutScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -103,16 +126,16 @@ fun WorkoutScreen(
                         selectedMode = currentMode,
                         availableModes = currentLevel.availableModes,
                         enabled = !isRunning && countdown == null && !workoutViewModel.hasEverStarted,
-                        onModeSelected = { /* workoutViewModel.setMode(it) - need to add this to VM if wanted, but currently fixed in factory */ }
+                        onModeSelected = { workoutViewModel.setMode(it) }
                     )
                 }
 
                 // Hybrid Phase Header
                 if (workoutViewModel.isHybrid) {
                     HybridPhaseHeader(
-                        phaseIndex = workoutViewModel.hybridPhaseIndex,
+                        phaseIndex = if (position.isResting) 1 else position.phaseIndex,
                         phaseLabels = currentLevel.hybridPhaseLabels,
-                        phaseGoals = listOf(currentLevel.sealsGoal / 2 + (currentLevel.sealsGoal % 2), currentLevel.sixCountsGoal / 2 + (currentLevel.sixCountsGoal % 2)),
+                        phaseGoals = listOf(currentLevel.hybridPhaseGoal(0), currentLevel.hybridPhaseGoal(1)),
                         totalRemaining = workoutViewModel.formatTime(timeRemaining)
                     )
                 }
@@ -139,13 +162,18 @@ fun WorkoutScreen(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = workoutViewModel.formatTime(workoutViewModel.currentPhaseTimeRemaining),
+                            text = if (position.isResting) "${position.restSecondsLeft}"
+                                   else workoutViewModel.formatTime(position.phaseSecondsLeft.toLong()),
                             fontSize = 52.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (timeRemaining < 60) Color(0xFFDC2626) else Color.White
                         )
                         Text(
-                            text = if (workoutViewModel.isHybrid) "PHASE ${workoutViewModel.hybridPhaseIndex + 1} · ${workoutViewModel.hybridPhaseLabel.uppercase()}" else "TIME REMAINING",
+                            text = when {
+                                position.isResting -> "REST · NEXT: ${workoutViewModel.hybridPhaseLabel.uppercase()}"
+                                workoutViewModel.isHybrid -> "PHASE ${position.phaseIndex + 1} · ${workoutViewModel.hybridPhaseLabel.uppercase()}"
+                                else -> "TIME REMAINING"
+                            },
                             fontSize = 10.sp,
                             color = Color(0xFFA1A1AA),
                             fontWeight = FontWeight.Medium,
@@ -165,9 +193,19 @@ fun WorkoutScreen(
                 // Rep Counter
                 RepCounterSection(
                     currentReps = currentReps,
+                    displayReps = if (isRunning || countdown != null) workoutViewModel.currentDisplayRep else currentReps,
                     goal = workoutViewModel.currentPhaseGoal,
                     isCompleted = workoutViewModel.isCompleted,
-                    onIncrement = { workoutViewModel.incrementRep() },
+                    onIncrement = {
+                        // Before the workout starts the big red play button starts it (after the
+                        // warm-up check); once running it logs a rep.
+                        if (isIdle) {
+                            if (!warmupChecked) showWarmupPrompt = true
+                            else workoutViewModel.startTimer()
+                        } else {
+                            workoutViewModel.incrementRep()
+                        }
+                    },
                     onDecrement = { workoutViewModel.decrementRep() }
                 )
 
@@ -208,8 +246,6 @@ fun WorkoutScreen(
 
                 // Tutorial Link
                 TutorialLink()
-
-                Spacer(modifier = Modifier.weight(1f))
             }
         }
 
@@ -323,6 +359,7 @@ fun PacerChip(text: String?, isNearBoundary: Boolean) {
 @Composable
 fun RepCounterSection(
     currentReps: Int,
+    displayReps: Int = currentReps,
     goal: Int,
     isCompleted: Boolean,
     onIncrement: () -> Unit,
@@ -364,7 +401,7 @@ Canvas(modifier = Modifier.size(160.dp)) {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = currentReps.toString(),
+                        text = displayReps.toString(),
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCompleted) Color(0xFF22C55E) else Color.White
