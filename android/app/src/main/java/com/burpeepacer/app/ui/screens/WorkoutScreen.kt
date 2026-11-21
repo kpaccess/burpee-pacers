@@ -89,6 +89,10 @@ fun WorkoutScreen(
     LaunchedEffect(showWarmupPrompt, isFinished) {
         if (showWarmupPrompt || isFinished) scrollState.animateScrollTo(scrollState.maxValue)
     }
+    // Once the countdown or the timer starts, show the timer ring again.
+    LaunchedEffect(countdown != null, isRunning) {
+        if (countdown != null || isRunning) scrollState.animateScrollTo(0)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
