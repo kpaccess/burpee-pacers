@@ -11,6 +11,7 @@ struct ContentView: View {
     @Bindable var appViewModel: AppViewModel
     @State private var showAuth = false
     @State private var startWithSignUp = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -71,6 +72,24 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(appViewModel.firebase.accountNotice ?? "")
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Coming back to the app: make sure live sync is running so changes made on the
+            // web (e.g. ticking a day on the calendar) show up.
+            if phase == .active {
+                appViewModel.firebase.reattachListenerIfNeeded()
+            }
+        }
+        .alert(
+            "Workout not saved",
+            isPresented: Binding(
+                get: { appViewModel.firebase.workoutSaveError != nil },
+                set: { if !$0 { appViewModel.firebase.workoutSaveError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(appViewModel.firebase.workoutSaveError ?? "")
         }
     }
 }

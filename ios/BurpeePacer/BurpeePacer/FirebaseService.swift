@@ -58,6 +58,8 @@ class FirebaseService {
     var needsAccountChoice: Bool = false
     /// One-time message shown after the account choice (e.g. Apple couldn't be connected).
     var accountNotice: String?   = nil
+    /// Set when a workout could not be saved, so the user knows instead of it silently disappearing.
+    var workoutSaveError: String? = nil
 
     private var pendingAppleCredential: AuthCredential? = nil
     private var pendingAppleFullName: PersonNameComponents? = nil
@@ -455,6 +457,13 @@ class FirebaseService {
         authError = nil
     }
 
+    /// Restarts the live sync if it stopped (Firestore ends a listener after an error).
+    func reattachListenerIfNeeded() {
+        guard snapshotListener == nil, let uid = Auth.auth().currentUser?.uid else { return }
+        currentListenerUID = nil
+        attachListener(uid: uid)
+    }
+
     private func detachListener() {
         snapshotListener?.remove()
         snapshotListener = nil
@@ -517,6 +526,11 @@ class FirebaseService {
                     // Ignore errors from a listener for a user who is no longer signed in
                     // (sign-out, account switch, or a just-deleted Apple account).
                     guard Auth.auth().currentUser?.uid == uid, self.currentListenerUID == uid else { return }
+                    // A Firestore listener stops for good after an error. Drop it so the next
+                    // reattachListenerIfNeeded() (e.g. when the app returns to the foreground)
+                    // starts a fresh one instead of the app silently showing stale data.
+                    self.snapshotListener?.remove()
+                    self.snapshotListener = nil
                     self.authError = err.localizedDescription
                     self.isLoading = false
                     return
@@ -593,7 +607,10 @@ class FirebaseService {
         repsCompleted: Int,
         completed: Bool
     ) async {
-        guard let uid = currentUser?.uid, let data = userData else { return }
+        guard let uid = currentUser?.uid, let data = userData else {
+            workoutSaveError = "Your workout couldn't be saved because your account data hasn't loaded. Check your connection, then mark today as done on the calendar."
+            return
+        }
 
         let dateKey   = Self.dateKey(date)
         let isBeginnerLevel = levelID.hasPrefix("B")
@@ -633,8 +650,13 @@ class FirebaseService {
             "timerVerified":     timerVerified
         ]
 
-        try? await db.collection("users").document(uid)
-            .updateData(["workoutLogs": logsPayload, "workoutStats": statsPayload])
+        do {
+            try await db.collection("users").document(uid)
+                .updateData(["workoutLogs": logsPayload, "workoutStats": statsPayload])
+        } catch {
+            print("Failed to save workout log:", error)
+            workoutSaveError = "Your workout couldn't be saved: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Helpers: Firestore → Swift models

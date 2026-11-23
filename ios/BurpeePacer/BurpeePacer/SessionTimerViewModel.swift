@@ -279,7 +279,9 @@ class SessionTimerViewModel: Identifiable {
             workoutMode: workoutMode,
             repsCompleted: currentReps,
             targetReps: currentPhaseGoal,
-            completed: currentReps >= currentPhaseGoal
+            // Finishing the 20-minute session counts as a completed workout, whatever the
+            // rep count — same as the web, which logs completed: true when its timer ends.
+            completed: true
         )
     }
 
