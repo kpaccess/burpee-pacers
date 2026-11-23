@@ -87,9 +87,16 @@ struct SessionTimerView: View {
             }
         }
         .onAppear {
+            // Keep the screen awake for the whole workout, so it doesn't dim or auto-lock
+            // while the user is doing burpees and can't touch the phone.
+            UIApplication.shared.isIdleTimerDisabled = true
             Task {
                 await HealthManager.shared.requestAuthorization()
             }
+        }
+        .onDisappear {
+            // Back to the user's normal Auto-Lock setting once the timer screen is closed.
+            UIApplication.shared.isIdleTimerDisabled = false
         }
     }
 
