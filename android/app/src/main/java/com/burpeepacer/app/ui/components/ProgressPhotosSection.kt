@@ -29,10 +29,12 @@ fun ProgressPhotosSection(
     daysSinceStart: Long,
     day1PhotoUri: Uri?,
     sixMonthPhotoUri: Uri?,
+    hasSixMonthPhoto: Boolean = false,
     onDay1PhotoSelected: (Uri) -> Unit,
     onSixMonthPhotoSelected: (Uri) -> Unit
 ) {
-    val isSixMonthUnlocked = daysSinceStart >= 180
+    // Unlocked after 180 days, or as soon as a check-in photo exists on the account (as on iOS).
+    val isSixMonthUnlocked = daysSinceStart >= 180 || hasSixMonthPhoto
     val context = LocalContext.current
 
     val day1Launcher = rememberLauncherForActivityResult(
@@ -122,8 +124,10 @@ fun PhotoBox(
                     Text("$daysRemaining days to go", fontSize = 10.sp, color = Color(0xFFA1A1AA))
                 }
             } else if (uri != null) {
+                // The web can store a photo inline as a base64 "data:" URL, which the image loader can't open.
+                val model = remember(uri) { decodeDataUrl(uri) ?: uri }
                 AsyncImage(
-                    model = uri,
+                    model = model,
                     contentDescription = title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -137,4 +141,13 @@ fun PhotoBox(
         }
         Text(title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     }
+}
+
+/** Bytes of an inline `data:image/...;base64,` photo, or null if [uri] is any other kind of link. */
+internal fun decodeDataUrl(uri: Uri): ByteArray? {
+    val text = uri.toString()
+    if (!text.startsWith("data:")) return null
+    val marker = text.indexOf("base64,")
+    if (marker < 0) return null
+    return runCatching { android.util.Base64.decode(text.substring(marker + "base64,".length), android.util.Base64.DEFAULT) }.getOrNull()
 }

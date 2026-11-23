@@ -35,7 +35,10 @@ fun CalendarSection(
     viewModel: AppViewModel
 ) {
     var currentMonth by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) }
-    val days = remember(currentMonth) { viewModel.generateCalendarDays(currentMonth) }
+    val sessions by viewModel.workoutSessions.collectAsState()
+    val profile by viewModel.userProfile.collectAsState()
+    // Recompute whenever workouts or the chosen workout days change.
+    val days = remember(currentMonth, sessions, profile.workoutDays) { viewModel.generateCalendarDays(currentMonth) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
